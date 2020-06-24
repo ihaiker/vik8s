@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vik8s-calico-etcd
+  namespace: kube-system
+spec:
+  clusterIP: {{.VIP}}
+  sessionAffinity: None
+  selector:
+    component: etcd
+    tier: control-plane
+  ports:
+    - protocol: TCP
+      port: 2379
+      targetPort: 2379
