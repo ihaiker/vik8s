@@ -192,3 +192,18 @@ func Split3(str, sep string) (a, b, c string) {
 	}
 	return
 }
+
+func Switch(assert bool, a, b string) string {
+	if assert {
+		return a
+	} else {
+		return b
+	}
+}
+
+func Index(args []string, index int) string {
+	if index > len(args)-1 {
+		return ""
+	}
+	return args[index]
+}

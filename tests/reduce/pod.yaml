@@ -1,0 +1,53 @@
+# generate by vik8s
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vik8s
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: data-config
+  namespace: vik8s
+data:
+  data: d1
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: vik8s
+data:
+  nginx.conf: |
+    http {
+        server {
+
+        }
+        listeion / {
+            return 403;
+        }
+    }
+    
+  password: haiker:abd123123123
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test
+  namespace: vik8s
+spec:
+  hostNetwork: true
+  containers:
+    - name: glusetfs
+      image: "quay.io/ceph/ceph:v1.25.22"
+      imagePullPolicy: IfNotPresent
+  volumes:
+    - name: gluster-mysql-pvc
+      glusterfs:
+        endpoints: enddd
+        path: mysql
+
