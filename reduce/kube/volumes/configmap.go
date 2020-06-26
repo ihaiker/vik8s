@@ -45,7 +45,11 @@ func configMapParse(name string, args []string, bodys config.Directives) Volume 
 	if len(bodys) > 0 {
 		cm.Items = make(map[string]string)
 		for _, body := range bodys {
-			cm.Items[body.Name] = body.Args[0]
+			if len(body.Args) == 0 {
+				cm.Items[body.Name] = body.Name
+			} else {
+				cm.Items[body.Name] = body.Args[0]
+			}
 		}
 	}
 	return cm

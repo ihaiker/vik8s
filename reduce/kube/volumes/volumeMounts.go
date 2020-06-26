@@ -1,15 +1,28 @@
 package volumes
 
 import (
+	"fmt"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/ihaiker/vik8s/reduce/config"
 )
 
+func volumeType_mountName_volumeName(args []string) (string, string, string) {
+	vt, mountName, volumeName := utils.Split3(args[0], ":")
+	if mountName == "" {
+		mountName = vt
+		vt = utils.Switch(len(args) == 1, "emptyDir", "hostPath")
+	}
+	if volumeName == "" {
+		volumeName = mountName
+	}
+	return vt, mountName, volumeName
+}
+
 func MountParse(args []string, body config.Directives) (*VolumeMount, Volume) {
-	vt, name := volumeType(args)
+	vt, mountName := volumeTypeAndName(args)
 	switch vt {
 	case "from":
-		vm := &VolumeMount{name: name}
+		vm := &VolumeMount{name: mountName}
 		set := func(name string) string {
 			if d := body.Get(name); d != nil {
 				return d.Args[0]
@@ -25,26 +38,24 @@ func MountParse(args []string, body config.Directives) (*VolumeMount, Volume) {
 		vm.readOnly = set("readOnly")
 		return vm, nil
 	case "empty", "emptyDir":
-		vm := &VolumeMount{name: name}
+		vm := &VolumeMount{name: mountName}
 		vm.mountPath = args[1]
 		ve := VolumeParse(args, body)
 		return vm, ve
 	case "hostPath":
-		vm := &VolumeMount{name: name}
+		vm := &VolumeMount{name: mountName}
 		ve := VolumeParse(args, body)
 		ve.(*HostPath).path, vm.mountPath = utils.Split2(args[1], ":")
 		return vm, ve
 
 	case "secret", "configMap", "configmap":
-		volumeName, mountPath, subPath := utils.Split3(args[1], ":")
-		if volumeName == "" {
-			volumeName = name
-		}
-		vm := &VolumeMount{name: name}
+		mountPath, subPath := utils.Split2(args[1], ":")
+
+		vm := &VolumeMount{name: mountName}
 		vm.mountPath = mountPath
 		vm.subPath = subPath
 
-		args[1] = volumeName
+		args[0] = fmt.Sprintf("%s:%s", vt, mountName)
 		ve := VolumeParse(args, body)
 		if mountPropagation := body.Remove("mountPropagation"); mountPropagation != nil {
 			vm.mountPropagation = mountPropagation.Args[0]
@@ -62,7 +73,7 @@ func MountParse(args []string, body config.Directives) (*VolumeMount, Volume) {
 		}
 		return vm, ve
 	default:
-		vm := &VolumeMount{name: name}
+		vm := &VolumeMount{name: mountName}
 		vm.mountPath, vm.subPath = utils.Split2(args[1], ":")
 		ve := VolumeParse(args, body)
 		return vm, ve

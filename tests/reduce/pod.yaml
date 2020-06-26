@@ -45,9 +45,12 @@ spec:
     - name: glusetfs
       image: "quay.io/ceph/ceph:v1.25.22"
       imagePullPolicy: IfNotPresent
+      volumeMounts:
+        - name: configmap-volume1
+          mountPath: /data/config/sub
+          subPath: spub
   volumes:
-    - name: gluster-mysql-pvc
-      glusterfs:
-        endpoints: enddd
-        path: mysql
+    - name: configmap-volume1
+      configMap:
+        name: /data/config/sub:spub
 

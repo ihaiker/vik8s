@@ -55,6 +55,16 @@ var parses = map[string]VolumeFun{}
 func (vs *Volumes) Add(v Volume) {
 	for _, volume := range *vs {
 		if volume.Name() == v.Name() {
+			switch t := v.(type) {
+			case *ConfigMap:
+				for k, v := range t.Items {
+					volume.(*ConfigMap).Items[k] = v
+				}
+			case *Secret:
+				for k, v := range t.Items {
+					volume.(*ConfigMap).Items[k] = v
+				}
+			}
 			return
 		}
 	}
@@ -72,7 +82,7 @@ func (vs *Volumes) ToYaml(indent int) string {
 	return w.String()
 }
 
-func volumeType(args []string) (string, string) {
+func volumeTypeAndName(args []string) (string, string) {
 	vt, name := utils.Split2(args[0], ":")
 	if name == "" {
 		name = vt
@@ -82,7 +92,7 @@ func volumeType(args []string) (string, string) {
 }
 
 func VolumeParse(args []string, body []*config.Directive) Volume {
-	vt, name := volumeType(args)
+	vt, name := volumeTypeAndName(args)
 	fn, has := parses[vt]
 	utils.Assert(has, "not support volume %s", vt)
 	return fn(name, args[1:], body)
