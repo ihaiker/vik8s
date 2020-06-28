@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -206,4 +207,24 @@ func Index(args []string, index int) string {
 		return ""
 	}
 	return args[index]
+}
+
+func Default(args []string, index int, def string) string {
+	out := Index(args, index)
+	if out == "" {
+		out = def
+	}
+	return out
+}
+
+func Int32(str string, base int) *int32 {
+	i, _ := strconv.ParseInt(str, base, 32)
+	i32 := int32(i)
+	return &i32
+}
+
+func Int64(str string, base int) *int64 {
+	i, _ := strconv.ParseInt(str, base, 64)
+	i64 := int64(i)
+	return &i64
 }

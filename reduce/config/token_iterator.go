@@ -42,7 +42,8 @@ func (self *tokenIterator) next() (token string, tokenLine int, tokenHas bool) {
 				if !wordHas {
 					panic(fmt.Errorf("error at line : %d", line))
 				}
-				token = char + word
+				//token = char + word
+				token = word[0 : len(word)-1]
 				tokenLine = line
 				tokenHas = true
 				return

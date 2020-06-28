@@ -1,43 +1,42 @@
 package kube
 
 import (
+	"bytes"
+	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/ihaiker/vik8s/reduce/asserts"
 	"github.com/ihaiker/vik8s/reduce/config"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type Secret struct {
-	*Entry
-	Type string
-	Data Data
-}
+func secretToString(secret *v1.Secret) string {
+	w := config.Writer(0)
+	w.Writer(out(secret.TypeMeta, secret.ObjectMeta))
 
-func (s *Secret) ToYaml(indent int) string {
-	w := config.Writer(indent)
-	w.Writer(s.Entry.Yaml(indent))
-	w.Line("type:", s.Type)
-	w.Writer(s.Data.ToYaml(indent))
+	w.Line("data:")
+	for label, value := range secret.Data {
+		if bytes.IndexByte(value, '\n') == -1 {
+			w.Indent(1).Writer(label, ": ", string(value)).Enter()
+		} else {
+			w.Indent(1).Writer(label, ": |-").Enter()
+			w.Writer(config.ToString(value, 4))
+		}
+	}
 	return w.String()
 }
 
-func secret(d *config.Directive, kube *Kubernetes) {
-	asserts.ArgsRange(d, 1, 2)
+func secretParse(directive *config.Directive) metav1.Object {
+	asserts.ArgsMin(directive, 1)
 
-	secret := &Secret{
-		Entry: &Entry{
-			Name:   d.Args[0],
-			Labels: Labels(), Annotations: Annotations(),
-		},
-		Type: d.Args[1],
-		Data: make(map[string]string),
+	secret := &v1.Secret{}
+	asserts.MetadataIndex(secret.GetObjectMeta(), directive, 2)
+
+	if st := utils.Index(directive.Args, 1); st != "" {
+		secret.Type = v1.SecretType(st)
 	}
-	entry(d, secret.Entry, func(body *config.Directive) {
-		asserts.ArgsLen(body, 1)
-		secret.Data[body.Name] = body.Args[0]
-	})
-	kube.Objects = append(kube.Objects, secret)
-}
-
-func init() {
-	kinds["secret"] = secret
-	kinds["Secret"] = secret
+	secret.Data = make(map[string][]byte)
+	for _, d := range directive.Body {
+		secret.Data[d.Name] = []byte(d.Args[0])
+	}
+	return secret
 }

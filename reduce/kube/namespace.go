@@ -3,51 +3,18 @@ package kube
 import (
 	"github.com/ihaiker/vik8s/reduce/asserts"
 	"github.com/ihaiker/vik8s/reduce/config"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type Namespace struct {
-	*Entry
-}
+func namespaceParse(directive *config.Directive) metav1.Object {
+	asserts.ArgsMin(directive, 1)
+	namespace := &v1.Namespace{}
+	asserts.Metadata(namespace.GetObjectMeta(), directive)
 
-func (n *Namespace) ToYaml(indent int) string {
-	return n.Entry.Yaml(indent)
-}
-
-type Yaml struct {
-	*Entry
-	Body string
-}
-
-func (n *Yaml) ToYaml(indent int) string {
-	return n.Body[1 : len(n.Body)-1]
-}
-
-func namespaceParse(d *config.Directive, kube *Kubernetes) {
-	asserts.ArgsMin(d, 1)
-	namespace := &Namespace{
-		Entry: &Entry{
-			Name:        d.Args[0],
-			Labels:      Labels(),
-			Annotations: NewProperties(""),
-		},
+	labels := namespace.GetLabels()
+	for _, d := range directive.Body {
+		labels[d.Name] = d.Args[0]
 	}
-	argsLabels(namespace.Labels, d.Args[1:])
-	entry(d, namespace.Entry, func(body *config.Directive) {
-		asserts.ArgsLen(body, 1)
-		namespace.Labels.Add(body.Name, body.Args[0])
-	})
-
-	kube.Objects = append(kube.Objects, namespace)
-}
-
-func init() {
-	kinds["namespace"] = namespaceParse
-	kinds["Namespace"] = namespaceParse
-	kinds["yaml"] = func(d *config.Directive, kube *Kubernetes) {
-		yaml := &Yaml{
-			Entry: &Entry{}, Body: "",
-		}
-		yaml.Body = d.Args[0]
-		kube.Objects = append(kube.Objects, yaml)
-	}
+	return namespace
 }

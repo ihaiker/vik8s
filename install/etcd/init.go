@@ -103,6 +103,7 @@ mv -f etcdadm %s`, source, goProxy, remoteBin)
 	} else {
 		err := node.ScpProgress(localBin, remoteBin)
 		utils.Panic(err, "scp etcdadm")
+		node.MustCmd(fmt.Sprintf("chmod +x %s", remoteBin))
 	}
 	return remoteBin
 }

@@ -1,0 +1,113 @@
+# generate by vik8s
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vik8s
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: data-config
+  namespace: vik8s
+data:
+  data: d1
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: vik8s
+data:
+  nginx.conf: |
+    http {
+        server {
+
+        }
+        listeion / {
+            return 403;
+        }
+    }
+
+  password: haiker:abd123123123
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test
+  namespace: vik8s
+spec:
+  hostNetwork: true
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - preference:
+            matchFields:
+              - key: k11
+                operator: In
+                values:
+                  - bb111
+              - key: kay
+                operator: In
+                values:
+                  - ab
+                  - 12312a
+            matchExpressions:
+              - key: kkk
+                operator: DoesNotExist
+                values:
+                  - llb1
+          weight: 1
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchFields:
+              - key: kry
+                operator: In
+                values:
+                  - 1231a
+          - matchExpressions:
+              - key: key
+                operator: In
+                values:
+                  - bb112312
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - podAffinityTerm:
+            topologyKey: l
+            labelSelector:
+              matchLabels:
+                k8s-app: kubernetes-dashboard
+          weight: 1
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - topologyKey: k123
+    podAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - topologyKey: asd
+          labelSelector:
+            matchExpressions:
+              - key: k1
+                operator: In
+                values:
+                  - 1ab
+            matchLabels:
+              name: 123
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - podAffinityTerm:
+            topologyKey: b123
+            labelSelector:
+              matchLabels:
+                k8s-app: 123
+              matchExpressions:
+                - key: kb
+                  operator: In
+                  values:
+                    - b111
+          weight: 1
+  containers:
+    - name: glusetfs
+      image: "quay.io/ceph/ceph:v1.25.22"
+      imagePullPolicy: IfNotPresent
+

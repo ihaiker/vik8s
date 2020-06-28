@@ -10,14 +10,14 @@ type (
 	Virtual string
 
 	Directive struct {
-		Line    int          `json:"line"`
-		Virtual Virtual      `json:"virtual,omitempty"`
-		Name    string       `json:"name"`
-		Args    []string     `json:"args,omitempty"`
-		Body    []*Directive `json:"body,omitempty"`
+		Line    int        `json:"line"`
+		Virtual Virtual    `json:"virtual,omitempty"`
+		Name    string     `json:"name"`
+		Args    []string   `json:"args,omitempty"`
+		Body    Directives `json:"body,omitempty"`
 	}
-	Configuration = Directive
 	Directives    []*Directive
+	Configuration = Directive
 )
 
 func NewDirective(name string, args ...string) *Directive {
@@ -101,8 +101,9 @@ func (ds *Directives) Get(name string) *Directive {
 }
 
 func (ds *Directives) Remove(name string) *Directive {
-	for _, d := range *ds {
+	for i, d := range *ds {
 		if d.Name == name {
+			*ds = append((*ds)[0:i], (*ds)[i+1:]...)
 			return d
 		}
 	}

@@ -3,31 +3,19 @@ package kube
 import (
 	"github.com/ihaiker/vik8s/reduce/asserts"
 	"github.com/ihaiker/vik8s/reduce/config"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type Node struct {
-	*Entry
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 }
 
-func (c *Node) ToYaml(indent int) string {
-	w := config.Writer(indent)
-	w.Writer(c.Entry.Yaml(indent))
-	return w.String()
-}
-
-func nodeParse(d *config.Directive, kube *Kubernetes) {
-	asserts.ArgsMin(d, 1)
-	node := &Node{
-		Entry: &Entry{Name: d.Args[0],
-			Labels: Labels(), Annotations: Annotations(),
-		},
+func nodeParse(directive *config.Directive) metav1.Object {
+	node := &Node{}
+	asserts.Metadata(node, directive)
+	for _, d := range directive.Body {
+		node.Labels[d.Name] = d.Args[0]
 	}
-	bodyLabels(node.Labels, d)
-	entry(d, node.Entry, nil)
-	kube.Add(node)
-}
-
-func init() {
-	kinds["node"] = nodeParse
-	kinds["node"] = nodeParse
+	return node
 }

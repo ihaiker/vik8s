@@ -4,7 +4,6 @@ go 1.13
 
 require (
 	github.com/cheggaaa/pb v2.0.7+incompatible
-	github.com/google/uuid v1.1.1
 	github.com/hashicorp/go-version v1.2.0
 	github.com/imdario/mergo v0.3.9 // indirect
 	github.com/kvz/logstreamer v0.0.0-20150507115422-a635b98146f0
@@ -21,7 +20,10 @@ require (
 	gopkg.in/mattn/go-colorable.v0 v0.1.0 // indirect
 	gopkg.in/mattn/go-isatty.v0 v0.0.4 // indirect
 	gopkg.in/mattn/go-runewidth.v0 v0.0.4 // indirect
+	gopkg.in/oleiade/reflections.v1 v1.0.0
+	k8s.io/api v0.17.3
 	k8s.io/apimachinery v0.17.3
 	k8s.io/client-go v0.17.3
 	k8s.io/utils v0.0.0-20200619165400-6e3d28b6ed19 // indirect
+	sigs.k8s.io/yaml v1.1.0
 )

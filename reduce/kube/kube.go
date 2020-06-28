@@ -1,69 +1,106 @@
 package kube
 
 import (
-	"github.com/ihaiker/vik8s/reduce/asserts"
+	"bytes"
+	"fmt"
+	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/ihaiker/vik8s/reduce/config"
+	"github.com/ihaiker/vik8s/reduce/kube/pod"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"path/filepath"
 	"reflect"
+	"sigs.k8s.io/yaml"
+	"strings"
 )
 
-var kinds = map[string]func(d *config.Directive, kube *Kubernetes){}
-
 type (
+	KindMaker  func(directive *config.Directive) metav1.Object
 	Kubernetes struct {
 		Kubernetes string
 		Prefix     string
-		Objects    []YamlEntry
+		Objects    []metav1.Object
 	}
 )
 
-func (k *Kubernetes) Add(object YamlEntry) {
+func (k *Kubernetes) Add(object metav1.Object) {
 	k.Objects = append(k.Objects, object)
 }
 
-func (k *Kubernetes) String() string {
-	w := config.Writer(0).Line("# generate by vik8s")
-
-	namespace := ""
-	for _, obj := range k.Objects {
-		switch obj.(type) {
-		case *Namespace:
-			namespace = obj.(*Namespace).Name
+func (k *Kubernetes) Namespace() string {
+	for _, object := range k.Objects {
+		switch ns := object.(type) {
+		case *v1.Namespace:
+			return ns.Name
 		}
 	}
-	version := Version{k.Kubernetes}
+	return ""
+}
+
+func (k *Kubernetes) String() string {
+	w := config.Writer(0).
+		Line("# -------------------------------------- #").
+		Line("# generate by vik8s                      #").
+		Line(fmt.Sprintf("# kubernetes %-22s      #", k.Kubernetes)).
+		Line(fmt.Sprintf("# prefix %-31s #", k.Prefix)).
+		Line("# -------------------------------------- #")
+
 	for _, object := range k.Objects {
 		w.Line("---")
-		kind := filepath.Ext(reflect.TypeOf(object).String())[1:]
-		object.(IEntry).Set(namespace, kind, version.Get(kind))
-		w.Writer(object.ToYaml(0))
+
+		object.SetNamespace(k.Namespace())
+		if ns, match := object.(*v1.Namespace); match {
+			ns.SetNamespace("")
+		}
+
+		switch t := object.(type) {
+		case *v1.ConfigMap:
+			w.Writer(configMapToString(t))
+		case *v1.Secret:
+			w.Writer(secretToString(t))
+		default:
+			bs, err := yaml.Marshal(object)
+			bs = bytes.ReplaceAll(bs, []byte("  creationTimestamp: null\n"), []byte{})
+			bs = bytes.ReplaceAll(bs, []byte("status: {}\n"), []byte{})
+			bs = bytes.ReplaceAll(bs, []byte("spec: {}\n"), []byte{})
+			utils.Panic(err, "Marshal error %s", reflect.TypeOf(object).String())
+			w.Writer(string(bs)).Enter()
+		}
+
 		w.Enter()
 	}
 	return w.String()
 }
 
-func init() {
-	kinds["kubernetes"] = func(d *config.Directive, kube *Kubernetes) {
-		asserts.ArgsLen(d, 1)
-		kube.Kubernetes = d.Args[0]
-	}
-	kinds["prefix"] = func(d *config.Directive, kube *Kubernetes) {
-		asserts.ArgsLen(d, 1)
-		kube.Prefix = d.Args[0]
-	}
+var kinds = map[string]KindMaker{
+	"namespace": namespaceParse, "node": nodeParse,
+	"configmap": configMapParse, "secret": secretParse,
+	"pod": pod.Parse,
 }
 
 func Parse(filename string) *Kubernetes {
 	kube := &Kubernetes{
 		Kubernetes: "1.18.2", Prefix: "vik8s.io",
-		Objects: make([]YamlEntry, 0),
+		Objects: make([]metav1.Object, 0),
 	}
-	f, _ := filepath.Abs(filename)
-	cfg := config.MustParse(f)
+
+	filePath, _ := filepath.Abs(filename)
+	cfg := config.MustParse(filePath)
+
+	if d := cfg.Body.Remove("kubernetes"); d != nil {
+		kube.Kubernetes = d.Args[0]
+	}
+	if d := cfg.Body.Remove("prefix"); d != nil {
+		kube.Prefix = d.Args[0]
+	}
+
+	version := Version{Kubernetes: kube.Kubernetes}
 	for _, d := range cfg.Body {
-		for kindName, kind := range kinds {
-			if kindName == d.Name {
-				kind(d, kube)
+		for kindName, kindFn := range kinds {
+			if kindName == strings.ToLower(d.Name) {
+				obj := kindFn(d)
+				version.Set(obj)
+				kube.Objects = append(kube.Objects, obj)
 			}
 		}
 	}
