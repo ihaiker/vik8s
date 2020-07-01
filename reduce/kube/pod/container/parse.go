@@ -7,7 +7,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-func container(d *config.Directive, pod *v1.Pod) v1.Container {
+func container(d *config.Directive, pod *v1.PodSpec) v1.Container {
 	asserts.ArgsRange(d, 2, 3)
 
 	c := v1.Container{
@@ -66,12 +66,12 @@ func container(d *config.Directive, pod *v1.Pod) v1.Container {
 	return c
 }
 
-func ContainerParse(d *config.Directive, pod *v1.Pod) {
-	c := container(d, pod)
-	pod.Spec.Containers = append(pod.Spec.Containers, c)
+func ContainerParse(d *config.Directive, spec *v1.PodSpec) {
+	c := container(d, spec)
+	spec.Containers = append(spec.Containers, c)
 }
 
-func InitContainerParse(d *config.Directive, pod *v1.Pod) {
-	c := container(d, pod)
-	pod.Spec.InitContainers = append(pod.Spec.InitContainers, c)
+func InitContainerParse(d *config.Directive, spec *v1.PodSpec) {
+	c := container(d, spec)
+	spec.InitContainers = append(spec.InitContainers, c)
 }

@@ -38,14 +38,14 @@ func volumeParse(name string, args []string, body config.Directives) v1.Volume {
 	return volume
 }
 
-func VolumesParse(d *config.Directive, pod *v1.Pod) {
+func VolumesParse(d *config.Directive, spec *v1.PodSpec) {
 	for _, body := range d.Body {
 		volume := volumeParse(body.Name, body.Args, body.Body)
-		pod.Spec.Volumes = append(pod.Spec.Volumes, volume)
+		spec.Volumes = append(spec.Volumes, volume)
 	}
 }
 
-func VolumeParse(d *config.Directive, pod *v1.Pod) {
+func VolumeParse(d *config.Directive, spec *v1.PodSpec) {
 	volume := volumeParse(d.Args[0], d.Args[1:], d.Body)
-	pod.Spec.Volumes = append(pod.Spec.Volumes, volume)
+	spec.Volumes = append(spec.Volumes, volume)
 }

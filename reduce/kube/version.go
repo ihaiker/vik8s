@@ -2,7 +2,7 @@ package kube
 
 import (
 	"github.com/ihaiker/vik8s/libs/utils"
-	"gopkg.in/oleiade/reflections.v1"
+	"github.com/ihaiker/vik8s/reduce/refs"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"path/filepath"
 	"reflect"
@@ -17,7 +17,7 @@ func (v Version) Set(obj metav1.Object) {
 		Kind: filepath.Ext(reflect.TypeOf(obj).String())[1:],
 	}
 	meta.APIVersion = v.get(meta.Kind)
-	err := reflections.SetField(obj, "TypeMeta", meta)
+	err := refs.SetField(obj, "TypeMeta", meta)
 	utils.Panic(err, "Set TypeMeta")
 }
 

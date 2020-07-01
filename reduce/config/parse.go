@@ -74,7 +74,6 @@ func Parse(filename string) (cfg *Configuration, err error) {
 	return
 }
 
-/*
 func ParseWith(filename string, bs []byte) (cfg *Configuration, err error) {
 	defer utils.Catch(func(re error) {
 		err = re
@@ -84,4 +83,3 @@ func ParseWith(filename string, bs []byte) (cfg *Configuration, err error) {
 	cfg.Body, err = subDirectives(it)
 	return
 }
-*/

@@ -18,20 +18,25 @@ metadata:
   namespace: vik8s
 spec:
   containers:
-    - image: quay.io/ceph/ceph:v1.25.22
-      imagePullPolicy: Always
-      name: glusetfs
-      resources: {}
+  - image: quay.io/ceph/ceph:v1.25.22
+    imagePullPolicy: Always
+    name: glusetfs
+    resources: {}
+  hostAliases:
+  - hostnames:
+    - reg.vik8s.io
+    - os.vik8s.io
+    ip: 172.16.100.10
+  - hostnames:
+    - reg2.vik8s.io
+    ip: 172.16.100.12
+  hostNetwork: true
   initContainers:
-    - args:
-        - "123"
-        - "123123"
-      command:
-        - bash
-      image: quay.io/ceph/ceph:v1.25.22
-      imagePullPolicy: Always
-      name: glusetfs
-      resources: {}
+  - image: quay.io/ceph/ceph:v1.25.22
+    imagePullPolicy: Always
+    name: glusetfs
+    resources: {}
+  nodeName: vm100
   nodeSelector:
     storage: ceph
 

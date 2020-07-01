@@ -8,7 +8,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-func mountParse(args []string, body config.Directives, pod *v1.Pod, c *v1.Container) {
+func mountParse(args []string, body config.Directives, spec *v1.PodSpec, c *v1.Container) {
 	vt, name, sourceName := volumes.VolumeTypeAndNameAndSource(args[0], args[1:])
 
 	vm := v1.VolumeMount{Name: name}
@@ -45,5 +45,5 @@ func mountParse(args []string, body config.Directives, pod *v1.Pod, c *v1.Contai
 	}
 
 	c.VolumeMounts = append(c.VolumeMounts, vm)
-	volumes.VolumeParse(&config.Directive{Name: "volume", Args: args, Body: body}, pod)
+	volumes.VolumeParse(&config.Directive{Name: "volume", Args: args, Body: body}, spec)
 }

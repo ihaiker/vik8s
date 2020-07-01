@@ -155,31 +155,31 @@ func affinityPodParse(podConfig *config.Directive) (Preferred []v1.WeightedPodAf
 	return
 }
 
-func AffinityParse(d *config.Directive, pod *v1.Pod) {
-	if pod.Spec.Affinity == nil {
-		pod.Spec.Affinity = &v1.Affinity{}
+func AffinityParse(d *config.Directive, spec *v1.PodSpec) {
+	if spec.Affinity == nil {
+		spec.Affinity = &v1.Affinity{}
 	}
 	selector(d, func(body *config.Directive) {
 		switch body.Name {
 		case "node":
-			if pod.Spec.Affinity.NodeAffinity == nil {
-				pod.Spec.Affinity.NodeAffinity = &v1.NodeAffinity{}
+			if spec.Affinity.NodeAffinity == nil {
+				spec.Affinity.NodeAffinity = &v1.NodeAffinity{}
 			}
-			AffinityNodeParse(pod.Spec.Affinity.NodeAffinity, body)
+			AffinityNodeParse(spec.Affinity.NodeAffinity, body)
 
 		case "pod":
-			if pod.Spec.Affinity.PodAffinity == nil {
-				pod.Spec.Affinity.PodAffinity = &v1.PodAffinity{}
+			if spec.Affinity.PodAffinity == nil {
+				spec.Affinity.PodAffinity = &v1.PodAffinity{}
 			}
-			pod.Spec.Affinity.PodAffinity.PreferredDuringSchedulingIgnoredDuringExecution,
-				pod.Spec.Affinity.PodAffinity.RequiredDuringSchedulingIgnoredDuringExecution = affinityPodParse(body)
+			spec.Affinity.PodAffinity.PreferredDuringSchedulingIgnoredDuringExecution,
+				spec.Affinity.PodAffinity.RequiredDuringSchedulingIgnoredDuringExecution = affinityPodParse(body)
 
 		case "podAnti":
-			if pod.Spec.Affinity.PodAntiAffinity == nil {
-				pod.Spec.Affinity.PodAntiAffinity = &v1.PodAntiAffinity{}
+			if spec.Affinity.PodAntiAffinity == nil {
+				spec.Affinity.PodAntiAffinity = &v1.PodAntiAffinity{}
 			}
-			pod.Spec.Affinity.PodAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution,
-				pod.Spec.Affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution = affinityPodParse(body)
+			spec.Affinity.PodAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution,
+				spec.Affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution = affinityPodParse(body)
 		}
 	})
 }

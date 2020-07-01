@@ -194,6 +194,16 @@ func Split3(str, sep string) (a, b, c string) {
 	return
 }
 
+func CompileSplit2(str, sep string) (a, b string) {
+	outs := regexp.MustCompile(sep).Split(str, 2)
+	return outs[0], outs[1]
+}
+
+func CompileSplit3(str, sep string) (a, b, c string) {
+	outs := regexp.MustCompile(sep).Split(str, 3)
+	return outs[0], outs[1], outs[2]
+}
+
 func Switch(assert bool, a, b string) string {
 	if assert {
 		return a
