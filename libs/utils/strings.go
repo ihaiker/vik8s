@@ -196,12 +196,23 @@ func Split3(str, sep string) (a, b, c string) {
 
 func CompileSplit2(str, sep string) (a, b string) {
 	outs := regexp.MustCompile(sep).Split(str, 2)
-	return outs[0], outs[1]
+	a = outs[0]
+	if len(outs) > 1 {
+		b = outs[1]
+	}
+	return
 }
 
 func CompileSplit3(str, sep string) (a, b, c string) {
 	outs := regexp.MustCompile(sep).Split(str, 3)
-	return outs[0], outs[1], outs[2]
+	a = outs[0]
+	if len(outs) > 1 {
+		b = outs[1]
+	}
+	if len(outs) > 2 {
+		c = outs[2]
+	}
+	return
 }
 
 func Switch(assert bool, a, b string) string {

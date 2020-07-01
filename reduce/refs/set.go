@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func tagField(obj interface{}, name string) (fieldType reflect.StructField, fieldValue reflect.Value, has bool) {
+func tagField(obj interface{}, name string) (reflect.StructField, reflect.Value, bool) {
 	objValue := reflectValue(obj)
 	fieldsCount := objValue.Type().NumField()
 	for i := 0; i < fieldsCount; i++ {
@@ -18,13 +18,10 @@ func tagField(obj interface{}, name string) (fieldType reflect.StructField, fiel
 		tag := field.Tag.Get("json")
 		tagValue, _ := utils.Split2(tag, ",")
 		if strings.ToLower(tagValue) == strings.ToLower(name) {
-			fieldType = field
-			fieldValue = objValue.Field(i)
-			has = true
-			return
+			return field, objValue.Field(i), true
 		}
 	}
-	return
+	return reflect.StructField{}, reflect.Value{}, false
 }
 
 //是否是简单类型
@@ -47,6 +44,9 @@ func isBase(fieldType reflect.Type) bool {
 }
 
 func Unmarshal(obj interface{}, item *config.Directive) {
+	utils.Assert(reflect.ValueOf(obj).Kind() == reflect.Ptr,
+		"Object must must be interface: %v", reflect.TypeOf(obj))
+
 	field, value, has := tagField(obj, item.Name)
 	utils.Assert(has, "Invalid field：%s", item.Name)
 

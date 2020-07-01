@@ -4,6 +4,7 @@ import (
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/ihaiker/vik8s/reduce/asserts"
 	"github.com/ihaiker/vik8s/reduce/config"
+	"github.com/ihaiker/vik8s/reduce/refs"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -20,6 +21,9 @@ func container(d *config.Directive, pod *v1.PodSpec) v1.Container {
 
 	for _, body := range d.Body {
 		switch body.Name {
+		default:
+			refs.Unmarshal(&c, body)
+
 		case "command":
 			c.Command = body.Args
 		case "args":

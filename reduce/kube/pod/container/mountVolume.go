@@ -9,13 +9,14 @@ import (
 )
 
 func mountParse(args []string, body config.Directives, spec *v1.PodSpec, c *v1.Container) {
-	vt, name, sourceName := volumes.VolumeTypeAndNameAndSource(args[0], args[1:])
+	vt, name, _ := volumes.VolumeTypeAndNameAndSource(args[0], args[1:])
 
 	vm := v1.VolumeMount{Name: name}
 	switch vt {
 	case "from":
 		vm.MountPath, vm.SubPath = utils.Split2(args[1], ":")
-		args[0] = fmt.Sprintf("%s:%s", vt, sourceName)
+		c.VolumeMounts = append(c.VolumeMounts, vm)
+		return
 	case "empty", "emptyDir", "emptydir":
 		vm.MountPath = args[1]
 	case "hostpath", "hostPath":
@@ -27,7 +28,7 @@ func mountParse(args []string, body config.Directives, spec *v1.PodSpec, c *v1.C
 		args = append(args[0:1], args[2:]...)
 	default:
 		vm.MountPath, vm.SubPath = utils.Split2(args[1], ":")
-		args[0] = fmt.Sprintf("%s:%s", vt, sourceName)
+		args[0] = fmt.Sprintf("%s:%s", vt, name)
 	}
 
 	if d := body.Remove("mountPropagation"); d != nil {

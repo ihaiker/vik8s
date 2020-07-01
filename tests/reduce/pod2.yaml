@@ -22,22 +22,14 @@ spec:
     imagePullPolicy: Always
     name: glusetfs
     resources: {}
-  hostAliases:
-  - hostnames:
-    - reg.vik8s.io
-    - os.vik8s.io
-    ip: 172.16.100.10
-  - hostnames:
-    - reg2.vik8s.io
-    ip: 172.16.100.12
-  hostNetwork: true
-  initContainers:
-  - image: quay.io/ceph/ceph:v1.25.22
-    imagePullPolicy: Always
-    name: glusetfs
-    resources: {}
-  nodeName: vm100
-  nodeSelector:
-    storage: ceph
+    stdin: true
+    volumeMounts:
+    - mountPath: /data
+      name: mysql-password
+      subPath: sub
+  volumes:
+  - name: mysql-password
+    secret:
+      secretName: mysql-config
 
 

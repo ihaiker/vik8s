@@ -236,14 +236,10 @@ func tags(obj interface{}, key string, deep bool) (map[string]string, error) {
 }
 
 func reflectValue(obj interface{}) reflect.Value {
-	var val reflect.Value
-
-	if reflect.TypeOf(obj).Kind() == reflect.Ptr {
-		val = reflect.ValueOf(obj).Elem()
-	} else {
-		val = reflect.ValueOf(obj)
+	val := reflect.ValueOf(obj)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
 	}
-
 	return val
 }
 

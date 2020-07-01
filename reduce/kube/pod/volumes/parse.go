@@ -33,7 +33,7 @@ func volumeParse(name string, args []string, body config.Directives) v1.Volume {
 	case "pvc":
 		pvcParse(&volume, sourceName, args, body)
 	default:
-
+		othersParse(&volume, vt, sourceName, []string{}, body)
 	}
 	return volume
 }
