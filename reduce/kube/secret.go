@@ -25,7 +25,7 @@ func secretToString(secret *v1.Secret) string {
 	return w.String()
 }
 
-func secretParse(directive *config.Directive) metav1.Object {
+func secretParse(version, prefix string, directive *config.Directive) metav1.Object {
 	asserts.ArgsMin(directive, 1)
 
 	secret := &v1.Secret{}

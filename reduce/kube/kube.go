@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/ihaiker/vik8s/reduce/config"
-	"github.com/ihaiker/vik8s/reduce/kube/pod"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"path/filepath"
@@ -15,7 +14,6 @@ import (
 )
 
 type (
-	KindMaker  func(directive *config.Directive) metav1.Object
 	Kubernetes struct {
 		Kubernetes string
 		Prefix     string
@@ -63,6 +61,8 @@ func (k *Kubernetes) String() string {
 			bs = bytes.ReplaceAll(bs, []byte("  creationTimestamp: null\n"), []byte{})
 			bs = bytes.ReplaceAll(bs, []byte("status: {}\n"), []byte{})
 			bs = bytes.ReplaceAll(bs, []byte("spec: {}\n"), []byte{})
+			//fixbug
+			bs = bytes.ReplaceAll(bs, []byte("          labels:\n"), []byte("      labels:\n"))
 			utils.Panic(err, "Marshal error %s", reflect.TypeOf(object).String())
 			w.Writer(string(bs)).Enter()
 		}
@@ -70,12 +70,6 @@ func (k *Kubernetes) String() string {
 		w.Enter()
 	}
 	return w.String()
-}
-
-var kinds = map[string]KindMaker{
-	"namespace": namespaceParse, "node": nodeParse,
-	"configmap": configMapParse, "secret": secretParse,
-	"pod": pod.Parse,
 }
 
 func Parse(filename string) *Kubernetes {
@@ -98,7 +92,7 @@ func Parse(filename string) *Kubernetes {
 	for _, d := range cfg.Body {
 		for kindName, kindFn := range kinds {
 			if kindName == strings.ToLower(d.Name) {
-				obj := kindFn(d)
+				obj := kindFn(kube.Kubernetes, kube.Prefix, d)
 				version.Set(obj)
 				kube.Objects = append(kube.Objects, obj)
 			}

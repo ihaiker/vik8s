@@ -30,9 +30,10 @@ func PodSpecParse(directive *config.Directive, podSpec *v1.PodSpec) {
 	}
 }
 
-func Parse(directive *config.Directive) metav1.Object {
+func Parse(version, prefix string, directive *config.Directive) metav1.Object {
 	pod := &v1.Pod{}
 	asserts.Metadata(pod, directive)
+	asserts.AutoLabels(pod, prefix)
 	PodSpecParse(directive, &pod.Spec)
 	return pod
 }

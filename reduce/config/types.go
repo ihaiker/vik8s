@@ -109,3 +109,13 @@ func (ds *Directives) Remove(name string) *Directive {
 	}
 	return nil
 }
+
+func (ds *Directives) Next() *Directive {
+	if len(*ds) == 0 {
+		return nil
+	} else {
+		d := (*ds)[0]
+		*ds = (*ds)[1:]
+		return d
+	}
+}

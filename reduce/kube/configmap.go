@@ -50,7 +50,8 @@ func configMapToString(configMap *v1.ConfigMap) string {
 	return w.String()
 }
 
-func configMapParse(directive *config.Directive) metav1.Object {
+func configMapParse(version, prefix string, directive *config.Directive) metav1.Object {
+
 	asserts.ArgsMin(directive, 1)
 	configMap := &v1.ConfigMap{}
 	asserts.Metadata(configMap.GetObjectMeta(), directive)

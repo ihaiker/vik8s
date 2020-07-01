@@ -6,6 +6,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"path/filepath"
 	"reflect"
+	"strings"
 )
 
 type Version struct {
@@ -16,19 +17,12 @@ func (v Version) Set(obj metav1.Object) {
 	meta := metav1.TypeMeta{
 		Kind: filepath.Ext(reflect.TypeOf(obj).String())[1:],
 	}
-	meta.APIVersion = v.get(meta.Kind)
+	meta.APIVersion = reflect.TypeOf(obj).Elem().PkgPath()
+	if strings.HasPrefix(meta.APIVersion, "k8s.io/api/core/") {
+		meta.APIVersion = meta.APIVersion[16:]
+	} else if strings.HasPrefix(meta.APIVersion, "k8s.io/api/") {
+		meta.APIVersion = meta.APIVersion[11:]
+	}
 	err := refs.SetField(obj, "TypeMeta", meta)
 	utils.Panic(err, "Set TypeMeta")
-}
-
-func (v Version) get(kind string) string {
-	switch kind {
-	case "Pod":
-		return "v1"
-	case "DaemonSet":
-		return "v1"
-	case "Deployment":
-		return "apps/v1"
-	}
-	return "v1"
 }

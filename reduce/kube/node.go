@@ -11,7 +11,7 @@ type Node struct {
 	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 }
 
-func nodeParse(directive *config.Directive) metav1.Object {
+func nodeParse(version, prefix string, directive *config.Directive) metav1.Object {
 	node := &Node{}
 	asserts.Metadata(node, directive)
 	for _, d := range directive.Body {

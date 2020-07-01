@@ -6,13 +6,11 @@ require (
 	github.com/cheggaaa/pb v2.0.7+incompatible
 	github.com/hashicorp/go-version v1.2.0
 	github.com/imdario/mergo v0.3.9 // indirect
-	github.com/kr/pretty v0.1.0
 	github.com/kvz/logstreamer v0.0.0-20150507115422-a635b98146f0
 	github.com/mattn/go-colorable v0.1.6 // indirect
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/peterh/liner v1.2.0
 	github.com/pkg/sftp v1.11.0
-	github.com/russross/blackfriday/v2 v2.0.1
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	golang.org/x/crypto v0.0.0-20200429183012-4b2356b1ed79

@@ -7,7 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func namespaceParse(directive *config.Directive) metav1.Object {
+func namespaceParse(version, prefix string, directive *config.Directive) metav1.Object {
 	asserts.ArgsMin(directive, 1)
 	namespace := &v1.Namespace{}
 	asserts.Metadata(namespace.GetObjectMeta(), directive)
@@ -16,5 +16,6 @@ func namespaceParse(directive *config.Directive) metav1.Object {
 	for _, d := range directive.Body {
 		labels[d.Name] = d.Args[0]
 	}
+	namespace.SetLabels(labels)
 	return namespace
 }
