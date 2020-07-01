@@ -1,7 +1,7 @@
 # -------------------------------------- #
-# generate by vik8s                      #
-# kubernetes v1.18.0                     #
-# prefix vik8s2.io                       #
+#          Generate by vik8s             #
+#       Kubernetes version v1.18.2       #
+#    https://github.com/ihaiker/vik8s    #
 # -------------------------------------- #
 ---
 apiVersion: v1
@@ -12,27 +12,32 @@ metadata:
 
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: DaemonSet
 metadata:
   labels:
-    vik8s2.io/name: mysql
+    vik8s.io/name: mysql
   name: mysql
   namespace: vik8s
 spec:
-  replicas: 1
   selector:
     matchLabels:
-      vik8s2.io/name: mysql
-  strategy: {}
+      vik8s.io/name: mysql
   template:
     metadata:
       labels:
-        vik8s2.io/name: mysql
+        vik8s.io/name: mysql
       name: mysql
     spec:
       containers:
       - image: busybox
         name: demo
         resources: {}
+      hostNetwork: true
+  updateStrategy: {}
+status:
+  currentNumberScheduled: 0
+  desiredNumberScheduled: 0
+  numberMisscheduled: 0
+  numberReady: 0
 
 

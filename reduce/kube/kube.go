@@ -38,9 +38,9 @@ func (k *Kubernetes) Namespace() string {
 func (k *Kubernetes) String() string {
 	w := config.Writer(0).
 		Line("# -------------------------------------- #").
-		Line("# generate by vik8s                      #").
-		Line(fmt.Sprintf("# kubernetes %-22s      #", k.Kubernetes)).
-		Line(fmt.Sprintf("# prefix %-31s #", k.Prefix)).
+		Line("#          Generate by vik8s             #").
+		Line(fmt.Sprintf("#       Kubernetes version %-8s      #", k.Kubernetes)).
+		Line("#    https://github.com/ihaiker/vik8s    #").
 		Line("# -------------------------------------- #")
 
 	for _, object := range k.Objects {
@@ -74,7 +74,7 @@ func (k *Kubernetes) String() string {
 
 func Parse(filename string) *Kubernetes {
 	kube := &Kubernetes{
-		Kubernetes: "1.18.2", Prefix: "vik8s.io",
+		Kubernetes: "v1.18.2", Prefix: "vik8s.io",
 		Objects: make([]metav1.Object, 0),
 	}
 

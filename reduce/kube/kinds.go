@@ -2,6 +2,7 @@ package kube
 
 import (
 	"github.com/ihaiker/vik8s/reduce/config"
+	"github.com/ihaiker/vik8s/reduce/kube/daemonset"
 	"github.com/ihaiker/vik8s/reduce/kube/deployment"
 	"github.com/ihaiker/vik8s/reduce/kube/pod"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,4 +18,5 @@ var kinds = map[string]KindMaker{
 	"pod": pod.Parse,
 
 	"dep": deployment.Parse, "deployment": deployment.Parse, "Deployment": deployment.Parse,
+	"daemon": daemonset.Parse, "daemonset": daemonset.Parse, "DaemonSet": daemonset.Parse,
 }
