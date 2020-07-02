@@ -1,26 +1,43 @@
 package kube
 
 import (
+	"github.com/ihaiker/vik8s/libs/utils"
+	"github.com/ihaiker/vik8s/reduce/asserts"
 	"github.com/ihaiker/vik8s/reduce/config"
-	"github.com/ihaiker/vik8s/reduce/kube/daemonset"
-	"github.com/ihaiker/vik8s/reduce/kube/deployment"
-	"github.com/ihaiker/vik8s/reduce/kube/pod"
-	"github.com/ihaiker/vik8s/reduce/kube/service"
+	"github.com/ihaiker/vik8s/reduce/refs"
+	v1 "k8s.io/api/apps/v1"
+	"k8s.io/api/rbac/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"reflect"
 )
 
-type (
-	KindMaker func(version, prefix string, directive *config.Directive) []metav1.Object
-)
+var schemes = runtime.NewScheme()
 
-var kinds = map[string]KindMaker{
-	"namespace": namespaceParse, "node": nodeParse,
-	"configmap": configMapParse, "secret": secretParse,
+func init() {
+	_ = v1beta1.AddToScheme(schemes)
+	_ = v1.AddToScheme(schemes)
+}
 
-	"pod": pod.Parse,
+func kubeKinds(prefix string, item *config.Directive) (metav1.Object, bool) {
+	kind, version := utils.Split2(item.Name, ":")
+	for knownKind, knownType := range schemes.AllKnownTypes() {
+		if knownKind.String() == version || knownKind.Kind == kind {
+			objValue := reflect.New(knownType)
+			obj := objValue.Interface().(metav1.Object)
 
-	"dep": deployment.Parse, "deployment": deployment.Parse, "Deployment": deployment.Parse,
-	"daemon": daemonset.Parse, "daemonset": daemonset.Parse, "DaemonSet": daemonset.Parse,
+			typeMeta := objValue.Elem().FieldByName("TypeMeta")
+			typeMeta.Set(reflect.ValueOf(metav1.TypeMeta{
+				Kind: kind, APIVersion: version,
+			}))
 
-	"service": service.ServiceParse, "Service": service.ServiceParse,
+			asserts.Metadata(obj, item)
+			asserts.AutoLabels(obj, prefix)
+			for _, directive := range item.Body {
+				refs.Unmarshal(obj, directive)
+			}
+			return obj, true
+		}
+	}
+	return nil, false
 }

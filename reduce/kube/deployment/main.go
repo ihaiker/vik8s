@@ -16,7 +16,13 @@ func podSpecParse(item *config.Directive, spec *appsv1.DeploymentSpec) bool {
 }
 
 func Parse(version, prefix string, directive *config.Directive) []metav1.Object {
-	dep := &appsv1.Deployment{}
+	dep := &appsv1.Deployment{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Deployment",
+			APIVersion: appsv1.SchemeGroupVersion.String(),
+		},
+	}
+
 	asserts.Metadata(dep, directive)
 	asserts.AutoLabels(dep, prefix)
 

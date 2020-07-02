@@ -3,6 +3,7 @@ package kube
 import (
 	"github.com/ihaiker/vik8s/reduce/asserts"
 	"github.com/ihaiker/vik8s/reduce/config"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -12,7 +13,12 @@ type Node struct {
 }
 
 func nodeParse(version, prefix string, directive *config.Directive) []metav1.Object {
-	node := &Node{}
+	node := &Node{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Node",
+			APIVersion: v1.SchemeGroupVersion.String(),
+		},
+	}
 	asserts.Metadata(node, directive)
 	for _, d := range directive.Body {
 		node.Labels[d.Name] = d.Args[0]

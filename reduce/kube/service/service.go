@@ -12,7 +12,12 @@ import (
 )
 
 func ServiceParse(version, prefix string, dir *config.Directive) []metav1.Object {
-	service := &v1.Service{}
+	service := &v1.Service{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Service",
+			APIVersion: v1.SchemeGroupVersion.String(),
+		},
+	}
 	asserts.MetadataIndex(service, dir, math.MaxInt8)
 	asserts.AutoLabels(service, prefix)
 

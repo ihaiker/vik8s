@@ -126,3 +126,24 @@ status:
   loadBalancer: {}
 
 
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  labels:
+    vik8s.io/name: mysql
+  name: mysql
+  namespace: vik8s
+status:
+  loadBalancer: {}
+
+
+
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  name: 123
+rules:
+  - verbs:
+      - 123123

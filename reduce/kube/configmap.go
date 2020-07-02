@@ -51,11 +51,14 @@ func configMapToString(configMap *v1.ConfigMap) string {
 }
 
 func configMapParse(version, prefix string, directive *config.Directive) []metav1.Object {
-
 	asserts.ArgsMin(directive, 1)
-	configMap := &v1.ConfigMap{}
+	configMap := &v1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ConfigMap",
+			APIVersion: v1.SchemeGroupVersion.String(),
+		},
+	}
 	asserts.Metadata(configMap.GetObjectMeta(), directive)
-
 	configMap.Data = make(map[string]string)
 	for _, d := range directive.Body {
 		configMap.Data[d.Name] = d.Args[0]

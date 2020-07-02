@@ -28,7 +28,12 @@ func secretToString(secret *v1.Secret) string {
 func secretParse(version, prefix string, directive *config.Directive) []metav1.Object {
 	asserts.ArgsMin(directive, 1)
 
-	secret := &v1.Secret{}
+	secret := &v1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: v1.SchemeGroupVersion.String(),
+		},
+	}
 	asserts.MetadataIndex(secret.GetObjectMeta(), directive, 2)
 
 	if st := utils.Index(directive.Args, 1); st != "" {

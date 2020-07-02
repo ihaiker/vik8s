@@ -16,7 +16,12 @@ func podSpecParse(item *config.Directive, spec *appsv1.DaemonSetSpec) bool {
 }
 
 func Parse(version, prefix string, directive *config.Directive) []metav1.Object {
-	daemonset := &appsv1.DaemonSet{}
+	daemonset := &appsv1.DaemonSet{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "DaemonSet",
+			APIVersion: appsv1.SchemeGroupVersion.String(),
+		},
+	}
 	asserts.Metadata(daemonset, directive)
 	asserts.AutoLabels(daemonset, prefix)
 

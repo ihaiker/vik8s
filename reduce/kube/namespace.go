@@ -9,7 +9,12 @@ import (
 
 func namespaceParse(version, prefix string, directive *config.Directive) []metav1.Object {
 	asserts.ArgsMin(directive, 1)
-	namespace := &v1.Namespace{}
+	namespace := &v1.Namespace{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Namespace",
+			APIVersion: v1.SchemeGroupVersion.String(),
+		},
+	}
 	asserts.Metadata(namespace.GetObjectMeta(), directive)
 
 	labels := namespace.GetLabels()

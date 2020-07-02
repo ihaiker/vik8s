@@ -43,7 +43,12 @@ func PodSpecParse(directive *config.Directive, podSpec *v1.PodSpec) []metav1.Obj
 }
 
 func Parse(version, prefix string, directive *config.Directive) []metav1.Object {
-	pod := &v1.Pod{}
+	pod := &v1.Pod{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Pod",
+			APIVersion: v1.SchemeGroupVersion.String(),
+		},
+	}
 	asserts.Metadata(pod, directive)
 	asserts.AutoLabels(pod, prefix)
 
