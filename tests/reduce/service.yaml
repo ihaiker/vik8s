@@ -12,25 +12,6 @@ metadata:
 
 ---
 apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    vik8s.io/name: mysql
-  name: mysql
-  namespace: vik8s
-spec:
-  ports:
-  - name: rpc
-    nodePort: 31024
-    port: 1024
-    targetPort: 1024
-  type: NodePort
-status:
-  loadBalancer: {}
-
-
----
-apiVersion: v1
 kind: Pod
 metadata:
   labels:
@@ -59,6 +40,7 @@ kind: Service
 metadata:
   labels:
     vik8s.io/name: mysql
+  name: mysql
   namespace: vik8s
 spec:
   ports:
@@ -77,20 +59,20 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    vik8s.io/name: mysql
-  name: mysql
+    vik8s.io/name: mysql2
+  name: mysql2
   namespace: vik8s
 spec:
   replicas: 5
   selector:
     matchLabels:
-      vik8s.io/name: mysql
+      vik8s.io/name: mysql2
   strategy: {}
   template:
     metadata:
       labels:
-        vik8s.io/name: mysql
-      name: mysql
+        vik8s.io/name: mysql2
+      name: mysql2
     spec:
       containers:
       - image: quay.io/ceph/ceph:v1.25.22
@@ -112,7 +94,7 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    vik8s.io/name: mysql
+    vik8s.io/name: mysql2
   namespace: vik8s
 spec:
   ports:
@@ -121,7 +103,7 @@ spec:
     protocol: TCP
     targetPort: 1024
   selector:
-    vik8s.io/name: mysql
+    vik8s.io/name: mysql2
 status:
   loadBalancer: {}
 
@@ -134,16 +116,22 @@ metadata:
     vik8s.io/name: mysql
   name: mysql
   namespace: vik8s
+spec:
+  rules:
+  - host: n1m2
+    http:
+      paths:
+      - backend:
+          serviceName: name2
+          servicePort: 2
+  tls:
+  - hosts:
+    - /name
+    secretName: sec-config
+  - hosts:
+    - /name1
+    secretName: sec-config1
 status:
   loadBalancer: {}
 
 
-
----
-apiVersion: rbac.authorization.k8s.io/v1beta1
-kind: Role
-metadata:
-  name: 123
-rules:
-  - verbs:
-      - 123123

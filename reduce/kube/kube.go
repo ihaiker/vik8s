@@ -52,6 +52,8 @@ func (k *Kubernetes) String() string {
 		}
 
 		switch t := object.(type) {
+		case *sourceYaml:
+			w.Writer(t.Data).Enter()
 		case *v1.ConfigMap:
 			w.Writer(configMapToString(t))
 		case *v1.Secret:
@@ -92,7 +94,9 @@ func Parse(filename string) *Kubernetes {
 	for _, d := range cfg.Body {
 		configKindName, _ := utils.Split2(d.Name, ":")
 
-		if kindHandler, has := reduceKinds[configKindName]; has {
+		if obj, handler := plugins.Manager.Handler(d); handler {
+			kube.Objects = append(kube.Objects, obj)
+		} else if kindHandler, has := reduceKinds[configKindName]; has {
 			objs := kindHandler(kube.Kubernetes, kube.Prefix, d)
 			for _, obj := range objs {
 				kube.Objects = append(kube.Objects, obj)

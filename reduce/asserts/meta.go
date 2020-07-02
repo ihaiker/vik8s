@@ -11,6 +11,7 @@ func Metadata(metaObject metav1.Object, directive *config.Directive) {
 }
 
 func MetadataIndex(meta metav1.Object, directive *config.Directive, argsLabel int) {
+	ArgsMin(directive, 1)
 	meta.SetName(directive.Args[0])
 
 	{

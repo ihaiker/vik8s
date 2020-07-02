@@ -10,6 +10,19 @@ import (
 	"time"
 )
 
+func reflectValue(obj interface{}) reflect.Value {
+	val := reflect.ValueOf(obj)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+	return val
+}
+
+func GetField(obj interface{}, name string) reflect.Value {
+	objValue := reflectValue(obj)
+	return objValue.FieldByName(name)
+}
+
 func tagField(obj interface{}, name string) (reflect.StructField, reflect.Value, bool) {
 	objValue := reflectValue(obj)
 	fieldsCount := objValue.Type().NumField()
