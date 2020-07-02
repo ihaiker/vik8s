@@ -16,8 +16,25 @@ func tagField(obj interface{}, name string) (reflect.StructField, reflect.Value,
 	for i := 0; i < fieldsCount; i++ {
 		field := objValue.Type().Field(i)
 		tag := field.Tag.Get("json")
-		tagValue, _ := utils.Split2(tag, ",")
-		if strings.ToLower(tagValue) == strings.ToLower(name) {
+		fieldTagValue, _ := utils.Split2(tag, ",")
+		if fieldTagValue == "-" || fieldTagValue == "" {
+			if !isBase(field.Type) {
+				v := objValue.Field(i)
+				if field.Type.Kind() != reflect.Ptr {
+					v = v.Addr()
+				} else {
+					v = reflect.New(field.Type.Elem())
+				}
+				sf, rv, has := tagField(v.Interface(), name)
+				if !has {
+					continue
+				}
+				if field.Type.Kind() == reflect.Ptr {
+					objValue.Field(i).Set(v)
+				}
+				return sf, rv, has
+			}
+		} else if strings.ToLower(fieldTagValue) == strings.ToLower(name) {
 			return field, objValue.Field(i), true
 		}
 	}
