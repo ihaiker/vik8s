@@ -15,7 +15,7 @@ apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: Role
 metadata:
   labels:
-    vik8s.io/name: name
+    name: n1
   name: name
   namespace: vik8s
 rules:

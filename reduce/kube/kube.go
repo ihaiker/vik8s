@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/ihaiker/vik8s/reduce/config"
+	"github.com/ihaiker/vik8s/reduce/plugins"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"path/filepath"
@@ -76,6 +77,7 @@ func Parse(filename string) *Kubernetes {
 		Kubernetes: "v1.18.2", Prefix: "vik8s.io",
 		Objects: make([]metav1.Object, 0),
 	}
+	plugins.Load()
 
 	filePath, _ := filepath.Abs(filename)
 	cfg := config.MustParse(filePath)
@@ -89,15 +91,16 @@ func Parse(filename string) *Kubernetes {
 
 	for _, d := range cfg.Body {
 		configKindName, _ := utils.Split2(d.Name, ":")
+
 		if kindHandler, has := reduceKinds[configKindName]; has {
 			objs := kindHandler(kube.Kubernetes, kube.Prefix, d)
 			for _, obj := range objs {
 				kube.Objects = append(kube.Objects, obj)
 			}
+		} else if object, has := kubeKinds(kube.Prefix, d); has {
+			kube.Objects = append(kube.Objects, object)
 		} else {
-			if object, has := kubeKinds(kube.Prefix, d); has {
-				kube.Objects = append(kube.Objects, object)
-			}
+			utils.Assert(false, "not support [%s]", d.Name)
 		}
 	}
 	return kube
