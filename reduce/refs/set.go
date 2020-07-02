@@ -61,25 +61,31 @@ func isBase(fieldType reflect.Type) bool {
 }
 
 func Unmarshal(obj interface{}, item *config.Directive) {
+	UnmarshalWith(obj, item, Defaults)
+}
+
+func UnmarshalWith(obj interface{}, item *config.Directive, manager Manager) {
 	utils.Assert(reflect.ValueOf(obj).Kind() == reflect.Ptr,
 		"Object must must be interface: %v", reflect.TypeOf(obj))
 
 	field, value, has := tagField(obj, item.Name)
 	utils.Assert(has, "Invalid field：%s", item.Name)
 
-	if baseValue, err := baseValue(field.Type, utils.Index(item.Args, 0)); err == nil {
+	if v, has := manager.DealWith(field.Type, item); has {
+		value.Set(v)
+	} else if baseValue, err := baseValue(field.Type, utils.Index(item.Args, 0), manager); err == nil {
 		value.Set(baseValue)
-	} else if v, err := assemblyValue(field.Type, value, item); err == nil {
+	} else if v, err := assemblyValue(field.Type, value, item, manager); err == nil {
 		value.Set(v)
 	} else {
 		utils.Panic(err, "Invalid %s", item.Name)
 	}
 }
 
-func assemblyValue(fieldType reflect.Type, value reflect.Value, item *config.Directive) (reflect.Value, error) {
+func assemblyValue(fieldType reflect.Type, value reflect.Value, item *config.Directive, manager Manager) (reflect.Value, error) {
 
 	if fieldType.Kind() == reflect.Ptr {
-		if out, err := assemblyValue(fieldType.Elem(), value.Elem(), item); err == nil {
+		if out, err := assemblyValue(fieldType.Elem(), value.Elem(), item, manager); err == nil {
 			v := reflect.New(fieldType.Elem())
 			v.Elem().Set(out)
 			return v, nil
@@ -88,13 +94,17 @@ func assemblyValue(fieldType reflect.Type, value reflect.Value, item *config.Dir
 		}
 	}
 
+	if v, has := manager.DealWith(fieldType, item); has {
+		return v, nil
+	}
+
 	switch fieldType.Kind() {
 	case reflect.Array:
 		//return reflect.Value{}, fmt.Errorf("Invalid %s", item.Name)
 
 	case reflect.Map:
 		v := reflect.New(fieldType)
-		m := mapValue(fieldType.Key(), fieldType.Elem(), item)
+		m := mapValue(fieldType.Key(), fieldType.Elem(), item, manager)
 		if value.IsValid() {
 			for mr := value.MapRange(); mr.Next(); {
 				m.SetMapIndex(mr.Key(), mr.Value())
@@ -105,7 +115,7 @@ func assemblyValue(fieldType reflect.Type, value reflect.Value, item *config.Dir
 
 	case reflect.Slice:
 		v := reflect.New(fieldType)
-		slice := sliceValue(fieldType.Elem(), item)
+		slice := sliceValue(fieldType.Elem(), item, manager)
 		v.Elem().Set(slice)
 		if value.IsValid() {
 			v.Elem().Set(reflect.AppendSlice(value, slice))
@@ -113,28 +123,28 @@ func assemblyValue(fieldType reflect.Type, value reflect.Value, item *config.Dir
 		return v.Elem(), nil
 
 	case reflect.Struct:
-		value := structValue(fieldType, item)
+		value := structValue(fieldType, item, manager)
 		return value, nil
 	}
 
 	return reflect.Value{}, os.ErrInvalid
 }
 
-func structValue(fieldType reflect.Type, item *config.Directive) reflect.Value {
+func structValue(fieldType reflect.Type, item *config.Directive, manager Manager) reflect.Value {
 	value := reflect.New(fieldType)
 	for _, arg := range item.Args {
 		fieldName, fieldValue := utils.CompileSplit2(arg, ":|=")
-		Unmarshal(value.Interface(), &config.Directive{
+		UnmarshalWith(value.Interface(), &config.Directive{
 			Line: item.Line, Name: fieldName, Args: []string{fieldValue},
-		})
+		}, manager)
 	}
 	for _, directive := range item.Body {
-		Unmarshal(value.Interface(), directive)
+		UnmarshalWith(value.Interface(), directive, manager)
 	}
 	return value.Elem()
 }
 
-func mapValue(keyType, valueType reflect.Type, item *config.Directive) reflect.Value {
+func mapValue(keyType, valueType reflect.Type, item *config.Directive, manager Manager) reflect.Value {
 	m := reflect.MakeMap(reflect.MapOf(keyType, valueType))
 	utils.Assert(isBase(keyType), "invalid %s, line %d", item.Name, item.Line)
 
@@ -143,19 +153,19 @@ func mapValue(keyType, valueType reflect.Type, item *config.Directive) reflect.V
 			"invalid %s, line %d", item.Name, item.Line)
 
 		if len(item.Args) == 2 {
-			key, err := baseValue(keyType, item.Args[0])
+			key, err := baseValue(keyType, item.Args[0], manager)
 			utils.Panic(err, "invalid %s %s, line %d", item.Name, strings.Join(item.Args, " "), item.Line)
-			value, err := baseValue(valueType, item.Args[1])
+			value, err := baseValue(valueType, item.Args[1], manager)
 			utils.Panic(err, "invalid %s %s, line %d", item.Name, strings.Join(item.Args, " "), item.Line)
 			m.SetMapIndex(key, value)
 		} else {
 			for _, d := range item.Body {
 				utils.Assert(len(d.Args) == 1, "invalid %s %s, line %d", d.Name, strings.Join(d.Args, " "), d.Line)
 
-				key, err := baseValue(keyType, d.Name)
+				key, err := baseValue(keyType, d.Name, manager)
 				utils.Panic(err, "invalid %s %s, line %d", d.Name, strings.Join(d.Args, " "), d.Line)
 
-				value, err := baseValue(valueType, d.Args[0])
+				value, err := baseValue(valueType, d.Args[0], manager)
 				utils.Panic(err, "invalid %s %s, line %d", d.Name, strings.Join(d.Args, " "), d.Line)
 
 				m.SetMapIndex(key, value)
@@ -163,7 +173,7 @@ func mapValue(keyType, valueType reflect.Type, item *config.Directive) reflect.V
 		}
 	} else {
 		if len(item.Args) == 1 {
-			key, err := baseValue(keyType, item.Args[0])
+			key, err := baseValue(keyType, item.Args[0], manager)
 			utils.Panic(err, "invalid %s %s, line %d", item.Name, strings.Join(item.Args, " "), item.Line)
 
 			vs := reflect.New(valueType)
@@ -171,57 +181,69 @@ func mapValue(keyType, valueType reflect.Type, item *config.Directive) reflect.V
 				vs = vs.Elem()
 			}
 			item.Args = item.Args[1:]
-			value, err := assemblyValue(valueType, vs, item)
-			utils.Panic(err, "invalid %s %s, line %d", item.Name, strings.Join(item.Args, " "), item.Line)
-			m.SetMapIndex(key, value)
+			if value, has := manager.DealWith(valueType, item); has {
+				m.SetMapIndex(key, value)
+			} else {
+				value, err := assemblyValue(valueType, vs, item, manager)
+				utils.Panic(err, "invalid %s %s, line %d", item.Name, strings.Join(item.Args, " "), item.Line)
+				m.SetMapIndex(key, value)
+			}
 		} else {
 			for _, d := range item.Body {
 				utils.Assert(len(d.Args) == 0, "invalid %s %s, line %d", d.Name, strings.Join(d.Args, " "), d.Line)
 
-				key, err := baseValue(keyType, d.Name)
+				key, err := baseValue(keyType, d.Name, manager)
 				utils.Panic(err, "invalid %s %s, line %d", d.Name, strings.Join(d.Args, " "), d.Line)
 
-				vs := reflect.New(valueType)
-				if vs.Kind() == reflect.Ptr {
-					vs = vs.Elem()
+				if value, has := manager.DealWith(valueType, item); has {
+					m.SetMapIndex(key, value)
+				} else {
+					vs := reflect.New(valueType)
+					if vs.Kind() == reflect.Ptr {
+						vs = vs.Elem()
+					}
+					value, err := assemblyValue(valueType, vs, d, manager)
+					utils.Panic(err, "invalid %s %s, line %d", item.Name, strings.Join(item.Args, " "), item.Line)
+					m.SetMapIndex(key, value)
 				}
-				value, err := assemblyValue(valueType, vs, d)
-				utils.Panic(err, "invalid %s %s, line %d", item.Name, strings.Join(item.Args, " "), item.Line)
-				m.SetMapIndex(key, value)
 			}
 		}
 	}
 	return m
 }
 
-func sliceValue(sliceType reflect.Type, item *config.Directive) reflect.Value {
+func sliceValue(sliceType reflect.Type, item *config.Directive, manager Manager) reflect.Value {
 	if isBase(sliceType) {
 		length := len(item.Args)
 		values := reflect.MakeSlice(reflect.SliceOf(sliceType), length, length)
 		for i, arg := range item.Args {
-			if v, err := baseValue(sliceType, arg); err == nil {
+			if v, err := baseValue(sliceType, arg, manager); err == nil {
 				values.Index(i).Set(v)
 			}
 		}
 		return values
 	} else {
 		slice := reflect.MakeSlice(reflect.SliceOf(sliceType), 1, 1)
-		vs := reflect.New(sliceType)
-		if vs.Kind() == reflect.Ptr {
-			vs = vs.Elem()
-		}
-		if value, err := assemblyValue(sliceType, vs, item); err == nil {
+		if value, has := manager.DealWith(sliceType, item); has {
 			slice.Index(0).Set(value)
+		} else {
+			vs := reflect.New(sliceType)
+			if vs.Kind() == reflect.Ptr {
+				vs = vs.Elem()
+			}
+			if value, err := assemblyValue(sliceType, vs, item, manager); err == nil {
+				slice.Index(0).Set(value)
+			}
 		}
 		return slice
 	}
 }
 
 //OK
-func baseValue(fieldType reflect.Type, value string) (reflect.Value, error) {
+func baseValue(fieldType reflect.Type, value string, manager Manager) (reflect.Value, error) {
 
 	if fieldType.Kind() == reflect.Ptr {
-		if out, err := baseValue(fieldType.Elem(), value); err == nil {
+		if out, err := baseValue(fieldType.Elem(), value, manager); err == nil {
 			v := reflect.New(fieldType.Elem())
 			v.Elem().Set(out)
 			return v, err

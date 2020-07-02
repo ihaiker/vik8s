@@ -30,6 +30,15 @@ spec:
     spec:
       containers:
       - image: busybox
+        livenessProbe:
+          httpGet:
+            httpHeaders:
+            - name: name
+              value: value
+            path: /
+            port: 9090
+          initialDelaySeconds: 30
+          timeoutSeconds: 30
         name: demo
         resources: {}
       hostNetwork: true
