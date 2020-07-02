@@ -16,7 +16,11 @@ type (
 		Args    []string   `json:"args,omitempty"`
 		Body    Directives `json:"body,omitempty"`
 	}
-	Directives    []*Directive
+	Directives        []*Directive
+	DirectiveIterator struct {
+		items   *Directives
+		current int
+	}
 	Configuration = Directive
 )
 
@@ -26,6 +30,10 @@ func NewDirective(name string, args ...string) *Directive {
 
 func (d *Directive) String() string {
 	return d.Pretty(0)
+}
+
+func (d *Directive) HasArgs() bool {
+	return len(d.Args) > 0
 }
 
 func (d *Directive) BodyBytes() []byte {
@@ -110,12 +118,22 @@ func (ds *Directives) Remove(name string) *Directive {
 	return nil
 }
 
-func (ds *Directives) Next() *Directive {
-	if len(*ds) == 0 {
-		return nil
-	} else {
-		d := (*ds)[0]
-		*ds = (*ds)[1:]
-		return d
+func (ds *Directives) Iterator() *DirectiveIterator {
+	return &DirectiveIterator{
+		current: -1, items: ds,
 	}
+}
+
+func (ds *DirectiveIterator) Next() *Directive {
+	ds.current++
+	return (*ds.items)[ds.current]
+}
+
+func (ds *DirectiveIterator) HasNext() bool {
+	return len(*ds.items) > ds.current+1
+}
+
+func (ds *DirectiveIterator) Remove() {
+	*ds.items = append((*ds.items)[0:ds.current], (*ds.items)[ds.current+1:]...)
+	ds.current--
 }

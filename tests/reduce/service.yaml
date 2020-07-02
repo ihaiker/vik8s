@@ -117,20 +117,45 @@ metadata:
   name: mysql
   namespace: vik8s
 spec:
+  backend:
+    serviceName: service-path2
+    servicePort: 1024
   rules:
-  - host: n1m2
+  - host: host1.vik8s.io
     http:
       paths:
       - backend:
-          serviceName: name2
-          servicePort: 2
+          serviceName: service-name1
+          servicePort: 1024
+  - host: host3.vik8s.io
+    http:
+      paths:
+      - backend:
+          serviceName: service-name3
+          servicePort: 1024
+  - host: host.vik8s.io
+    http:
+      paths:
+      - backend:
+          serviceName: service-path2
+          servicePort: 1024
+        path: /path2
+      - backend:
+          serviceName: service-path1
+          servicePort: 1024
+        path: /path1
   tls:
   - hosts:
-    - /name
-    secretName: sec-config
+    - hosts1
+    - hosts2
+    secretName: secretName1
   - hosts:
-    - /name1
-    secretName: sec-config1
+    - hosts3
+    - hosts4
+    secretName: secretName2
+  - hosts:
+    - hostsN
+    secretName: secretNameN
 status:
   loadBalancer: {}
 

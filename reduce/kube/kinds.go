@@ -127,17 +127,13 @@ func kubeKinds(prefix string, item *config.Directive) (metav1.Object, bool) {
 			asserts.AutoLabels(obj, prefix)
 
 			if spec := refs.GetField(obj, "Spec"); spec.IsValid() {
-				for _, directive := range item.Body {
-					if spec.Kind() == reflect.Ptr {
-						refs.Unmarshal(spec.Interface(), directive)
-					} else {
-						refs.Unmarshal(spec.Addr().Interface(), directive)
-					}
+				if spec.Kind() == reflect.Ptr {
+					refs.UnmarshalItem(spec.Interface(), item)
+				} else {
+					refs.UnmarshalItem(spec.Addr().Interface(), item)
 				}
 			} else {
-				for _, directive := range item.Body {
-					refs.Unmarshal(obj, directive)
-				}
+				refs.Unmarshal(obj, item)
 			}
 			return obj, true
 		}

@@ -4,6 +4,7 @@ import (
 	"github.com/ihaiker/vik8s/reduce/config"
 	"github.com/ihaiker/vik8s/reduce/kube/daemonset"
 	"github.com/ihaiker/vik8s/reduce/kube/deployment"
+	"github.com/ihaiker/vik8s/reduce/kube/ingress"
 	"github.com/ihaiker/vik8s/reduce/kube/pod"
 	"github.com/ihaiker/vik8s/reduce/kube/service"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,6 +39,7 @@ var reduceKinds = map[string]KindMaker{
 	"daemon": daemonset.Parse, "daemonset": daemonset.Parse, "DaemonSet": daemonset.Parse,
 
 	"service": service.ServiceParse, "Service": service.ServiceParse,
+	"Ingress": ingress.Parse, "ingress": ingress.Parse,
 
 	"yaml": yamlParse,
 }

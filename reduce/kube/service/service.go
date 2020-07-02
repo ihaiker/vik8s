@@ -28,7 +28,7 @@ func ServiceParse(version, prefix string, dir *config.Directive) []metav1.Object
 	for _, item := range dir.Body {
 		switch item.Name {
 		default:
-			refs.Unmarshal(&service.Spec, item)
+			refs.UnmarshalItem(&service.Spec, item)
 
 		case "port":
 			service.Spec.Ports = append(service.Spec.Ports, servicePortParse(item.Args))

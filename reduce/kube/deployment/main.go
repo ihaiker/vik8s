@@ -11,8 +11,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func podSpecParse(item *config.Directive, spec *appsv1.DeploymentSpec) bool {
-	return utils.Safe(func() { refs.Unmarshal(spec, item) }) == nil
+func specParse(item *config.Directive, spec *appsv1.DeploymentSpec) bool {
+	return utils.Safe(func() { refs.UnmarshalItem(spec, item) }) == nil
 }
 
 func Parse(version, prefix string, directive *config.Directive) []metav1.Object {
@@ -26,17 +26,13 @@ func Parse(version, prefix string, directive *config.Directive) []metav1.Object 
 	asserts.Metadata(dep, directive)
 	asserts.AutoLabels(dep, prefix)
 
-	items := &config.Directive{}
-	for {
-		if d := directive.Body.Next(); d == nil {
-			break
-		} else {
-			if !podSpecParse(d, &dep.Spec) {
-				items.Body = append(items.Body, d)
-			}
+	for it := directive.Body.Iterator(); it.HasNext(); {
+		d := it.Next()
+		if specParse(d, &dep.Spec) {
+			it.Remove()
 		}
 	}
-	services := pod.PodSpecParse(items, &dep.Spec.Template.Spec)
+	services := pod.PodSpecParse(directive, &dep.Spec.Template.Spec)
 
 	dep.Spec.Template.Labels = dep.Labels
 	dep.Spec.Template.Name = dep.Name

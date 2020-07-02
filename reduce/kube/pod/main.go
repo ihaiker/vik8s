@@ -35,7 +35,7 @@ func PodSpecParse(directive *config.Directive, podSpec *v1.PodSpec) []metav1.Obj
 			if item.Name == "service" {
 				services = append(services, serviceParse(item)...)
 			} else {
-				refs.Unmarshal(podSpec, item)
+				refs.UnmarshalItem(podSpec, item)
 			}
 		}
 	}

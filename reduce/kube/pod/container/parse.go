@@ -22,7 +22,7 @@ func container(d *config.Directive, pod *v1.PodSpec) v1.Container {
 	for _, body := range d.Body {
 		switch body.Name {
 		default:
-			refs.Unmarshal(&c, body)
+			refs.UnmarshalItem(&c, body)
 
 		case "command":
 			c.Command = body.Args

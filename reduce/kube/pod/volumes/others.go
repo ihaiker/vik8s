@@ -16,7 +16,7 @@ func othersParse(volume *v1.Volume,
 		volumeType = "cephfs"
 	}
 
-	refs.Unmarshal(&volume.VolumeSource, &config.Directive{
+	refs.UnmarshalItem(&volume.VolumeSource, &config.Directive{
 		Name: volumeType, Args: args, Body: body,
 	})
 }

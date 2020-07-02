@@ -74,10 +74,16 @@ func isBase(fieldType reflect.Type) bool {
 }
 
 func Unmarshal(obj interface{}, item *config.Directive) {
-	UnmarshalWith(obj, item, Defaults)
+	for _, directive := range item.Body {
+		UnmarshalItem(obj, directive)
+	}
 }
 
-func UnmarshalWith(obj interface{}, item *config.Directive, manager Manager) {
+func UnmarshalItem(obj interface{}, item *config.Directive) {
+	UnmarshalItemWith(obj, item, Defaults)
+}
+
+func UnmarshalItemWith(obj interface{}, item *config.Directive, manager Manager) {
 	utils.Assert(reflect.ValueOf(obj).Kind() == reflect.Ptr,
 		"Object must must be interface: %v", reflect.TypeOf(obj))
 
@@ -147,12 +153,12 @@ func structValue(fieldType reflect.Type, item *config.Directive, manager Manager
 	value := reflect.New(fieldType)
 	for _, arg := range item.Args {
 		fieldName, fieldValue := utils.CompileSplit2(arg, ":|=")
-		UnmarshalWith(value.Interface(), &config.Directive{
+		UnmarshalItemWith(value.Interface(), &config.Directive{
 			Line: item.Line, Name: fieldName, Args: []string{fieldValue},
 		}, manager)
 	}
 	for _, directive := range item.Body {
-		UnmarshalWith(value.Interface(), directive, manager)
+		UnmarshalItemWith(value.Interface(), directive, manager)
 	}
 	return value.Elem()
 }
