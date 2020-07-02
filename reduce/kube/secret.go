@@ -25,7 +25,7 @@ func secretToString(secret *v1.Secret) string {
 	return w.String()
 }
 
-func secretParse(version, prefix string, directive *config.Directive) metav1.Object {
+func secretParse(version, prefix string, directive *config.Directive) []metav1.Object {
 	asserts.ArgsMin(directive, 1)
 
 	secret := &v1.Secret{}
@@ -38,5 +38,6 @@ func secretParse(version, prefix string, directive *config.Directive) metav1.Obj
 	for _, d := range directive.Body {
 		secret.Data[d.Name] = []byte(d.Args[0])
 	}
-	return secret
+
+	return []metav1.Object{secret}
 }

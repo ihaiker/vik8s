@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/ihaiker/vik8s/reduce/config"
+	"github.com/ihaiker/vik8s/reduce/refs"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"path/filepath"
@@ -46,6 +47,7 @@ func (k *Kubernetes) String() string {
 	for _, object := range k.Objects {
 		w.Line("---")
 
+		k.Set(object)
 		object.SetNamespace(k.Namespace())
 		if ns, match := object.(*v1.Namespace); match {
 			ns.SetNamespace("")
@@ -72,6 +74,20 @@ func (k *Kubernetes) String() string {
 	return w.String()
 }
 
+func (k *Kubernetes) Set(obj metav1.Object) {
+	meta := metav1.TypeMeta{
+		Kind: filepath.Ext(reflect.TypeOf(obj).String())[1:],
+	}
+	meta.APIVersion = reflect.TypeOf(obj).Elem().PkgPath()
+	if strings.HasPrefix(meta.APIVersion, "k8s.io/api/core/") {
+		meta.APIVersion = meta.APIVersion[16:]
+	} else if strings.HasPrefix(meta.APIVersion, "k8s.io/api/") {
+		meta.APIVersion = meta.APIVersion[11:]
+	}
+	err := refs.SetField(obj, "TypeMeta", meta)
+	utils.Panic(err, "Set TypeMeta")
+}
+
 func Parse(filename string) *Kubernetes {
 	kube := &Kubernetes{
 		Kubernetes: "v1.18.2", Prefix: "vik8s.io",
@@ -88,13 +104,13 @@ func Parse(filename string) *Kubernetes {
 		kube.Prefix = d.Args[0]
 	}
 
-	version := Version{Kubernetes: kube.Kubernetes}
 	for _, d := range cfg.Body {
-		for kindName, kindFn := range kinds {
+		for kindName, kindHandler := range kinds {
 			if kindName == strings.ToLower(d.Name) {
-				obj := kindFn(kube.Kubernetes, kube.Prefix, d)
-				version.Set(obj)
-				kube.Objects = append(kube.Objects, obj)
+				objs := kindHandler(kube.Kubernetes, kube.Prefix, d)
+				for _, obj := range objs {
+					kube.Objects = append(kube.Objects, obj)
+				}
 			}
 		}
 	}

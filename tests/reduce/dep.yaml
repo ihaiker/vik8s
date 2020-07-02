@@ -4,11 +4,6 @@
 #    https://github.com/ihaiker/vik8s    #
 # -------------------------------------- #
 ---
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: vik8s
-
 
 ---
 apiVersion: apps/v1
@@ -19,6 +14,7 @@ metadata:
   name: mysql
   namespace: vik8s
 spec:
+  minReadySeconds: 10
   selector:
     matchLabels:
       vik8s.io/name: mysql

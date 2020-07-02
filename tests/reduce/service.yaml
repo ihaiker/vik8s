@@ -1,0 +1,128 @@
+# -------------------------------------- #
+#          Generate by vik8s             #
+#       Kubernetes version v1.18.2       #
+#    https://github.com/ihaiker/vik8s    #
+# -------------------------------------- #
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vik8s
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    vik8s.io/name: mysql
+  name: mysql
+  namespace: vik8s
+spec:
+  ports:
+  - name: rpc
+    nodePort: 31024
+    port: 1024
+    targetPort: 1024
+  type: NodePort
+status:
+  loadBalancer: {}
+
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    vik8s.io/name: mysql
+  name: mysql
+  namespace: vik8s
+spec:
+  containers:
+  - image: quay.io/ceph/ceph:v1.25.22
+    imagePullPolicy: Always
+    name: glusetfs
+    resources: {}
+    volumeMounts:
+    - mountPath: /data
+      name: mysql-password
+      subPath: sub
+  volumes:
+  - name: mysql-password
+    secret:
+      secretName: mysql-config
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    vik8s.io/name: mysql
+  namespace: vik8s
+spec:
+  ports:
+  - name: rpc
+    port: 1024
+    protocol: TCP
+    targetPort: 1024
+  selector:
+    vik8s.io/name: mysql
+status:
+  loadBalancer: {}
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    vik8s.io/name: mysql
+  name: mysql
+  namespace: vik8s
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      vik8s.io/name: mysql
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        vik8s.io/name: mysql
+      name: mysql
+    spec:
+      containers:
+      - image: quay.io/ceph/ceph:v1.25.22
+        imagePullPolicy: Always
+        name: glusetfs
+        resources: {}
+        volumeMounts:
+        - mountPath: /data
+          name: mysql-password
+          subPath: sub
+      volumes:
+      - name: mysql-password
+        secret:
+          secretName: mysql-config
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    vik8s.io/name: mysql
+  namespace: vik8s
+spec:
+  ports:
+  - name: rpc
+    port: 1024
+    protocol: TCP
+    targetPort: 1024
+  selector:
+    vik8s.io/name: mysql
+status:
+  loadBalancer: {}
+
+
