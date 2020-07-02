@@ -1,0 +1,36 @@
+# -------------------------------------- #
+#          Generate by vik8s             #
+#       Kubernetes version v1.18.2       #
+#    https://github.com/ihaiker/vik8s    #
+# -------------------------------------- #
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vik8s
+
+
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    vik8s.io/name: bgpconfigurations.crd.projectcalico.org
+  name: bgpconfigurations.crd.projectcalico.org
+  namespace: vik8s
+spec:
+  group: crd.projectcalico.org
+  names:
+    kind: BGPConfiguration
+    plural: bgpconfigurations
+    singular: bgpconfiguration
+  scope: Cluster
+  version: v1
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: null
+  storedVersions: null
+
+
