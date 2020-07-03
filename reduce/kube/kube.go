@@ -1,11 +1,13 @@
 package kube
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/ihaiker/vik8s/reduce/config"
 	"github.com/ihaiker/vik8s/reduce/plugins"
+	"io"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"path/filepath"
@@ -35,6 +37,56 @@ func (k *Kubernetes) Namespace() string {
 	return ""
 }
 
+func removeStatus(bs []byte) string {
+	bs = bytes.ReplaceAll(bs, []byte("status: {}\n"), []byte{})
+
+	readLine := func(r *bufio.Reader) (string, error) {
+		outs := bytes.NewBufferString("")
+		for {
+			if line, prefix, err := r.ReadLine(); err != nil {
+				return "", err
+			} else if prefix {
+				outs.Write(line)
+			} else {
+				outs.Write(line)
+				return outs.String(), err
+			}
+		}
+	}
+
+	outs := bytes.NewBufferString("")
+	reader := bufio.NewReader(bytes.NewBuffer(bs))
+	statusStart := false
+	for {
+		if line, err := readLine(reader); err == io.EOF {
+			break
+		} else {
+			if statusStart {
+				if line[0:1] != " " {
+					statusStart = false
+				} else {
+					continue
+				}
+			}
+			if line == "status:" {
+				statusStart = true
+				continue
+			}
+			outs.WriteString(line)
+			outs.WriteRune('\n')
+		}
+	}
+	return outs.String()
+}
+
+func fix(bs []byte) string {
+	bs = bytes.ReplaceAll(bs, []byte("  creationTimestamp: null\n"), []byte{})
+	bs = bytes.ReplaceAll(bs, []byte("spec: {}\n"), []byte{})
+	//fix 这个标签会有些问题
+	bs = bytes.ReplaceAll(bs, []byte("          labels:\n"), []byte("      labels:\n"))
+	return removeStatus(bs)
+}
+
 func (k *Kubernetes) String() string {
 	w := config.Writer(0).
 		Line("# -------------------------------------- #").
@@ -60,15 +112,9 @@ func (k *Kubernetes) String() string {
 			w.Writer(secretToString(t))
 		default:
 			bs, err := yaml.Marshal(object)
-			bs = bytes.ReplaceAll(bs, []byte("  creationTimestamp: null\n"), []byte{})
-			bs = bytes.ReplaceAll(bs, []byte("status: {}\n"), []byte{})
-			bs = bytes.ReplaceAll(bs, []byte("spec: {}\n"), []byte{})
-			//fixbug
-			bs = bytes.ReplaceAll(bs, []byte("          labels:\n"), []byte("      labels:\n"))
 			utils.Panic(err, "Marshal error %s", reflect.TypeOf(object).String())
-			w.Writer(string(bs)).Enter()
+			w.Writer(fix(bs)).Enter()
 		}
-
 		w.Enter()
 	}
 	return w.String()
