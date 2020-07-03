@@ -13,7 +13,6 @@ require (
 	github.com/pkg/sftp v1.11.0
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
-	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2
 	golang.org/x/crypto v0.0.0-20200429183012-4b2356b1ed79
 	gopkg.in/VividCortex/ewma.v1 v1.1.1 // indirect
 	gopkg.in/cheggaaa/pb.v2 v2.0.7 // indirect
@@ -26,6 +25,5 @@ require (
 	k8s.io/apimachinery v0.18.5
 	k8s.io/client-go v0.18.5
 	k8s.io/utils v0.0.0-20200619165400-6e3d28b6ed19 // indirect
-	sigs.k8s.io/structured-merge-diff v0.0.0-20190525122527-15d366b2352e // indirect
 	sigs.k8s.io/yaml v1.2.0
 )
