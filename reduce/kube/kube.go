@@ -88,6 +88,10 @@ func fix(bs []byte) string {
 }
 
 func (k *Kubernetes) String() string {
+	return string(k.Bytes())
+}
+
+func (k *Kubernetes) Bytes() []byte {
 	w := config.Writer(0).
 		Line("# -------------------------------------- #").
 		Line("#          Generate by vik8s             #").
@@ -98,9 +102,10 @@ func (k *Kubernetes) String() string {
 	for _, object := range k.Objects {
 		w.Line("---")
 
-		object.SetNamespace(k.Namespace())
 		if ns, match := object.(*v1.Namespace); match {
 			ns.SetNamespace("")
+		} else if ns := object.GetNamespace(); ns == "" {
+			object.SetNamespace(k.Namespace())
 		}
 
 		switch t := object.(type) {
@@ -117,18 +122,26 @@ func (k *Kubernetes) String() string {
 		}
 		w.Enter()
 	}
-	return w.String()
+	return w.Bytes()
+}
+
+func ParseWith(bs []byte) *Kubernetes {
+	cfg := config.MustParseWith("", bs)
+	return parse(cfg)
 }
 
 func Parse(filename string) *Kubernetes {
+	filePath, _ := filepath.Abs(filename)
+	cfg := config.MustParse(filePath)
+	return parse(cfg)
+}
+
+func parse(cfg *config.Directive) *Kubernetes {
 	kube := &Kubernetes{
-		Kubernetes: "v1.18.2", Prefix: "vik8s.io",
+		Kubernetes: "v1.18.2", Prefix: "apps.vik8s.io",
 		Objects: make([]metav1.Object, 0),
 	}
 	plugins.Load()
-
-	filePath, _ := filepath.Abs(filename)
-	cfg := config.MustParse(filePath)
 
 	if d := cfg.Body.Remove("kubernetes"); d != nil {
 		kube.Kubernetes = d.Args[0]
@@ -136,6 +149,8 @@ func Parse(filename string) *Kubernetes {
 	if d := cfg.Body.Remove("prefix"); d != nil {
 		kube.Prefix = d.Args[0]
 	}
+
+	replace(cfg)
 
 	for _, d := range cfg.Body {
 		if obj, handler := plugins.Manager.Handler(kube.Kubernetes, kube.Prefix, d); handler {

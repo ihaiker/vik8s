@@ -13,14 +13,18 @@ import (
 func secretToString(secret *v1.Secret) string {
 	w := config.Writer(0)
 	w.Writer(out(secret.TypeMeta, secret.ObjectMeta))
-
-	w.Line("data:")
-	for label, value := range secret.Data {
-		if bytes.IndexByte(value, '\n') == -1 {
-			w.Indent(1).Writer(label, ": ", string(value)).Enter()
-		} else {
-			w.Indent(1).Writer(label, ": |-").Enter()
-			w.Writer(config.ToString(value, 4))
+	if secret.Type != "" {
+		w.Line("type:", string(secret.Type))
+	}
+	if len(secret.Data) > 0 {
+		w.Line("data:")
+		for label, value := range secret.Data {
+			if bytes.IndexByte(value, '\n') == -1 {
+				w.Indent(1).Writer(label, ": ", string(value)).Enter()
+			} else {
+				w.Indent(1).Writer(label, ": |-").Enter()
+				w.Writer(config.ToString(value, 4))
+			}
 		}
 	}
 	return w.String()

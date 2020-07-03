@@ -246,6 +246,5 @@ func Int32(str string, base int) *int32 {
 
 func Int64(str string, base int) *int64 {
 	i, _ := strconv.ParseInt(str, base, 64)
-	i64 := int64(i)
-	return &i64
+	return &i
 }

@@ -13,7 +13,7 @@ func CreateCalicoETCDPKIAssert(dir string, certificateValidity time.Duration) (c
 		return
 	}
 
-	line("caolico-etcd-client", "create caolico-etcd-client.crt and ")
+	line("caolico-etcd-client", "create caolico-etcd-client.crt")
 	caCert, caKey := loadCaCertAndKey(dir)
 	config := certs.NewConfig("calico-etcd-client")
 	{

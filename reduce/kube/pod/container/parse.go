@@ -38,7 +38,7 @@ func container(d *config.Directive, pod *v1.PodSpec) v1.Container {
 			}
 		case "ports":
 			for _, port := range body.Body {
-				if len(body.Args) == 0 {
+				if len(port.Args) == 0 {
 					c.Ports = append(c.Ports, portParse("", port.Name))
 				} else {
 					c.Ports = append(c.Ports, portParse(port.Name, port.Args[0]))
@@ -68,9 +68,6 @@ func container(d *config.Directive, pod *v1.PodSpec) v1.Container {
 				}
 			}
 			c.EnvFrom = append(c.EnvFrom, env)
-		case "resources":
-			asserts.ArgsLen(body, 0)
-			c.Resources = resourceParse(body)
 
 		case "device":
 			asserts.ArgsLen(body, 2)
@@ -78,12 +75,12 @@ func container(d *config.Directive, pod *v1.PodSpec) v1.Container {
 				Name: body.Args[0], DevicePath: body.Args[1],
 			})
 
-		case "mount":
-			mountParse(body.Args, body.Body, pod, &c)
-		case "mounts":
+		case "mount", "volumeMount":
+			mountParse(body.Args, body, pod, &c)
+		case "mounts", "volumeMounts":
 			for _, directive := range body.Body {
 				args := append([]string{directive.Name}, directive.Args...)
-				mountParse(args, body.Body, pod, &c)
+				mountParse(args, directive, pod, &c)
 			}
 		}
 	}

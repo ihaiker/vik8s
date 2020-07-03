@@ -40,9 +40,11 @@ func ServiceParse(version, prefix string, dir *config.Directive) metav1.Object {
 		default:
 			refs.UnmarshalItem(&service.Spec, item)
 		case "port":
+			asserts.ArgsMin(item, 1)
 			service.Spec.Ports = append(service.Spec.Ports, servicePortParse(item.Args))
 		case "ports":
 			for _, i := range item.Body {
+				asserts.ArgsMin(i, 1)
 				service.Spec.Ports = append(service.Spec.Ports,
 					servicePortParse(append([]string{i.Name}, i.Args...)))
 			}
@@ -58,13 +60,22 @@ func ServiceParse(version, prefix string, dir *config.Directive) metav1.Object {
 }
 
 func servicePortParse(args []string) v1.ServicePort {
-	targetPort, portAndProtocol := utils.Split2(args[1], ":")
+	name := args[0]
+	portExpr := utils.Index(args, 1)
+	nodePort := utils.Index(args, 2)
+	if strings.Contains(name, ":") {
+		name = ""
+		portExpr = args[0]
+		nodePort = utils.Index(args, 1)
+	}
+
+	targetPort, portAndProtocol := utils.Split2(portExpr, ":")
 	port, protocol := utils.Split2(portAndProtocol, "/")
 	sp := v1.ServicePort{
-		Name: args[0], Protocol: v1.Protocol(protocol),
+		Name: name, Protocol: v1.Protocol(strings.ToUpper(protocol)),
 		Port:       *utils.Int32(port, 10),
 		TargetPort: intstr.Parse(targetPort),
-		NodePort:   *utils.Int32(utils.Index(args, 2), 10),
+		NodePort:   *utils.Int32(nodePort, 10),
 	}
 	return sp
 }
@@ -73,7 +84,7 @@ var Service = plugins.ReduceHandler{
 	Names: []string{"service", "Service"}, Handler: ServiceParse,
 	Demo: `
 service [deployment:mysql] server-name [serviceType] {
-    port [name] targetPort:port/protocol [nodePort];
+    port name targetPort:port/protocol [nodePort];
     ports {
 		name1 targetPort:port[/protocol] [nodePort];
 		name2 targetPort:port[/protocol] [nodePort];

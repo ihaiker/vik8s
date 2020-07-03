@@ -6,11 +6,11 @@ import (
 )
 
 type (
-	Handler func(fieldType reflect.Type, item *config.Directive) interface{}
-	Manager map[reflect.Type]Handler
+	TypeHandler func(fieldType reflect.Type, item *config.Directive) interface{}
+	TypeManager map[reflect.Type]TypeHandler
 )
 
-func (h *Manager) DealWith(fieldType reflect.Type, item *config.Directive) (reflect.Value, bool) {
+func (h *TypeManager) DealWith(fieldType reflect.Type, item *config.Directive) (reflect.Value, bool) {
 	if handler, has := (*h)[fieldType]; has {
 		v := handler(fieldType, item)
 		return reflect.ValueOf(v), true
@@ -18,7 +18,7 @@ func (h *Manager) DealWith(fieldType reflect.Type, item *config.Directive) (refl
 	return reflect.Value{}, false
 }
 
-func (h *Manager) With(fieldType reflect.Type, handler Handler) *Manager {
+func (h *TypeManager) With(fieldType reflect.Type, handler TypeHandler) *TypeManager {
 	(*h)[fieldType] = handler
 	if fieldType.Kind() == reflect.Ptr {
 		(*h)[fieldType.Elem()] = handler

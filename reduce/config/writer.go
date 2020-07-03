@@ -63,6 +63,10 @@ func (s *writer) String() string {
 	return s.outs.String()
 }
 
+func (s *writer) Bytes() []byte {
+	return s.outs.Bytes()
+}
+
 func ToString(bs []byte, indent int) string {
 	reader := bufio.NewReader(bytes.NewBuffer(bs))
 

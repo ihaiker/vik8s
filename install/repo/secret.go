@@ -9,15 +9,18 @@ import (
 )
 
 type Repo struct {
-	Url      string `flag:"" help:"Choose a container registry to pull images."`
-	User     string `flag:"user" help:"docker registry user"`
-	Password string `flag:"password" help:"docker registry password"`
+	Url              string   `flag:"" help:"Choose a container registry to pull images."`
+	User             string   `flag:"user" help:"docker registry user"`
+	Password         string   `flag:"password" help:"docker registry password"`
+	ImagePullSecrets []string `flag:"image-pull-secrets"`
 
 	//输出 Secret kubernetes yaml 定义
-	Secret string `flag:"-"`
+	Secret       string `flag:"-"`
+	ReduceSecret string `flag:"-"`
 
 	//输出imagePullSecrets定义
-	PullSecrets string `flag:"-"`
+	PullSecrets       string `flag:"-"`
+	ReducePullSecrets string `flag:"-"`
 }
 
 func (repo *Repo) String() string {
@@ -26,7 +29,16 @@ func (repo *Repo) String() string {
 
 func (repo *Repo) Set(namespace string) {
 	repo.Url = Suffix(repo.Url)
-	if repo.User != "" {
+	if len(repo.ImagePullSecrets) > 0 {
+		repo.PullSecrets = "imagePullSecrets:\n"
+		for _, secret := range repo.ImagePullSecrets {
+			repo.PullSecrets += fmt.Sprintf("  - name: %s\n", secret)
+		}
+		repo.ReducePullSecrets = ""
+		for _, secret := range repo.ImagePullSecrets {
+			repo.ReducePullSecrets = fmt.Sprintf("imagePullSecrets name=%s;\n", secret)
+		}
+	} else if repo.User != "" {
 		auth := tools.Json{
 			"auths": tools.Json{
 				"http://" + strings.TrimRight(repo.Url, "/"): tools.Json{
@@ -54,6 +66,12 @@ data:
   .dockerconfigjson: %s
 `, namespace, base64.StdEncoding.EncodeToString(base))
 		repo.PullSecrets = "imagePullSecrets:\n  - name: docker-auth"
+
+		repo.ReduceSecret = fmt.Sprintf(`
+secret docker-auth kubernetes.io/dockerconfigjson {
+	.dockerconfigjson: "%s"
+}`, base64.StdEncoding.EncodeToString(base))
+		repo.ReducePullSecrets = "imagePullSecrets name=docker-auth;"
 	}
 }
 

@@ -39,13 +39,15 @@ func configMapToString(configMap *v1.ConfigMap) string {
 	w := config.Writer(0)
 	w.Writer(out(configMap.TypeMeta, configMap.ObjectMeta))
 
-	w.Line("data:")
-	for label, value := range configMap.Data {
-		if strings.Index(value, "\n") == -1 {
-			w.Indent(1).Writer(label, ": ", value).Enter()
-		} else {
-			w.Indent(1).Writer(label, ": |-").Enter()
-			w.Writer(config.ToString([]byte(value), 2))
+	if len(configMap.Data) > 0 {
+		w.Line("data:")
+		for label, value := range configMap.Data {
+			if strings.Index(value, "\n") == -1 {
+				w.Indent(1).Writer(label, ": ", value).Enter()
+			} else {
+				w.Indent(1).Writer(label, ": |-").Enter()
+				w.Writer(config.ToString([]byte(value), 2))
+			}
 		}
 	}
 	return w.String()

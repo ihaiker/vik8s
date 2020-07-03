@@ -8,6 +8,7 @@ import (
 	"github.com/ihaiker/vik8s/install/tools"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
+	"github.com/ihaiker/vik8s/reduce"
 	yamls "github.com/ihaiker/vik8s/yaml"
 	"io/ioutil"
 	"os"
@@ -88,12 +89,13 @@ func copyKubeletConfg(node *ssh.Node) {
 }
 
 func applyApiServerEndpoint(node *ssh.Node) {
-	name := "yaml/vik8s-api-server.yaml"
+	name := "yaml/vik8s-api-server.conf"
 	data := tools.Json{
 		"Etcd":    Config.ETCD,
 		"Masters": hosts.Gets(Config.Masters), "Workers": hosts.Gets(Config.Nodes),
 		"Nodes":   hosts.Gets(Config.Masters, Config.Nodes),
 		"Kubeadm": Config.Kubernetes,
 	}
-	tools.MustScpAndApplyAssert(node, name, data)
+	//tools.MustScpAndApplyAssert(node, name, data)
+	reduce.MustApplyAssert(node, name, data)
 }

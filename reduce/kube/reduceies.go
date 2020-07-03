@@ -23,16 +23,17 @@ func yamlParse(version, prefix string, directive *config.Directive) metav1.Objec
 	return v
 }
 
-var ReduceKinds = plugins.ReduceHandlers{
-	Namespace, Node, ConfigMap, Secret,
-	pod.Pod, deployment.Deployment, daemonset.DaemonSet,
-	service.Service, ingress.Ingress,
-	{Names: []string{"yaml"}, Demo: `
+var Yaml = plugins.ReduceHandler{Names: []string{"yaml"}, Demo: `
 yaml '
 ---
 apiVersion: v1
 kind: Pod
 ....
 ';
-`, Handler: yamlParse},
+`, Handler: yamlParse}
+
+var ReduceKinds = plugins.ReduceHandlers{
+	Namespace, Node, ConfigMap, Secret,
+	pod.Pod, deployment.Deployment, daemonset.DaemonSet,
+	service.Service, ingress.Ingress, Yaml,
 }

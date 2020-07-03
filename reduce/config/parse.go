@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"os"
+	"strings"
 )
 
 func expectNextToken(it *tokenIterator, filter CharFilter) ([]string, string, error) {
@@ -39,10 +40,16 @@ func subDirectives(it *tokenIterator) ([]*Directive, error) {
 			if args, lastToken, err := expectNextToken(it, In(";", "{")); err != nil {
 				return nil, err
 			} else if lastToken == ";" {
+				if strings.HasSuffix(token, ":") {
+					token = token[0 : len(token)-1]
+				}
 				directives = append(directives, &Directive{
 					Line: line, Name: token, Args: args,
 				})
 			} else {
+				if strings.HasSuffix(token, ":") {
+					token = token[0 : len(token)-1]
+				}
 				directive := &Directive{
 					Line: line, Name: token, Args: args,
 				}
@@ -72,6 +79,12 @@ func Parse(filename string) (cfg *Configuration, err error) {
 	it := newTokenIterator(filename)
 	cfg.Body, err = subDirectives(it)
 	return
+}
+
+func MustParseWith(filename string, bs []byte) *Configuration {
+	cfg, err := ParseWith(filename, bs)
+	utils.Panic(err, "parse config")
+	return cfg
 }
 
 func ParseWith(filename string, bs []byte) (cfg *Configuration, err error) {

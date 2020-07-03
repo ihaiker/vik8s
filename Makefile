@@ -17,7 +17,7 @@ init: build ## 初始化一个节点
 	vik8s init -m 172.16.100.10 --cni calico --cni-calico-etcd
 
 joinm: build ## 加入新节点
-	vik8s join -m 172.16.100.15 -n 172.16.100.12
+	vik8s join -m 172.16.100.14 -m 172.16.100.15 -n 172.16.100.11-172.16.100.13
 
 clean: build ## 清除全部节点（重要，会删除文件夹）
 	vik8s clean --force
@@ -28,7 +28,7 @@ reset: build ## 清楚全部节点
 all: reset
 	vik8s init -m 172.16.100.10 --cni calico --cni-calico-etcd
 	vik8s join -m 172.16.100.14 -m 172.16.100.15 -n 172.16.100.11-172.16.100.13
-	vik8s ingress traefik --host-network=true --ui-ingress=traefik.vik8s.io --ui-passwd=haiker --node-selector=kubernetes.io/hostname=vm11
+	vik8s ingress traefik --host-network=true --ui-ingress=traefik.vik8s.io --ui-passwd=haiker --node.selector=kubernetes.io/hostname=vm11
 	vik8s sidecars dashboard --expose=31715 --enable-insecure-login --insecure-header --ingress=dashboard.vik8s.io
 
 etcd-init: build ## etcd集群初始化
@@ -45,10 +45,10 @@ help: ## 帮助信息
 
 ingress-traefik: build
 	vik8s ingress traefik del
-	vik8s ingress traefik --host-network=true --ui-ingress=traefik.vik8s.io --ui-passwd=haiker --node-selector=kubernetes.io/hostname=vm11
+	vik8s ingress traefik --host-network=true --ui-ingress=traefik.vik8s.io --ui-passwd=haiker --node.selector=kubernetes.io/hostname=vm11
 
 ingress-nginx: build
-	vik8s ingress nginx --host-network=true --node-selector=kubernetes.io/hostname=vm11
+	vik8s ingress nginx --host-network=true --node.selector=kubernetes.io/hostname=vm11
 
 dashboard: build
 	vik8s sidecars dashboard uninstall
