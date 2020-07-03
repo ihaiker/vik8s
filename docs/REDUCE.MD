@@ -67,8 +67,74 @@ ingress mysql-admin {
 
 ### Reduce 系统定义配置方式
 
+关于此处就不使用长篇论述了，您可以自己使用 `vik8s reduce demo <kind>` 查看demo实例。    
+    
 ### kubernetes配置转换方式
+由于kubernetes kind比较多，所有并非所有配置都做了简化处理，当然如果依然要使用此方式配置的话，就需要提供一个配置方式。此方式应用而生。
+此方式配置有个统一的前缀 `kind:version name`。下面我们就一个简单的实例来说明。
+
+```nginx 
+CustomResourceDefinition:apiextensions.k8s.io/v1beta1 bgpconfigurations.crd.projectcalico.org {
+    scope Cluster;
+    group crd.projectcalico.org;
+    version v1;
+    names {
+        kind BGPConfiguration;
+        plural bgpconfigurations;
+        singular bgpconfiguration;
+    }
+}
+
+
+PodSecurityPolicy:policy/v1beta1 psp.flannel.unprivileged {
+    annotations {
+        seccomp.security.alpha.kubernetes.io/allowedProfileNames docker/default;
+        seccomp.security.alpha.kubernetes.io/defaultProfileName docker/default;
+        apparmor.security.beta.kubernetes.io/allowedProfileNames runtime/default;
+        apparmor.security.beta.kubernetes.io/defaultProfileName runtime/default;
+    }
+    privileged false;
+    volumes configMap secret emptyDir hostPath;
+
+    allowedHostPaths {
+        pathPrefix "/etc/cni/net.d";
+    }
+    allowedHostPaths pathPrefix=/etc/kube-flannel;
+    allowedHostPaths pathPrefix=/run/flannel;
+    
+    readOnlyRootFilesystem false;
+    runAsUser {
+        rule RunAsAny;
+    }
+    supplementalGroups {
+        rule RunAsAny;
+    }
+    fsGroup rule=RunAsAny;
+    # Privilege Escalation
+    allowPrivilegeEscalation false;
+    defaultAllowPrivilegeEscalation false;
+    # Capabilities
+    allowedCapabilities 'NET_ADMIN';
+    # Host namespaces
+    hostPID false;
+    hostIPC false;
+    hostNetwork true;
+    hostPorts {
+        min 0;
+        max 65535;
+    }
+    # SELinux
+    seLinux rule=RunAsAny;
+}
+```
 
 ### yaml标签方式。
+此方式就是直接使用yaml配置文件，做配置。
+```nginx
+yaml '
+yamlSource
+';
+```
 
 ## 更多Demo
+
