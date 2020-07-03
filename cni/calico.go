@@ -8,6 +8,7 @@ import (
 	"github.com/ihaiker/vik8s/install/tools"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
+	"github.com/ihaiker/vik8s/reduce"
 	"github.com/spf13/cobra"
 	"strconv"
 	"strings"
@@ -73,8 +74,8 @@ the system will look for the etcd cluster from the following two points.
 }
 
 func (f *calico) applyVik8sETCDServer(node *ssh.Node, vip string) {
-	name := "yaml/cni/calico-vik8s-etcd.yaml"
-	tools.MustScpAndApplyAssert(node, name, tools.Json{
+	name := "yaml/cni/calico-vik8s-etcd.conf"
+	reduce.MustApplyAssert(node, name, tools.Json{
 		"VIP": vip,
 	})
 }
@@ -90,7 +91,7 @@ func (f *calico) Apply(master *ssh.Node) {
 		"Typha": f.typha,
 	}
 
-	local := "yaml/cni/calico.yaml"
+	local := "yaml/cni/calico.conf"
 	if f.etcd.Enable {
 		if len(f.etcd.Endpoints) == 0 {
 			f.etcd.TLS = true
@@ -132,12 +133,12 @@ func (f *calico) Apply(master *ssh.Node) {
 		}
 
 		data["Etcd"] = f.etcd
-		local = "yaml/cni/calico-etcd.yaml"
+		local = "yaml/cni/calico-etcd.conf"
 	} else if f.typha.Enable {
-		local = "yaml/cni/calico-typha.yaml"
+		local = "yaml/cni/calico-typha.conf"
 	}
 
-	tools.MustScpAndApplyAssert(master, local, data)
+	reduce.MustApplyAssert(master, local, data)
 
 	bs, _ := json.Marshal(f.etcd)
 	k8s.Config.CNI.Params = map[string]string{

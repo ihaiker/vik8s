@@ -12,10 +12,6 @@ import (
 	"strings"
 )
 
-func specParse(item *config.Directive, spec *appsv1.DaemonSetSpec) bool {
-	return utils.Safe(func() { refs.UnmarshalItem(spec, item) }) == nil
-}
-
 func Parse(version, prefix string, directive *config.Directive) metav1.Object {
 	daemonset := &appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
@@ -27,8 +23,8 @@ func Parse(version, prefix string, directive *config.Directive) metav1.Object {
 	asserts.AutoLabels(daemonset, prefix)
 
 	for it := directive.Body.Iterator(); it.HasNext(); {
-		d := it.Next()
-		if specParse(d, &daemonset.Spec) {
+		item := it.Next()
+		if err := utils.Safe(func() { refs.UnmarshalItem(&daemonset.Spec, item) }); err == nil {
 			it.Remove()
 		}
 	}

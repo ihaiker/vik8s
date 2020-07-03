@@ -2,6 +2,7 @@ package pod
 
 import (
 	"github.com/ihaiker/vik8s/libs/utils"
+	"github.com/ihaiker/vik8s/reduce/asserts"
 	"github.com/ihaiker/vik8s/reduce/config"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,13 +21,13 @@ type (
 func executionParse(weights *config.Directive) []AffinityExecution {
 	executions := make([]AffinityExecution, 0)
 
-	selector(weights, func(weight *config.Directive) {
+	asserts.Selector(weights, func(weight *config.Directive) {
 		ae := AffinityExecution{
 			fields: make([][]string, 0), expressions: make([][]string, 0),
 		}
 		ae.name, ae.weight = utils.Split2(weight.Name, ":")
 
-		selector(weight, func(execution *config.Directive) {
+		asserts.Selector(weight, func(execution *config.Directive) {
 			switch execution.Name {
 			case "matchFields", "fields", "labels":
 				if len(execution.Args) == 0 {
@@ -54,7 +55,7 @@ func executionParse(weights *config.Directive) []AffinityExecution {
 }
 
 func AffinityNodeParse(nodeAffinity *v1.NodeAffinity, nodeConfig *config.Directive) {
-	selector(nodeConfig, func(body *config.Directive) {
+	asserts.Selector(nodeConfig, func(body *config.Directive) {
 		switch body.Name {
 		case "preferred":
 			exprs := executionParse(body)
@@ -107,7 +108,7 @@ func AffinityNodeParse(nodeAffinity *v1.NodeAffinity, nodeConfig *config.Directi
 }
 
 func affinityPodParse(podConfig *config.Directive) (Preferred []v1.WeightedPodAffinityTerm, Required []v1.PodAffinityTerm) {
-	selector(podConfig, func(body *config.Directive) {
+	asserts.Selector(podConfig, func(body *config.Directive) {
 		switch body.Name {
 		case "preferred":
 			exprs := executionParse(body)
@@ -159,7 +160,7 @@ func AffinityParse(d *config.Directive, spec *v1.PodSpec) {
 	if spec.Affinity == nil {
 		spec.Affinity = &v1.Affinity{}
 	}
-	selector(d, func(body *config.Directive) {
+	asserts.Selector(d, func(body *config.Directive) {
 		switch body.Name {
 		case "node":
 			if spec.Affinity.NodeAffinity == nil {
@@ -182,19 +183,4 @@ func AffinityParse(d *config.Directive, spec *v1.PodSpec) {
 				spec.Affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution = affinityPodParse(body)
 		}
 	})
-}
-
-func selector(d *config.Directive, comsumer func(*config.Directive)) {
-	if len(d.Args) == 0 {
-		for _, body := range d.Body {
-			comsumer(&config.Directive{
-				Name: body.Name, Args: body.Args,
-				Body: body.Body,
-			})
-		}
-	} else {
-		comsumer(&config.Directive{
-			Name: d.Args[0], Args: d.Args[1:], Body: d.Body,
-		})
-	}
 }

@@ -3,10 +3,10 @@ package ingress
 import (
 	"fmt"
 	"github.com/ihaiker/vik8s/install/repo"
-	"github.com/ihaiker/vik8s/install/tools"
 	"github.com/ihaiker/vik8s/libs/flags"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
+	"github.com/ihaiker/vik8s/reduce"
 	"github.com/spf13/cobra"
 	"math/rand"
 	"os"
@@ -54,8 +54,10 @@ func (t *traefik) Apply(master *ssh.Node) {
 		t.AuthPassword, _ = utils.HashApr1(t.AuthPassword)
 	}
 
-	name := "yaml/ingress/traefik.yaml"
-	tools.MustScpAndApplyAssert(master, name, t)
+	//name := "yaml/ingress/traefik.yaml"
+	//tools.MustScpAndApplyAssert(master, name, t)
+	name := "yaml/ingress/traefik.conf"
+	reduce.MustApplyAssert(master, name, t)
 }
 
 func (n *traefik) Delete(master *ssh.Node) {

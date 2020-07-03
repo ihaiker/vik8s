@@ -74,16 +74,20 @@ func isBase(fieldType reflect.Type) bool {
 }
 
 func Unmarshal(obj interface{}, item *config.Directive) {
-	for _, directive := range item.Body {
-		UnmarshalItem(obj, directive)
-	}
+	UnmarshalWith(obj, item, Defaults)
 }
 
 func UnmarshalItem(obj interface{}, item *config.Directive) {
 	UnmarshalItemWith(obj, item, Defaults)
 }
 
-func UnmarshalItemWith(obj interface{}, item *config.Directive, manager Manager) {
+func UnmarshalWith(obj interface{}, item *config.Directive, manager TypeManager) {
+	for _, directive := range item.Body {
+		UnmarshalItemWith(obj, directive, manager)
+	}
+}
+
+func UnmarshalItemWith(obj interface{}, item *config.Directive, manager TypeManager) {
 	utils.Assert(reflect.ValueOf(obj).Kind() == reflect.Ptr,
 		"Object must must be interface: %v", reflect.TypeOf(obj))
 
@@ -101,7 +105,7 @@ func UnmarshalItemWith(obj interface{}, item *config.Directive, manager Manager)
 	}
 }
 
-func assemblyValue(fieldType reflect.Type, value reflect.Value, item *config.Directive, manager Manager) (reflect.Value, error) {
+func assemblyValue(fieldType reflect.Type, value reflect.Value, item *config.Directive, manager TypeManager) (reflect.Value, error) {
 
 	if fieldType.Kind() == reflect.Ptr {
 		if out, err := assemblyValue(fieldType.Elem(), value.Elem(), item, manager); err == nil {
@@ -149,7 +153,7 @@ func assemblyValue(fieldType reflect.Type, value reflect.Value, item *config.Dir
 	return reflect.Value{}, os.ErrInvalid
 }
 
-func structValue(fieldType reflect.Type, item *config.Directive, manager Manager) reflect.Value {
+func structValue(fieldType reflect.Type, item *config.Directive, manager TypeManager) reflect.Value {
 	value := reflect.New(fieldType)
 	for _, arg := range item.Args {
 		fieldName, fieldValue := utils.CompileSplit2(arg, ":|=")
@@ -163,7 +167,7 @@ func structValue(fieldType reflect.Type, item *config.Directive, manager Manager
 	return value.Elem()
 }
 
-func mapValue(keyType, valueType reflect.Type, item *config.Directive, manager Manager) reflect.Value {
+func mapValue(keyType, valueType reflect.Type, item *config.Directive, manager TypeManager) reflect.Value {
 	m := reflect.MakeMap(reflect.MapOf(keyType, valueType))
 	utils.Assert(isBase(keyType), "invalid %s, line %d", item.Name, item.Line)
 
@@ -231,7 +235,7 @@ func mapValue(keyType, valueType reflect.Type, item *config.Directive, manager M
 	return m
 }
 
-func sliceValue(sliceType reflect.Type, item *config.Directive, manager Manager) reflect.Value {
+func sliceValue(sliceType reflect.Type, item *config.Directive, manager TypeManager) reflect.Value {
 	if isBase(sliceType) {
 		length := len(item.Args)
 		values := reflect.MakeSlice(reflect.SliceOf(sliceType), length, length)
@@ -259,7 +263,7 @@ func sliceValue(sliceType reflect.Type, item *config.Directive, manager Manager)
 }
 
 //OK
-func baseValue(fieldType reflect.Type, value string, manager Manager) (reflect.Value, error) {
+func baseValue(fieldType reflect.Type, value string, manager TypeManager) (reflect.Value, error) {
 
 	if fieldType.Kind() == reflect.Ptr {
 		if out, err := baseValue(fieldType.Elem(), value, manager); err == nil {

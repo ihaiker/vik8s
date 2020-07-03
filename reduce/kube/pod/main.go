@@ -12,9 +12,10 @@ import (
 )
 
 var handlers = map[string]func(directive *config.Directive, spec *v1.PodSpec){
-	"container": container.ContainerParse,
+	"container": container.ContainerParse, "containers": container.ContainerParse,
 
-	"init-container": container.InitContainerParse, "initContainer": container.InitContainerParse,
+	"init-containers": container.InitContainerParse, "init-container": container.InitContainerParse,
+	"initContainer": container.InitContainerParse, "initContainers": container.InitContainerParse,
 
 	"hosts":  HostAliasesParse,
 	"volume": volumes.VolumeParse, "volumes": volumes.VolumesParse,
@@ -151,6 +152,11 @@ pod test [label=value ...] {
         mount pvc:volume-name:pvc-name /data;
         mount pvc:volume-name:pvc-name /data[:subPath] {
             readOnly true;
+        }
+
+        resources {
+            requests cpu=250m;
+            limits cpu=100m;
         }
     }
 

@@ -12,10 +12,6 @@ import (
 	"strings"
 )
 
-func specParse(item *config.Directive, spec *appsv1.DeploymentSpec) bool {
-	return utils.Safe(func() { refs.UnmarshalItem(spec, item) }) == nil
-}
-
 func Parse(version, prefix string, directive *config.Directive) metav1.Object {
 	dep := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
@@ -29,7 +25,7 @@ func Parse(version, prefix string, directive *config.Directive) metav1.Object {
 
 	for it := directive.Body.Iterator(); it.HasNext(); {
 		d := it.Next()
-		if specParse(d, &dep.Spec) {
+		if err := utils.Safe(func() { refs.UnmarshalItem(&dep.Spec, d) }); err == nil {
 			it.Remove()
 		}
 	}

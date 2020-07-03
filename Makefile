@@ -45,10 +45,10 @@ help: ## 帮助信息
 
 ingress-traefik: build
 	vik8s ingress traefik del
-	vik8s ingress traefik --host-network=true --ui-ingress=traefik.vik8s.io --ui-passwd=haiker --node-selector=kubernetes.io/hostname=vm11
+	vik8s ingress traefik --host-network=true --ui-ingress=traefik.vik8s.io --ui-passwd=haiker --node.selector=kubernetes.io/hostname=vm11
 
 ingress-nginx: build
-	vik8s ingress nginx --host-network=true --node-selector=kubernetes.io/hostname=vm11
+	vik8s ingress nginx --host-network=true --node.selector=kubernetes.io/hostname=vm11
 
 dashboard: build
 	vik8s sidecars dashboard uninstall

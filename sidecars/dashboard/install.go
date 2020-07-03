@@ -9,6 +9,7 @@ import (
 	"github.com/ihaiker/vik8s/install/tools"
 	"github.com/ihaiker/vik8s/libs/flags"
 	"github.com/ihaiker/vik8s/libs/utils"
+	"github.com/ihaiker/vik8s/reduce"
 	"github.com/spf13/cobra"
 	"strconv"
 )
@@ -58,17 +59,17 @@ func (d *Dashboard) Apply() {
 	{
 		data := tools.Json{"ExposePort": exposePort}
 		if enableInsecureLogin {
-			tools.MustScpAndApplyAssert(master, "yaml/sidecars/dashboard/alternative.yaml", data)
+			reduce.MustApplyAssert(master, "yaml/sidecars/dashboard/alternative.conf", data)
 		} else {
 			data["TLSCert"], data["TLSKey"] = certBase64, keyBase64
-			tools.MustScpAndApplyAssert(master, "yaml/sidecars/dashboard/recommended.yaml", data)
+			reduce.MustApplyAssert(master, "yaml/sidecars/dashboard/recommended.conf", data)
 		}
 	}
 
 	//dashboard access control
 	token := ""
 	{
-		tools.MustScpAndApplyAssert(master, "yaml/sidecars/dashboard/user.yaml", tools.Json{})
+		reduce.MustApplyAssert(master, "yaml/sidecars/dashboard/user.conf", tools.Json{})
 		token = master.MustCmd2String(tokenPrintCmd.Long)
 	}
 
@@ -78,7 +79,7 @@ func (d *Dashboard) Apply() {
 			"EnableInsecureLogin": enableInsecureLogin, "InsecureHeader": insecureHeader,
 			"TLSCert": certBase64, "TLSKey": keyBase64,
 		}
-		tools.MustScpAndApplyAssert(master, "yaml/sidecars/dashboard/ingress.yaml", data)
+		reduce.MustApplyAssert(master, "yaml/sidecars/dashboard/ingress.conf", data)
 	}
 
 	//show access function

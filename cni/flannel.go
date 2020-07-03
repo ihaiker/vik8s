@@ -5,6 +5,7 @@ import (
 	"github.com/ihaiker/vik8s/install/repo"
 	"github.com/ihaiker/vik8s/install/tools"
 	"github.com/ihaiker/vik8s/libs/ssh"
+	"github.com/ihaiker/vik8s/reduce"
 	"github.com/spf13/cobra"
 )
 
@@ -34,8 +35,8 @@ func (f *flannel) Apply(node *ssh.Node) {
 		"LimitCPU": f.limitCPU, "LimitMemory": f.limitMemory,
 	}
 
-	name := "yaml/cni/flannel.yaml"
-	tools.MustScpAndApplyAssert(node, name, data)
+	name := "yaml/cni/flannel.conf"
+	reduce.MustApplyAssert(node, name, data)
 
 	k8s.Config.CNI.Params = map[string]string{
 		"Version": f.version, "Repo": repo.QuayIO(f.repo),

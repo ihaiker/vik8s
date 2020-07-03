@@ -3,10 +3,10 @@ package ingress
 import (
 	"fmt"
 	"github.com/ihaiker/vik8s/install/repo"
-	"github.com/ihaiker/vik8s/install/tools"
 	"github.com/ihaiker/vik8s/libs/flags"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
+	"github.com/ihaiker/vik8s/reduce"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -15,7 +15,7 @@ type nginx struct {
 	Repo    repo.Repo
 	Version string `help:"" def:"0.30.0"`
 
-	HostNetwork   bool `help:"deploy pod use hostNetwork"`
+	HostNetwork   bool `flag:"host-network" help:"deploy pod use hostNetwork"`
 	NodePortHttp  int  `flag:"nodeport" help:"the ingress-nginx http 80 service nodeport, 0: automatic allocation, -1: disable" def:"-1"`
 	NodePortHttps int  `flag:"nodeport-https" help:"the ingress-nginx https 443 service nodeport, 0: automatic allocation, -1: disable" def:"-1"`
 
@@ -37,8 +37,10 @@ func (n *nginx) Flags(cmd *cobra.Command) {
 
 func (n *nginx) Apply(master *ssh.Node) {
 	n.Repo.QuayIO("ingress-nginx")
-	name := "yaml/ingress/nginx.yaml"
-	tools.MustScpAndApplyAssert(master, name, n)
+	//name := "yaml/ingress/nginx.yaml"
+	//tools.MustScpAndApplyAssert(master, name, n)
+	name := "yaml/ingress/nginx.conf"
+	reduce.MustApplyAssert(master, name, n)
 }
 
 func (n *nginx) Delete(master *ssh.Node) {
