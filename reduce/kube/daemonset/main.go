@@ -5,16 +5,18 @@ import (
 	"github.com/ihaiker/vik8s/reduce/asserts"
 	"github.com/ihaiker/vik8s/reduce/config"
 	"github.com/ihaiker/vik8s/reduce/kube/pod"
+	"github.com/ihaiker/vik8s/reduce/plugins"
 	"github.com/ihaiker/vik8s/reduce/refs"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"strings"
 )
 
 func specParse(item *config.Directive, spec *appsv1.DaemonSetSpec) bool {
 	return utils.Safe(func() { refs.UnmarshalItem(spec, item) }) == nil
 }
 
-func Parse(version, prefix string, directive *config.Directive) []metav1.Object {
+func Parse(version, prefix string, directive *config.Directive) metav1.Object {
 	daemonset := &appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "DaemonSet",
@@ -37,5 +39,10 @@ func Parse(version, prefix string, directive *config.Directive) []metav1.Object 
 	daemonset.Spec.Selector = &metav1.LabelSelector{
 		MatchLabels: daemonset.Labels,
 	}
-	return []metav1.Object{daemonset}
+	return daemonset
+}
+
+var DaemonSet = plugins.ReduceHandler{
+	Names: []string{"daemon", "daemonset", "DaemonSet"}, Handler: Parse,
+	Demo: strings.Replace(pod.Pod.Demo, "pod test", "daemonset test", 1),
 }

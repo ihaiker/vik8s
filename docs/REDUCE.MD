@@ -7,171 +7,68 @@ reduce命令采用类似`nginx.conf`的配置方式配置kubernetes。
 
 先给一个简单的配置：mysql.conf
 ```nginx
-# 配置kubernetes版本
 kubernetes v1.18.2;
-
-# 配置自动添加label的前缀，默认：vik8s.io
 prefix vik8s.io;
+namespace vik8s;
 
-namespace vik8s; 
-
-configmap mysql-root-password {
+configmap mysql-config {
     mysql.root.password haiker;
-}
-
-configmap mysql-vik8s-password {
     mysql.vik8s.password vik8s;
 }
 
+deployment mysql {
+    restartPolicy Always;
+    container mysql mysql:5.7.29 IfNotPresent {
+        port 3306;
+        env MYSQL_ROOT_PASSWORD configmap mysql-config mysql.root.password;
+        envs {
+            MYSQL_DATABASE vik8s;
+            MYSQL_USER vik8s;
+            MYSQL_PASSWORD configmap mysql-config mysql.vik8s.password;
+        }
+        mount hostPath:mysql-data /data/mysql:/var/lib/mysql;
+    }
 
+    container php-my-admin phpmyadmin/phpmyadmin {
+        envs {
+            PMA_HOST 127.0.0.1;
+            PMA_USER root;
+            PMA_PASSWORD configmap mysql-config mysql.root.password;
+        }
+        port http 80;
+    }
+}
 
+service deployment:mysql mysql-admin {
+    port admin 80:80;
+    port mysql 3306:3306;
+}
+
+ingress mysql-admin {
+    rules myadmin.vik8s.io {
+        http paths {
+            serviceName mysql-admin;
+            servicePort admin;
+        }
+    }
+}
 ```
+使用 `vik8s reduce mysql.conf` 编译后输出yaml内容。不知道您是否觉得会感觉配置清爽了许多呢（只要您不回答：呵呵，就好）。
 
-执行编译后的文件：`vik8s reduce mysql.conf -o mysql.yaml`
-```yaml
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: mysql
-  namespace: ext
-  labels:
-    app: mysql
-    tier: backend
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: mysql
-      tier: backend
-  template:
-    metadata:
-      name: mysql
-      labels:
-        app: mysql
-        tier: backend
-    spec:
-      restartPolicy: Always
-      containers:
-        - name: mysql
-          image: mysql:5.7.29
-          imagePullPolicy: IfNotPresent
-          ports:
-            - containerPort: 3306
-          env:
-            - name: MYSQL_ROOT_PASSWORD
-              valueFrom:
-                configMapKeyRef:
-                  name: mysql
-                  key: mysql.root.password
-            - name: MYSQL_DATABASE
-              value: extez
-            - name: MYSQL_USER
-              value: ext
-            - name: MYSQL_PASSWORD
-              valueFrom:
-                configMapKeyRef:
-                  name: mysql
-                  key: mysql.ext.password
-          envFrom:
-            - configMapRef:
-                name: mysql
-          volumeMounts:
-            - mountPath: "/var/lib/mysql"
-              name: mysql-data
-      volumes:
-        - name: mysql-data
-          persistentVolumeClaim:
-            claimName: gluster-mysql-pvc
+## Reduce 原理
 
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: mysql
-  namespace: ext
-spec:
-  selector:
-    app: mysql
-    tier: backend
-  ports:
-    - port: 3306
-      targetPort: 3306
-  type: ClusterIP
+配置分为四种配置方式：
+- [用户自定配置插件](./REDUCE.PLUGINS.MD)
+- Reduce 系统定义配置方式
+- kubernetes配置转换方式
+- yaml标签方式。
 
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: mysql-admin
-  namespace: ext
-  labels:
-    app: mysql-admin
-    tier: frontend
-spec:
-  selector:
-    matchLabels:
-      app: mysql-admin
-      tier: frontend
-  template:
-    metadata:
-      name: mysql-admin
-      labels:
-        app: mysql-admin
-        tier: frontend
-    spec:
-      containers:
-        - name: phpmyadmin
-          image: phpmyadmin/phpmyadmin
-          imagePullPolicy: IfNotPresent
-          env:
-            - name: PMA_HOST
-              value: mysql
-            - name: PMA_USER
-              value: root
-            - name: PMA_PASSWORD
-              valueFrom:
-                configMapKeyRef:
-                  key: mysql.root.password
-                  name: mysql
-          ports:
-            - name: http
-              containerPort: 80
-              hostPort: 80
-          envFrom:
-            - configMapRef:
-                name: mysql
+优先顺序为从前向后。
 
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: mysql-admin
-  namespace: ext
-spec:
-  type: ClusterIP
-  selector:
-    app: mysql-admin
-    tier: frontend
-  ports:
-    - name: http
-      port: 80
-      targetPort: 80
+### Reduce 系统定义配置方式
 
----
-apiVersion: networking.k8s.io/v1beta1
-kind: Ingress
-metadata:
-  name: mysql-admin
-  namespace: ext
-spec:
-  rules:
-    - host: db.extez.com
-      http:
-        paths:
-          - backend:
-              serviceName: mysql-admin
-              servicePort: http
+### kubernetes配置转换方式
 
-```
+### yaml标签方式。
 
+## 更多Demo

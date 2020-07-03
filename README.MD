@@ -45,6 +45,8 @@ vik8s init -m 172.16.100.10 -m 172.16.100.11 -m 172.16.100.12 -n 172.16.100.13-1
 
 ## [安装详细文档](./docs/INSTALL.MD)
 
+## [Reduce配置简化方案](./docs/REDUCE.MD)
+
 ## 技术支持群
 
 ![](./docs/dd.png) ![](./docs/qq.png) 

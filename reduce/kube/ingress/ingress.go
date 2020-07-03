@@ -4,13 +4,14 @@ import (
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/ihaiker/vik8s/reduce/asserts"
 	"github.com/ihaiker/vik8s/reduce/config"
+	"github.com/ihaiker/vik8s/reduce/plugins"
 	"github.com/ihaiker/vik8s/reduce/refs"
 	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"strings"
 )
 
-func Parse(version, prefix string, directive *config.Directive) []metav1.Object {
+func Parse(version, prefix string, directive *config.Directive) metav1.Object {
 	ig := &networkingv1beta1.Ingress{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Ingress",
@@ -55,5 +56,47 @@ func Parse(version, prefix string, directive *config.Directive) []metav1.Object 
 			refs.Unmarshal(ig.Spec.Backend, d)
 		}
 	}
-	return []metav1.Object{ig}
+	return ig
+}
+
+var Ingress = plugins.ReduceHandler{
+	Names: []string{"ingress", "Ingress"}, Handler: Parse,
+	Demo: `
+
+ingress mysql {
+    tls secretName1 hosts1 hosts2;
+    tls {
+        secretName2 hosts3 hosts4;
+        secretNameN hostsN;
+    }
+
+    rules host1.vik8s.io {
+        http paths {
+            serviceName service-name1;
+            servicePort 1024;
+        }
+    }
+    rules host3.vik8s.io {
+        http paths {
+            serviceName service-name3;
+            servicePort 1024;
+        }
+    }
+    rules host.vik8s.io {
+        http paths /path2 {
+            serviceName service-path2;
+            servicePort 1024;
+        }
+        http paths /path1 {
+            serviceName service-path1;
+            servicePort 1024;
+        }
+    }
+
+    backend {
+        serviceName service-path2;
+        servicePort 1024;
+    }
+}
+`,
 }

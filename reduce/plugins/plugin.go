@@ -11,20 +11,37 @@ import (
 )
 
 type (
-	ReduceHandler func(item *config.Directive) (obj metav1.Object, handler bool)
-	LoadPlugin    func() ReduceHandler
-	manager       []ReduceHandler
+	ReduceHandler struct {
+		Names   []string
+		Demo    string
+		Handler func(version, prefix string, item *config.Directive) (obj metav1.Object)
+	}
+
+	PluginLoad func() ReduceHandler
+
+	ReduceHandlers []ReduceHandler
 )
 
-var Manager = manager{}
+var Manager = ReduceHandlers{}
 
-func (m *manager) Handler(item *config.Directive) (obj metav1.Object, handler bool) {
-	for _, reduceHandler := range *m {
-		if obj, handler = reduceHandler(item); handler {
-			return
+func (m *ReduceHandler) Has(name string) bool {
+	for _, n := range m.Names {
+		if n == name {
+			return true
 		}
 	}
-	return
+	return false
+}
+
+func (m *ReduceHandlers) Handler(version, prefix string, item *config.Directive) (metav1.Object, bool) {
+	name, _ := utils.Split2(item.Name, ":")
+	for _, reduce := range *m {
+		if reduce.Has(name) {
+			obj := reduce.Handler(version, prefix, item)
+			return obj, true
+		}
+	}
+	return nil, false
 }
 
 func plugins() []string {
@@ -49,6 +66,6 @@ func Load() {
 		utils.Panic(err, "load reduce plugins %s", file)
 		sl, err := p.Lookup("Reduce")
 		utils.Assert(err == nil, "load reduce plugins %s", file)
-		Manager = append(Manager, sl.(LoadPlugin)())
+		Manager = append(Manager, sl.(PluginLoad)())
 	}
 }

@@ -1,5 +1,5 @@
 # -------------------------------------- #
-#   Generate by vik8s @2020-07-03T13:40  #
+#          Generate by vik8s             #
 #       Kubernetes version v1.18.2       #
 #    https://github.com/ihaiker/vik8s    #
 # -------------------------------------- #
@@ -67,7 +67,7 @@ spec:
           name: mysql-data
       - env:
         - name: PMA_HOST
-          value: mysql
+          value: 127.0.0.1
         - name: PMA_USER
           value: root
         - name: PMA_PASSWORD

@@ -3,6 +3,7 @@ package kube
 import (
 	"github.com/ihaiker/vik8s/reduce/asserts"
 	"github.com/ihaiker/vik8s/reduce/config"
+	"github.com/ihaiker/vik8s/reduce/plugins"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"strings"
@@ -50,7 +51,7 @@ func configMapToString(configMap *v1.ConfigMap) string {
 	return w.String()
 }
 
-func configMapParse(version, prefix string, directive *config.Directive) []metav1.Object {
+func configMapParse(version, prefix string, directive *config.Directive) metav1.Object {
 	asserts.ArgsMin(directive, 1)
 	configMap := &v1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
@@ -63,5 +64,30 @@ func configMapParse(version, prefix string, directive *config.Directive) []metav
 	for _, d := range directive.Body {
 		configMap.Data[d.Name] = d.Args[0]
 	}
-	return []metav1.Object{configMap}
+	return configMap
+}
+
+var ConfigMap = plugins.ReduceHandler{
+	Names: []string{"configmap", "config", "ConfigMap"}, Handler: configMapParse,
+	Demo: `
+configmap data-config [label1=value1 ...] {
+    datakey datavalue;
+    nginx.conf '
+    http {
+        server {
+
+        }
+    }
+    ';
+    password haiker:abd123123123;
+}
+
+configmap data-config-2 {
+	labels {
+		label1 value1;
+	}
+	data-key-1 value-1;
+	data-key-2 value-2;
+}
+`,
 }

@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"reflect"
 	"sigs.k8s.io/yaml"
-	"time"
 )
 
 type (
@@ -89,10 +88,9 @@ func fix(bs []byte) string {
 }
 
 func (k *Kubernetes) String() string {
-	tf := time.Now().Format("2006-01-02T15:04")
 	w := config.Writer(0).
 		Line("# -------------------------------------- #").
-		Line(fmt.Sprintf("#   Generate by vik8s @%s  #", tf)).
+		Line("#          Generate by vik8s             #").
 		Line(fmt.Sprintf("#       Kubernetes version %-8s      #", k.Kubernetes)).
 		Line("#    https://github.com/ihaiker/vik8s    #").
 		Line("# -------------------------------------- #")
@@ -140,15 +138,10 @@ func Parse(filename string) *Kubernetes {
 	}
 
 	for _, d := range cfg.Body {
-		configKindName, _ := utils.Split2(d.Name, ":")
-
-		if obj, handler := plugins.Manager.Handler(d); handler {
+		if obj, handler := plugins.Manager.Handler(kube.Kubernetes, kube.Prefix, d); handler {
 			kube.Objects = append(kube.Objects, obj)
-		} else if kindHandler, has := reduceKinds[configKindName]; has {
-			objs := kindHandler(kube.Kubernetes, kube.Prefix, d)
-			for _, obj := range objs {
-				kube.Objects = append(kube.Objects, obj)
-			}
+		} else if obj, handler := ReduceKinds.Handler(kube.Kubernetes, kube.Prefix, d); handler {
+			kube.Objects = append(kube.Objects, obj)
 		} else if object, has := kubeKinds(kube.Prefix, d); has {
 			kube.Objects = append(kube.Objects, object)
 		} else {

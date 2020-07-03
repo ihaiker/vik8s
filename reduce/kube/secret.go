@@ -5,6 +5,7 @@ import (
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/ihaiker/vik8s/reduce/asserts"
 	"github.com/ihaiker/vik8s/reduce/config"
+	"github.com/ihaiker/vik8s/reduce/plugins"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -25,7 +26,7 @@ func secretToString(secret *v1.Secret) string {
 	return w.String()
 }
 
-func secretParse(version, prefix string, directive *config.Directive) []metav1.Object {
+func secretParse(version, prefix string, directive *config.Directive) metav1.Object {
 	asserts.ArgsMin(directive, 1)
 
 	secret := &v1.Secret{
@@ -44,5 +45,24 @@ func secretParse(version, prefix string, directive *config.Directive) []metav1.O
 		secret.Data[d.Name] = []byte(d.Args[0])
 	}
 
-	return []metav1.Object{secret}
+	return secret
+}
+
+var Secret = plugins.ReduceHandler{
+	Names: []string{"secret", "Secret"}, Handler: secretParse,
+	Demo: `
+secret data-config-1 [secretType] {
+    datakey ZGF0YXZhbHVlCg==;
+    password aGFpa2VyOmFiZDEyMzEyMzEyMwo=;
+}
+secret data-config-2 {
+	labels {
+		label1 value1;
+	}
+	label label2 value2;
+
+	data-key-1 dmFsdWUtMQo=;
+	data-key-2 dmFsdWUtMgo=;
+}
+`,
 }

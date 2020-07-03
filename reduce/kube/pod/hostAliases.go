@@ -6,6 +6,11 @@ import (
 )
 
 func HostAliasesParse(d *config.Directive, spec *v1.PodSpec) {
+	if len(d.Args) > 0 {
+		spec.HostAliases = append(spec.HostAliases, v1.HostAlias{
+			IP: d.Args[0], Hostnames: d.Args[1:],
+		})
+	}
 	for _, host := range d.Body {
 		spec.HostAliases = append(spec.HostAliases, v1.HostAlias{
 			IP: host.Name, Hostnames: host.Args,

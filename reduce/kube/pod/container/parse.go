@@ -53,8 +53,21 @@ func container(d *config.Directive, pod *v1.PodSpec) v1.Container {
 				c.Env = append(c.Env, envParse(env.Name, env.Args))
 			}
 		case "envFrom":
-			//TODO envFrom
-
+			asserts.ArgsMin(body, 1)
+			fromType, name := utils.Split2(body.Args[0], ":")
+			env := v1.EnvFromSource{
+				Prefix: utils.Index(body.Args, 1),
+			}
+			if fromType == "secret" {
+				env.ConfigMapRef = &v1.ConfigMapEnvSource{
+					LocalObjectReference: v1.LocalObjectReference{Name: name},
+				}
+			} else {
+				env.SecretRef = &v1.SecretEnvSource{
+					LocalObjectReference: v1.LocalObjectReference{Name: name},
+				}
+			}
+			c.EnvFrom = append(c.EnvFrom, env)
 		case "resources":
 			asserts.ArgsLen(body, 0)
 			c.Resources = resourceParse(body)

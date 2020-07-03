@@ -5,23 +5,25 @@ import (
 	"github.com/ihaiker/vik8s/reduce/asserts"
 	"github.com/ihaiker/vik8s/reduce/config"
 	"github.com/ihaiker/vik8s/reduce/kube/pod"
+	"github.com/ihaiker/vik8s/reduce/plugins"
 	"github.com/ihaiker/vik8s/reduce/refs"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"strings"
 )
 
 func specParse(item *config.Directive, spec *appsv1.DeploymentSpec) bool {
 	return utils.Safe(func() { refs.UnmarshalItem(spec, item) }) == nil
 }
 
-func Parse(version, prefix string, directive *config.Directive) []metav1.Object {
+func Parse(version, prefix string, directive *config.Directive) metav1.Object {
 	dep := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
 			APIVersion: appsv1.SchemeGroupVersion.String(),
 		},
 	}
-
+	dep.Spec.Replicas = utils.Int32("1", 10)
 	asserts.Metadata(dep, directive)
 	asserts.AutoLabels(dep, prefix)
 
@@ -38,6 +40,10 @@ func Parse(version, prefix string, directive *config.Directive) []metav1.Object 
 	dep.Spec.Selector = &metav1.LabelSelector{
 		MatchLabels: dep.Labels,
 	}
+	return dep
+}
 
-	return []metav1.Object{dep}
+var Deployment = plugins.ReduceHandler{
+	Names: []string{"dep", "deployment", "Dep", "Deployment"}, Handler: Parse,
+	Demo: strings.Replace(pod.Pod.Demo, "pod test", "deployment test", 1),
 }
