@@ -30,14 +30,20 @@ func container(d *config.Directive, pod *v1.PodSpec) v1.Container {
 			c.Args = body.Args
 
 		case "port":
-			asserts.ArgsLen(body, 2)
-			c.Ports = append(c.Ports, portParse(body.Args[0], body.Args[1]))
+			asserts.ArgsMin(body, 1)
+			if len(body.Args) == 1 {
+				c.Ports = append(c.Ports, portParse("", body.Args[0]))
+			} else {
+				c.Ports = append(c.Ports, portParse(body.Args[0], body.Args[1]))
+			}
 		case "ports":
 			for _, port := range body.Body {
-				asserts.ArgsLen(port, 1)
-				c.Ports = append(c.Ports, portParse(port.Name, port.Args[0]))
+				if len(body.Args) == 0 {
+					c.Ports = append(c.Ports, portParse("", port.Name))
+				} else {
+					c.Ports = append(c.Ports, portParse(port.Name, port.Args[0]))
+				}
 			}
-
 		case "env":
 			asserts.ArgsMin(body, 2)
 			c.Env = append(c.Env, envParse(body.Args[0], body.Args[1:]))
@@ -46,6 +52,8 @@ func container(d *config.Directive, pod *v1.PodSpec) v1.Container {
 			for _, env := range body.Body {
 				c.Env = append(c.Env, envParse(env.Name, env.Args))
 			}
+		case "envFrom":
+			//TODO envFrom
 
 		case "resources":
 			asserts.ArgsLen(body, 0)

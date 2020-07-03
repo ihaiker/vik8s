@@ -1,0 +1,128 @@
+# -------------------------------------- #
+#   Generate by vik8s @2020-07-03T13:40  #
+#       Kubernetes version v1.18.2       #
+#    https://github.com/ihaiker/vik8s    #
+# -------------------------------------- #
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vik8s
+
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-config
+  namespace: vik8s
+data:
+  mysql.root.password: haiker
+  mysql.vik8s.password: vik8s
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    vik8s.io/name: mysql
+  name: mysql
+  namespace: vik8s
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      vik8s.io/name: mysql
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        vik8s.io/name: mysql
+      name: mysql
+    spec:
+      containers:
+      - env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              key: mysql.root.password
+              name: mysql-config
+        - name: MYSQL_DATABASE
+          value: vik8s
+        - name: MYSQL_USER
+          value: vik8s
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              key: mysql.vik8s.password
+              name: mysql-config
+        image: mysql:5.7.29
+        imagePullPolicy: IfNotPresent
+        name: mysql
+        ports:
+        - containerPort: 3306
+        resources: {}
+        volumeMounts:
+        - mountPath: /var/lib/mysql
+          name: mysql-data
+      - env:
+        - name: PMA_HOST
+          value: mysql
+        - name: PMA_USER
+          value: root
+        - name: PMA_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              key: mysql.root.password
+              name: mysql-config
+        image: phpmyadmin/phpmyadmin
+        name: php-my-admin
+        ports:
+        - containerPort: 80
+          name: http
+        resources: {}
+      restartPolicy: Always
+      volumes:
+      - hostPath:
+          path: /data/mysql
+        name: mysql-data
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    vik8s.io/name: mysql-admin
+  name: mysql-admin
+  namespace: vik8s
+spec:
+  ports:
+  - name: admin
+    port: 80
+    targetPort: 80
+  - name: mysql
+    port: 3306
+    targetPort: 3306
+  selector:
+    vik8s.io/name: mysql
+
+
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  labels:
+    vik8s.io/name: mysql-admin
+  name: mysql-admin
+  namespace: vik8s
+spec:
+  rules:
+  - host: myadmin.vik8s.io
+    http:
+      paths:
+      - backend:
+          serviceName: mysql-admin
+          servicePort: admin
+
+

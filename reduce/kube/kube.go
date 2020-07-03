@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"sigs.k8s.io/yaml"
+	"time"
 )
 
 type (
@@ -88,9 +89,10 @@ func fix(bs []byte) string {
 }
 
 func (k *Kubernetes) String() string {
+	tf := time.Now().Format("2006-01-02T15:04")
 	w := config.Writer(0).
 		Line("# -------------------------------------- #").
-		Line("#          Generate by vik8s             #").
+		Line(fmt.Sprintf("#   Generate by vik8s @%s  #", tf)).
 		Line(fmt.Sprintf("#       Kubernetes version %-8s      #", k.Kubernetes)).
 		Line("#    https://github.com/ihaiker/vik8s    #").
 		Line("# -------------------------------------- #")

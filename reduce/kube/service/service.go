@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/ihaiker/vik8s/reduce/asserts"
 	"github.com/ihaiker/vik8s/reduce/config"
@@ -18,6 +19,9 @@ func ServiceParse(version, prefix string, dir *config.Directive) []metav1.Object
 			APIVersion: v1.SchemeGroupVersion.String(),
 		},
 	}
+	from := dir.Args[0]
+	dir.Args = dir.Args[1:]
+
 	asserts.MetadataIndex(service, dir, math.MaxInt8)
 	asserts.AutoLabels(service, prefix)
 
@@ -37,6 +41,12 @@ func ServiceParse(version, prefix string, dir *config.Directive) []metav1.Object
 				service.Spec.Ports = append(service.Spec.Ports,
 					servicePortParse(append([]string{i.Name}, i.Args...)))
 			}
+		}
+	}
+	if len(service.Spec.Selector) == 0 {
+		_, name := utils.Split2(from, ":")
+		service.Spec.Selector = map[string]string{
+			fmt.Sprintf("%s/name", prefix): name,
 		}
 	}
 	return []metav1.Object{service}

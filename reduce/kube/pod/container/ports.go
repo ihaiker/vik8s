@@ -8,6 +8,7 @@ import (
 )
 
 var (
+	//ip:hostPort:containerPort/protocol
 	portPattern = regexp.MustCompile(`(((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):)?(\d{1,5}):)?(\d{1,5})(\/(\S+))?`)
 )
 
