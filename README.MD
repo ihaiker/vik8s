@@ -22,7 +22,7 @@
     - [X] dashboard 
     - [X] ingress (nginx/traefik)
     - [ ] 后续会提供更多的安装方式
-- [X] <span style="color: red">【重病推出】kubernetes reduce 命令，简化yaml配置文件。 </span> [查看教程和实例](./docs/REDUCE.MD)。
+- [X] <span style="color: red">【重磅推出】kubernetes reduce 命令，简化yaml配置文件。 </span> [查看教程和实例](./docs/REDUCE.MD)。
 <p style="color:red">Note: 本程序现在仅支持 centos 7/8，是否将来会支持其他系统暂未可知</p>
 
 ## 快速开始
