@@ -94,6 +94,17 @@ func Get(nameOrIP string) *ssh.Node {
 	return nodes.Get(nameOrIP)
 }
 
+func Remove(nameOrIP string) {
+	readHosts()
+	defer writeHosts()
+	for i, node := range nodes {
+		if node.Hostname == nameOrIP || node.Host == nameOrIP {
+			nodes = append(nodes[0:i], nodes[i+1:]...)
+			break
+		}
+	}
+}
+
 func Gets(args ...[]string) ssh.Nodes {
 	nodes := ssh.Nodes{}
 	for _, arg := range args {

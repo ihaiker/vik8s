@@ -3,6 +3,7 @@ package install
 import (
 	"fmt"
 	"github.com/hashicorp/go-version"
+	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/tools"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
@@ -55,6 +56,9 @@ func checkDistribution(node *ssh.Node) {
 	v1, _ := version.NewVersion("4.1")
 	support(node)
 	v2, _ := version.NewVersion(node.KernelVersion)
+	if v1.GreaterThanOrEqual(v2) {
+		hosts.Remove(node.Hostname) //fixbug: 如果版本错误，删除本地管理，不然没办法安装
+	}
 	utils.Assert(v1.LessThanOrEqual(v2), "[%s,%s] The kernel version is too low, please upgrade the kernel first, "+
 		"your current version is: %s, the minimum requirement is %s", node.Address(), node.Hostname, v2.String(), v1.String())
 }
@@ -73,7 +77,7 @@ func InstallChronyServices(node *ssh.Node, timezone string, timeServices ...stri
 	}()
 
 	node.MustCmd(fmt.Sprintf("rm -f /etc/localtime && cp -f %s /etc/localtime", filepath.Join("/usr/share/zoneinfo", timezone)))
-	tools.Install("chrony", "", node)
+	tools.Install("chrony", "3.4", node) //fixbug 必须指定版本号，不然如何用户含有自己的repo会导致安装低版本出现问题
 
 	config := "allow all\n"
 	for _, service := range timeServices {

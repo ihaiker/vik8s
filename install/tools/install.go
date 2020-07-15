@@ -38,5 +38,7 @@ func EnableAndStartService(name string, node *ssh.Node) {
 	if status == "inactive" {
 		_, _ = node.Cmd("systemctl enable " + name)
 	}
-	_ = node.MustCmd2String("systemctl restart " + name)
+	//_ = node.MustCmd2String("systemctl restart " + name)
+	_, _ = node.Cmd("systemctl stop " + name)
+	node.MustCmd("systemctl start " + name)
 }
