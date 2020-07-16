@@ -77,7 +77,12 @@ func InstallChronyServices(node *ssh.Node, timezone string, timeServices ...stri
 	}()
 
 	node.MustCmd(fmt.Sprintf("rm -f /etc/localtime && cp -f %s /etc/localtime", filepath.Join("/usr/share/zoneinfo", timezone)))
-	tools.Install("chrony", "3.4", node) //fixbug 必须指定版本号，不然如何用户含有自己的repo会导致安装低版本出现问题
+
+	if node.MajorVersion == "7" {
+		tools.Install("chrony", "3.4", node) //fixbug 必须指定版本号，不然如何用户含有自己的repo会导致安装低版本出现问题
+	} else {
+		tools.Install("chrony", "", node)
+	}
 
 	config := "allow all\n"
 	for _, service := range timeServices {
