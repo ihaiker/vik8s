@@ -47,7 +47,7 @@ func checkDocker(node *ssh.Node) {
 	}()
 
 	//fixbug: 当 centos 小于 7.3.1611 systemd 必须更新
-	_ = node.CmdStd("yum update systemd", logstreamer.NewLogstreamerForStdout(node.Hostname))
+	_ = node.CmdStd("yum update -y systemd", logstreamer.NewLogstreamerForStdout(node.Hostname))
 
 	dockerVersion := node.MustCmd2String("rpm -qi docker-ce | grep Version | awk '{printf $3}'")
 	if dockerVersion != "" && (dockerVersion == Config.Docker.Version || !Config.Docker.CheckVersion) {
