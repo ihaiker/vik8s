@@ -1,7 +1,7 @@
 # vik8s (very easy install kubernetes)
 ![](./docs/logo.png) ![](./logo.png)
 
-一个非常简单原生多云kubernetes高可用集群安装部署工具，支持 v1.17.+
+一个非常简单kubernetes高可用集群安装部署工具，支持 v1.17.+
 
 程序尽可能采用原生kubernetes特性不对kubernetes进行修改和面向过程模式编写，把安装过程清晰化。
 

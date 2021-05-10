@@ -134,19 +134,6 @@ func Join(ms map[string]string, separator, kvSeparator string) string {
 	}
 	return out.String()
 }
-func KeyJoin(ms map[string]string, separator, kvSeparator string) string {
-	out := bytes.NewBufferString("")
-	i := 0
-	for k, _ := range ms {
-		if i != 0 {
-			out.WriteString(separator)
-		}
-		i++
-		out.WriteString(k)
-		out.WriteString(kvSeparator)
-	}
-	return out.String()
-}
 
 func Repeat(str string, size int) []string {
 	outs := make([]string, size)

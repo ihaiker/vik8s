@@ -103,6 +103,13 @@ yum install -y systemd
 vik8s -- yum install -y systemd
 ```
 
+## 证书问题
+在有些时候会报出`certificate has expired or is not yet valid`问题，这个主要是由于服务器时间不一致导致。
+
+
+## Transaction test error
+大多数情况下需要执行 `yum update`
+
 ## GlusterFS 
 
 ### 集群 复制分数问题

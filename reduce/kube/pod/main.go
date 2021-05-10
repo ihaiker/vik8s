@@ -96,7 +96,7 @@ pod test [label=value ...] {
             namespaces n1 n2 n3;
         }
     }
-    container continarName image [imagePullSecret] {
+    container continarName image [imagePullPolicy] {
         args arg1 arg2 ... argN;
         command cmd1 cmd2 ... cmdN;
         resources {

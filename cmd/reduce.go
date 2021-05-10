@@ -14,10 +14,14 @@ import (
 
 var reduceCmd = &cobra.Command{
 	Use: "reduce", Short: "Simplify kubernetes configuration file",
+	Args: cobra.ExactArgs(1),
 	PreRun: func(cmd *cobra.Command, args []string) {
 		utils.Try(k8s.Config.Load)
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if utils.NotExists(args[0]) {
+			return fmt.Errorf("file not found: %s", args[0])
+		}
 		kube := kube.Parse(args[0]).String()
 		if output, _ := cmd.Flags().GetString("output"); output != "" {
 			outputFile, _ := filepath.Abs(output)
