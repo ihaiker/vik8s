@@ -3,7 +3,6 @@ package kube
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/ihaiker/vik8s/reduce/config"
 	"github.com/ihaiker/vik8s/reduce/plugins"
@@ -95,7 +94,7 @@ func (k *Kubernetes) Bytes() []byte {
 	w := config.Writer(0).
 		Line("# -------------------------------------- #").
 		Line("#          Generate by vik8s             #").
-		Line(fmt.Sprintf("#       Kubernetes version %-8s      #", k.Kubernetes)).
+		Format("#       Kubernetes version %-8s      #", k.Kubernetes).
 		Line("#    https://github.com/ihaiker/vik8s    #").
 		Line("# -------------------------------------- #")
 
@@ -130,7 +129,7 @@ func ParseWith(bs []byte) *Kubernetes {
 	return parse(cfg)
 }
 
-func Parse(filename string) *Kubernetes {
+func Reduce(filename string) *Kubernetes {
 	filePath, _ := filepath.Abs(filename)
 	cfg := config.MustParse(filePath)
 	return parse(cfg)

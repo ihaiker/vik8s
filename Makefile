@@ -1,4 +1,4 @@
-.PHONY: help build init clean reset generate release
+.PHONY: help build init clean reset generate release test provision
 
 
 Version=$(shell git describe --tags `git rev-list --tags --max-count=1`)
@@ -75,3 +75,11 @@ release:
 
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags "${debug} ${param}" -o bin/vik8s-windows-amd64-${Version}.exe main.go
 	zip bin/vik8s-windows-amd64-${Version}.zip bin/vik8s-windows-amd64-${Version}.exe
+
+test:
+	vagrant up
+	ssh root@10.24.0.10 -i .vagrant/machines/master0/virtualbox/private_key whoami
+
+provision:
+	vagrant up --provision
+	ssh root@10.24.0.10 -i .vagrant/machines/master0/virtualbox/private_key whoami

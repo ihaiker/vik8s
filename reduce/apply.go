@@ -7,11 +7,10 @@ import (
 	"github.com/ihaiker/vik8s/reduce/kube"
 	"os"
 	"strings"
-	"text/template"
 )
 
-func MustApplyAssert(node *ssh.Node, name string, data interface{}, funcs ...template.FuncMap) {
-	pods := tools.MustAssert(name, data, funcs...)
+func MustApplyAssert(node *ssh.Node, name string, data interface{}) {
+	pods := tools.MustAssert(name, data)
 	remote := node.Vik8s("apply", strings.TrimPrefix(name+".yaml", "yaml/"))
 
 	pods = kube.ParseWith(pods).Bytes()

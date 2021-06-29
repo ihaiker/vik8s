@@ -22,7 +22,7 @@ var reduceCmd = &cobra.Command{
 		if utils.NotExists(args[0]) {
 			return fmt.Errorf("file not found: %s", args[0])
 		}
-		kube := kube.Parse(args[0]).String()
+		kube := kube.Reduce(args[0]).String()
 		if output, _ := cmd.Flags().GetString("output"); output != "" {
 			outputFile, _ := filepath.Abs(output)
 			return ioutil.WriteFile(outputFile, []byte(kube), 0600)

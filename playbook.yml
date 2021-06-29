@@ -1,0 +1,13 @@
+- hosts: all
+  become: yes
+  tasks:
+    - name: make root ssh directory
+      file:
+        path: "${HOME}/.ssh"
+        state: directory
+    - name: copy authorized_keys
+      copy:
+        remote_src: true
+        src: "/home/vagrant/.ssh/authorized_keys"
+        dest: "/root/.ssh/authorized_keys"
+        mode: 0600
