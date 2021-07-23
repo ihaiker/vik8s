@@ -35,7 +35,19 @@ type WrapError struct {
 	Message string
 }
 
+func Error(format string, args ...interface{}) *WrapError {
+	return &WrapError{
+		Err: nil, Message: fmt.Sprintf(format, args...),
+	}
+}
+
 func (w WrapError) Error() string {
+	if w.Err == nil {
+		return w.Message
+	}
+	if w.Message == "" {
+		return w.Err.Error()
+	}
 	return fmt.Sprintf("%s: %s", w.Message, w.Err)
 }
 

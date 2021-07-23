@@ -5,6 +5,7 @@ import (
 	"fmt"
 	etcdcerts "github.com/ihaiker/vik8s/certs/etcd"
 	"github.com/ihaiker/vik8s/install/k8s"
+	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/install/tools"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
@@ -75,7 +76,7 @@ the system will look for the etcd cluster from the following two points.
 
 func (f *calico) applyVik8sETCDServer(node *ssh.Node, vip string) {
 	name := "yaml/cni/calico-vik8s-etcd.conf"
-	reduce.MustApplyAssert(node, name, tools.Json{
+	reduce.MustApplyAssert(node, name, paths.Json{
 		"VIP": vip,
 	})
 }
@@ -84,7 +85,7 @@ func (f *calico) Apply(master *ssh.Node) {
 	if f.repo != "" && strings.HasSuffix(f.repo, "/") {
 		f.repo = f.repo + "/"
 	}
-	data := tools.Json{
+	data := paths.Json{
 		"Version": "v" + f.version, "Repo": f.repo,
 		"IPIP": f.ipip, "MTU": f.mtu,
 		"CIDR": k8s.Config.Kubernetes.PodCIDR, "Interface": k8s.Config.Kubernetes.Interface,
@@ -104,10 +105,10 @@ func (f *calico) Apply(master *ssh.Node) {
 			} else {
 				vip := tools.GetVip(k8s.Config.Kubernetes.SvcCIDR, tools.Vik8sCalicoETCD)
 				f.applyVik8sETCDServer(master, vip)
-				certsDir := tools.Join("kube/pki/etcd")
+				certsDir := paths.Join("kube/pki/etcd")
 				certPath, keyPath := etcdcerts.CreateCalicoETCDPKIAssert(certsDir, k8s.Config.CertsValidity)
 				f.etcd.Endpoints = []string{vip + ":2379"}
-				f.etcd.Ca = tools.Join("kube/pki/etcd/ca.crt")
+				f.etcd.Ca = paths.Join("kube/pki/etcd/ca.crt")
 				f.etcd.Key = keyPath
 				f.etcd.Cert = certPath
 			}

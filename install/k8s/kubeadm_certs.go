@@ -5,6 +5,7 @@ import (
 	etcdcerts "github.com/ihaiker/vik8s/certs/etcd"
 	kubecerts "github.com/ihaiker/vik8s/certs/kubernetes"
 	"github.com/ihaiker/vik8s/install/hosts"
+	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/install/tools"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
@@ -22,7 +23,7 @@ func makeCerts(node *ssh.Node) {
 }
 
 func makeJoinControlPlaneConfigFiles(node *ssh.Node) {
-	dir := tools.Join("kube")
+	dir := paths.Join("kube")
 	endpoint := fmt.Sprintf("https://%s:6443", Config.Kubernetes.ApiServer)
 	files := kubecerts.CreateJoinControlPlaneKubeConfigFiles(dir, node.Hostname, endpoint, Config.CertsValidity)
 	for key, path := range files {
@@ -32,7 +33,7 @@ func makeJoinControlPlaneConfigFiles(node *ssh.Node) {
 }
 
 func makeWorkerConfigFiles(node *ssh.Node) {
-	dir := tools.Join("kube")
+	dir := paths.Join("kube")
 	endpoint := fmt.Sprintf("https://%s:6443", Config.Kubernetes.ApiServer)
 	files := kubecerts.CreateWorkerKubeConfigFile(dir, node.Hostname, endpoint, Config.CertsValidity)
 	for key, path := range files {
@@ -45,7 +46,7 @@ func makeEtcdCerts(node *ssh.Node) {
 	node.Logger("make etcd certs files")
 
 	name := node.Hostname
-	dir := tools.Join("kube", "pki", "etcd")
+	dir := paths.Join("kube", "pki", "etcd")
 
 	sans := []string{"127.0.0.1", "localhost", node.Hostname, node.Host, net.IPv6loopback.String()}
 	sans = append(sans, utils.ParseIPS(Config.Masters)...)
@@ -97,7 +98,7 @@ func makeKubeCerts(node *ssh.Node) {
 
 	node.Logger("make kube certs files")
 
-	dir := tools.Join("kube", "pki")
+	dir := paths.Join("kube", "pki")
 	kubecerts.CreatePKIAssets(dir, certNode)
 
 	//sa

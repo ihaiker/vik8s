@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/ihaiker/vik8s/certs"
 	"github.com/ihaiker/vik8s/install/k8s"
-	"github.com/ihaiker/vik8s/install/tools"
+	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/libs/flags"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/ihaiker/vik8s/reduce"
@@ -57,7 +57,7 @@ func (d *Dashboard) Apply() {
 	certBase64, keyBase64 := makeDashboardCertAndKey(ingress, certPath, keyPath)
 	//dashboard
 	{
-		data := tools.Json{"ExposePort": exposePort}
+		data := paths.Json{"ExposePort": exposePort}
 		if enableInsecureLogin {
 			reduce.MustApplyAssert(master, "yaml/sidecars/dashboard/alternative.conf", data)
 		} else {
@@ -69,12 +69,12 @@ func (d *Dashboard) Apply() {
 	//dashboard access control
 	token := ""
 	{
-		reduce.MustApplyAssert(master, "yaml/sidecars/dashboard/user.conf", tools.Json{})
+		reduce.MustApplyAssert(master, "yaml/sidecars/dashboard/user.conf", paths.Json{})
 		token = master.MustCmd2String(tokenPrintCmd.Long)
 	}
 
 	if ingress != "" {
-		data := tools.Json{
+		data := paths.Json{
 			"Ingress": ingress, "Token": token,
 			"EnableInsecureLogin": enableInsecureLogin, "InsecureHeader": insecureHeader,
 			"TLSCert": certBase64, "TLSKey": keyBase64,

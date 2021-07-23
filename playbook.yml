@@ -1,13 +1,18 @@
 - hosts: all
   become: yes
+  gather_facts: true
+
   tasks:
-    - name: make root ssh directory
-      file:
-        path: "${HOME}/.ssh"
-        state: directory
-    - name: copy authorized_keys
-      copy:
-        remote_src: true
-        src: "/home/vagrant/.ssh/authorized_keys"
-        dest: "/root/.ssh/authorized_keys"
-        mode: 0600
+    - name: centos
+      block:
+        - name: make root ssh directory
+          file:
+            path: "${HOME}/.ssh"
+            state: directory
+        - name: copy authorized_keys
+          copy:
+            remote_src: true
+            src: "/home/vagrant/.ssh/authorized_keys"
+            dest: "/root/.ssh/authorized_keys"
+            mode: 0600
+      when: ansible_distribution == "CentOS"

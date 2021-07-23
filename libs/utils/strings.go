@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"github.com/hashicorp/go-version"
 	"io/ioutil"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -27,21 +26,6 @@ func Base64File(file string) string {
 	bs, err := ioutil.ReadFile(file)
 	Panic(err, "read file %s", file)
 	return base64.StdEncoding.EncodeToString(bs)
-}
-
-func NotExists(path string) bool {
-	_, err := os.Stat(path)
-	return err != nil && os.IsNotExist(err)
-}
-
-func Exists(path string) bool {
-	return !NotExists(path)
-}
-
-func FileBytes(path string) []byte {
-	bs, err := ioutil.ReadFile(path)
-	Panic(err, "read file %s", path)
-	return bs
 }
 
 func DashName(name string) string {

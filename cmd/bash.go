@@ -1,8 +1,9 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/ihaiker/vik8s/install/hosts"
-	"github.com/ihaiker/vik8s/install/tools"
+	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/kvz/logstreamer"
@@ -41,9 +42,9 @@ func runCmd(sync bool, cmd string, nodes []*ssh.Node, filters ...string) {
 		prefix := color.New(colors[i%colorsSize]).Sprintf("[%s] ", node.Hostname)
 		out := logstreamer.NewLogstreamerForStdout(prefix)
 		if err := node.CmdStd(cmd, out, true); err != nil {
-			_, _ = out.Write([]byte(err.Error()))
+			fmt.Println(err)
+			_, _ = out.Write([]byte(fmt.Sprint(err)))
 		}
-		_ = out.Close()
 	}
 	if sync {
 		ssh.Sync(nodes, run)
@@ -56,7 +57,8 @@ func runCmd(sync bool, cmd string, nodes []*ssh.Node, filters ...string) {
 
 var bashCmd = &cobra.Command{
 	Use: "bash", Short: "Run commands uniformly in the cluster",
-	SilenceErrors: true, SilenceUsage: true,
+	//SilenceErrors: true, SilenceUsage: true,
+	PersistentPreRunE: hostsLoad(none),
 	Run: func(cmd *cobra.Command, args []string) {
 		nodes := hosts.Nodes()
 		utils.Assert(len(nodes) > 0, "not found any host, use `vik8s host <node>` to add.")
@@ -65,6 +67,7 @@ var bashCmd = &cobra.Command{
 			runCmd(false, strings.Join(args, " "), nodes)
 			return
 		}
+
 		sync := false
 		filters := make([]string, 0)
 
@@ -72,7 +75,7 @@ var bashCmd = &cobra.Command{
 		defer func() { _ = term.Close() }()
 		term.SetCtrlCAborts(true)
 
-		historyFile := tools.Join("history")
+		historyFile := paths.Join("history")
 		if f, err := os.Open(historyFile); err == nil {
 			_, _ = term.ReadHistory(f)
 			_ = f.Close()

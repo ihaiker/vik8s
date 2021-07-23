@@ -13,16 +13,15 @@ import (
 )
 
 var initCmd = &cobra.Command{
-	Use:   "init",
-	Short: "init k8s",
-	Example: `vik8s init --master 172.10.0.2 --master 172.10.0.3 --master 172.10.0.4 --node 172.10.0.5 --user root --pk ~/.ssh/id_rsa
-vik8s init -m 172.10.0.2 -m 172.10.0.3 -m 172.10.0.4 -n 172.10.0.5 -p password
-`,
+	Use: "init", Short: "Initialize the kubernates cluster",
+	Example: `vik8s init --master 172.10.0.2 --master 172.10.0.3 --master 172.10.0.4 --node 172.10.0.5 --ssh-user root --ssh-pk ~/.ssh/id_rsa
+vik8s init -m 172.10.0.2 -m 172.10.0.3 -m 172.10.0.4 -n 172.10.0.5 -p password`,
 	Run: func(cmd *cobra.Command, args []string) {
 		k8s.Config.Parse()
 		masters := getFlagsIps(cmd, "master")
 		nodes := getFlagsIps(cmd, "node")
 
+		utils.Assert(len(masters) != 0, "master node is empty")
 		master := k8s.InitCluster(masters[0])
 		cni.Plugins.Apply(master)
 
@@ -41,21 +40,21 @@ func init() {
 
 	// Here you will define your flags and configuration settings.
 	initCmd.Flags().IntVarP(&k8s.Config.SSH.Port, "ssh-port", "P", 22, "default port for ssh")
-	initCmd.Flags().StringVar(&k8s.Config.SSH.PkFile, "ssh-pk", "$HOME/.ssh/id_rsa", "private key for ssh")
+	initCmd.Flags().StringVarP(&k8s.Config.SSH.PrivateKey, "ssh-pk", "i", "$HOME/.ssh/id_rsa", "private key for ssh")
 	initCmd.Flags().StringVarP(&k8s.Config.SSH.Password, "ssh-passwd", "p", "", "password for ssh\n")
 
 	initCmd.Flags().StringSliceP("master", "m", []string{}, "k8s multi-masters. rule: XXX.XXX.XXX.XXX[-XXX.XXX.XXX.XXX][:PORT] ")
 	initCmd.Flags().StringSliceP("node", "n", []string{}, "k8s multi-nodes. rule: XXX.XXX.XXX.XXX[-XXX.XXX.XXX.XXX][:PORT]\n")
 
-	initCmd.Flags().StringVar(&k8s.Config.Docker.Version, "docker-version", "19.03.8", "docker version")
-	initCmd.Flags().StringVar(&k8s.Config.Docker.DaemonJson, "docker-daemon", "", "docker config file /etc/docker/daemon.json")
-	initCmd.Flags().StringSliceVar(&k8s.Config.Docker.Registry, "docker-registry", []string{}, "Customize docker registry, ignore it when set --docker-daemon")
-	initCmd.Flags().BoolVar(&k8s.Config.Docker.CheckVersion, "docker-check-version", false, "Mandatory check DOCKER version number will upgrade if inconsistent\n")
+	initCmd.Flags().StringVar(&k8s.Config.Docker.Version, "docker-version", "v1.19.12", "Specify docker version")
+	initCmd.Flags().StringVar(&k8s.Config.Docker.DaemonJson, "docker-daemon-json", "", "docker config file it will overwirte `/etc/docker/daemon.json`")
+	initCmd.Flags().StringSliceVar(&k8s.Config.Docker.Registry, "docker-registry-mirror", []string{}, "Customize docker registry, ignore it when set --docker-daemon-json")
+	initCmd.Flags().BoolVar(&k8s.Config.Docker.StraitVersion, "docker-strait-version", false, "Strict check DOCKER version if inconsistent will upgrade\n")
 
 	initCmd.Flags().StringVar(&k8s.Config.Kubernetes.KubeadmConfig, "kubeadm-config", "", "Path to a kubeadm configuration file. see kubeadm --config")
 	initCmd.Flags().StringVar(&k8s.Config.Kubernetes.ApiServer, "apiserver", "vik8s-api-server", "Specify a stable IP address or DNS name for the control plane. see kubeadm  --control-plane-endpoint")
 	initCmd.Flags().StringSliceVar(&k8s.Config.Kubernetes.ApiServerCertExtraSans, "apiserver-cert-extra-sans", []string{}, "see kubeadm init --apiserver-cert-extra-sans")
-	initCmd.Flags().StringVar(&k8s.Config.Kubernetes.Version, "k8s-version", "1.18.2", "k8s version, support 1.17.+")
+	initCmd.Flags().StringVar(&k8s.Config.Kubernetes.Version, "k8s-version", "v19.03.15", "Specify k8s version, support 1.17.+")
 	initCmd.Flags().StringVar(&k8s.Config.Kubernetes.Interface, "interface", "eth.*|en.*|em.*", "name of network interface")
 	initCmd.Flags().StringVar(&k8s.Config.Kubernetes.PodCIDR, "pod-cidr", "100.64.0.0/24", "Specify range of IP addresses for the pod network")
 	initCmd.Flags().StringVar(&k8s.Config.Kubernetes.SvcCIDR, "svc-cidr", "10.96.0.0/12", "Use alternative range of IP address for service VIPs")
@@ -168,5 +167,5 @@ func init() {
 func getFlagsIps(cmd *cobra.Command, name string) ssh.Nodes {
 	values, err := cmd.Flags().GetStringSlice(name)
 	utils.Panic(err, "get flags %s", name)
-	return hosts.Add(k8s.Config.SSH, values...)
+	return hosts.Add(values...)
 }

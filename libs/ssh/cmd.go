@@ -3,22 +3,9 @@ package ssh
 import (
 	"fmt"
 	"github.com/ihaiker/vik8s/libs/utils"
-	"golang.org/x/crypto/ssh"
-	"gopkg.in/fatih/color.v1"
 	"io"
 	"strings"
 )
-
-func (node *Node) session(r func(session *ssh.Session) error) error {
-	return node.connect(func(client *ssh.Client) error {
-		if session, err := client.NewSession(); err != nil {
-			return utils.Wrap(err, "open session")
-		} else {
-			defer session.Close()
-			return r(session)
-		}
-	})
-}
 
 func (node *Node) MustCmd(cmd string, hide ...bool) {
 	_ = node.MustCmd2String(cmd, hide...)
@@ -39,52 +26,27 @@ func (node *Node) Cmd(cmd string, hide ...bool) ([]byte, error) {
 	return node.cmd(cmd, len(hide) == 0 || !hide[0])
 }
 
-func (node *Node) cmd(cmd string, show bool) (out []byte, err error) {
-	err = node.session(func(session *ssh.Session) error {
-		if show {
-			node.Logger("cmd [%s]", color.BlueString(cmd))
-		}
-		out, err = session.CombinedOutput(cmd)
-		if err == nil {
-			length := len(out)
-			if length > 0 && out[length-1] == '\n' {
-				out = out[0 : length-1]
-			}
-		}
-		return err
-	})
-	return
+//cmd Running command cmd and show logger
+func (node *Node) cmd(cmd string, show bool) ([]byte, error) {
+	if show {
+		node.Logger("run command: %s", cmd)
+	}
+	return node.easyssh().Run(cmd)
 }
 
-func (node *Node) CmdChannel(cmd string, handler func(stream io.Reader), hide ...bool) error {
-	return node.session(func(session *ssh.Session) error {
-		if !(len(hide) > 0 && hide[0]) {
-			node.Logger("cmd [%s]", color.BlueString(cmd))
-		}
-		reader, writer := io.Pipe()
-		defer reader.Close()
-		defer writer.Close()
-		session.Stderr = writer
-		session.Stdout = writer
-		go handler(reader)
-		if err := session.Start(cmd); err != nil {
-			return err
-		}
-		return session.Wait()
-	})
+func (node *Node) CmdChannel(cmd string, handler StreamWatcher, hide ...bool) error {
+	if len(hide) == 0 || !hide[0] {
+		node.Logger("run command: %s", cmd)
+	}
+	return node.easyssh().Stream(cmd, handler)
 }
 
-func (node *Node) CmdStd(cmd string, std io.Writer, hideCmd ...bool) error {
-	return node.session(func(session *ssh.Session) error {
-		if !(len(hideCmd) > 0 && hideCmd[0]) {
-			node.Logger("cmd [%s]", color.BlueString(cmd))
-		}
-		session.Stderr = std
-		session.Stdout = std
-		if err := session.Start(cmd); err != nil {
-			return err
-		}
-		return session.Wait()
+func (node *Node) CmdStd(cmd string, std io.Writer, hide ...bool) error {
+	if len(hide) == 0 || !hide[0] {
+		node.Logger("run command: %s", cmd)
+	}
+	return node.easyssh().Stream(cmd, func(stdout io.Reader) {
+		_, _ = io.Copy(std, stdout)
 	})
 }
 

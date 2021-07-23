@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/ihaiker/vik8s/install/etcd"
 	"github.com/ihaiker/vik8s/install/hosts"
+	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/install/repo"
 	"github.com/ihaiker/vik8s/install/tools"
 	"github.com/ihaiker/vik8s/libs/ssh"
@@ -13,11 +14,12 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"path/filepath"
 	"time"
 )
 
 type config struct {
-	SSH hosts.SSH `json:"ssh"`
+	SSH hosts.Option `json:"ssh"`
 
 	Masters []string `json:"masters,omitempty"`
 	Nodes   []string `json:"nodes,omitempty"`
@@ -31,10 +33,10 @@ type config struct {
 	} `json:"etcd"`
 
 	Docker struct {
-		Version      string   `json:"version"`
-		DaemonJson   string   `json:"daemonJson,omitempty"`
-		Registry     []string `json:"registry,omitempty"`
-		CheckVersion bool     `json:"checkVersion"`
+		Version       string   `json:"version"`
+		DaemonJson    string   `json:"daemonJson,omitempty"`
+		Registry      []string `json:"registry,omitempty"`
+		StraitVersion bool     `json:"strait-version"`
 	} `json:"docker"`
 
 	Kubernetes struct {
@@ -69,12 +71,16 @@ func (cfg *config) Master() *ssh.Node {
 	return hosts.Get(cfg.Masters[0])
 }
 
+func (cfg *config) AllNode() []string {
+	return append(cfg.Masters, cfg.Nodes...)
+}
+
 func (cfg *config) LoadCmd(cmd *cobra.Command, args []string) {
 	cfg.Load()
 }
 
 func (cfg *config) Load() {
-	config := tools.Join("config.json")
+	config := paths.Join("config.json")
 	bs, err := ioutil.ReadFile(config)
 	utils.Panic(err, "Is your system uninitialized?")
 	utils.Panic(json.Unmarshal(bs, cfg), "parse config file %s ", config)
@@ -82,7 +88,7 @@ func (cfg *config) Load() {
 }
 
 func (cfg *config) Write() {
-	config := tools.Join("config.json")
+	config := paths.Join("config.json")
 
 	if len(cfg.Nodes) == 0 && len(cfg.Masters) == 0 {
 		_ = os.Remove(config)
@@ -96,7 +102,7 @@ func (cfg *config) Write() {
 		fmt.Println(string(bs))
 	})
 
-	utils.Panic(os.MkdirAll(tools.Join(), os.ModePerm), "mkdir config file dir")
+	utils.Panic(os.MkdirAll(paths.Join(), os.ModePerm), "mkdir config file dir")
 	utils.Panic(ioutil.WriteFile(config, bs, 0666), "write config file")
 }
 
@@ -107,16 +113,17 @@ func (cfg *config) readInstallETCDCluster() {
 			if len(etcd.Config.Nodes) > 0 {
 				cfg.ETCD.External = true
 				cfg.ETCD.Nodes = utils.Append(utils.ParseIPS(etcd.Config.Nodes), ":2379")
-				cfg.ETCD.CAFile = tools.Join("etcd/pki/ca.crt")
-				cfg.ETCD.ApiServerKeyFile = tools.Join("etcd/pki/apiserver-etcd-client.key")
-				cfg.ETCD.ApiServerCertFile = tools.Join("etcd/pki/apiserver-etcd-client.crt")
+				cfg.ETCD.CAFile = paths.Join("etcd/pki/ca.crt")
+				cfg.ETCD.ApiServerKeyFile = paths.Join("etcd/pki/apiserver-etcd-client.key")
+				cfg.ETCD.ApiServerCertFile = paths.Join("etcd/pki/apiserver-etcd-client.crt")
 			}
 		}
 	}
 }
 
 func (cfg *config) Parse() {
-	cfg.SSH.PkFile = os.ExpandEnv(cfg.SSH.PkFile)
+	pkRealFile, _ := filepath.Abs(os.ExpandEnv(cfg.SSH.PrivateKey))
+	cfg.SSH.PrivateKey = pkRealFile
 	cfg.readInstallETCDCluster()
 
 	_, _, err := net.ParseCIDR(Config.Kubernetes.PodCIDR)

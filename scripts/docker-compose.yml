@@ -1,0 +1,7 @@
+version: "3"
+services:
+  mkdocs:
+    build: .
+    volumes:
+      - ../:/build
+

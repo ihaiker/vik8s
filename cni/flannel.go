@@ -2,8 +2,8 @@ package cni
 
 import (
 	"github.com/ihaiker/vik8s/install/k8s"
+	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/install/repo"
-	"github.com/ihaiker/vik8s/install/tools"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/reduce"
 	"github.com/spf13/cobra"
@@ -29,7 +29,7 @@ func (f *flannel) Flags(cmd *cobra.Command) {
 
 func (f *flannel) Apply(node *ssh.Node) {
 
-	data := tools.Json{
+	data := paths.Json{
 		"Version": f.version, "Repo": repo.QuayIO(f.repo),
 		"CIDR": k8s.Config.Kubernetes.PodCIDR, "Interface": k8s.Config.Kubernetes.Interface,
 		"LimitCPU": f.limitCPU, "LimitMemory": f.limitMemory,

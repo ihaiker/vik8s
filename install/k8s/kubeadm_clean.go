@@ -1,7 +1,7 @@
 package k8s
 
 import (
-	"github.com/ihaiker/vik8s/install/tools"
+	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"os"
@@ -43,9 +43,9 @@ func Clean(nodes []*ssh.Node, expFn ...func(node *ssh.Node)) {
 			fn(node)
 		}
 	})
-	config := tools.Join("config.json")
+	config := paths.Join("config.json")
 	utils.Panic(os.RemoveAll(config), "remove %s", config)
 
-	kube := tools.Join("kube")
+	kube := paths.Join("kube")
 	utils.Panic(os.RemoveAll(kube), "remove %s", kube)
 }

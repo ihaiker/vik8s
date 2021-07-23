@@ -1,0 +1,15 @@
+site_name: vik8s
+site_description: very easy install kubernetes
+site_author: Haiker
+site_url: https://ihaiker.github.io/vik8s
+repo_url: https://github.com/ihaiker/vik8s
+copyright: Copyright @2021 Haiker
+
+nav:
+  - 简介: index.md
+  - 快速开始: quickstart.md
+  - 版本历史: versions/index.md
+theme: readthedocs
+
+extra_css:
+  - extra.css

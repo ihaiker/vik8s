@@ -1,4 +1,4 @@
-package tools
+package paths
 
 import (
 	"os"
@@ -13,5 +13,15 @@ var China = true
 
 func Join(path ...string) string {
 	paths := append([]string{os.ExpandEnv(ConfigDir), Cloud}, path...)
-	return filepath.Join(paths...)
+	outpath := filepath.Join(paths...)
+	outpath, _ = filepath.Abs(outpath)
+	return outpath
+}
+
+func Vik8sConfiguration() string {
+	return Join("vik8s.conf")
+}
+
+func HostsConfiguration() string {
+	return Join("hosts.conf")
 }

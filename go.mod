@@ -1,18 +1,21 @@
 module github.com/ihaiker/vik8s
 
-go 1.13
+go 1.15
 
 require (
 	github.com/cheggaaa/pb v2.0.7+incompatible
 	github.com/hashicorp/go-version v1.2.0
+	github.com/ihaiker/cobrax v1.2.5
+	github.com/ihaiker/ngx/v2 v2.0.6
 	github.com/imdario/mergo v0.3.9 // indirect
 	github.com/kvz/logstreamer v0.0.0-20150507115422-a635b98146f0
-	github.com/mattn/go-colorable v0.1.6 // indirect
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/peterh/liner v1.2.0
 	github.com/pkg/sftp v1.11.0
-	github.com/spf13/cobra v1.0.0
+	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
+	github.com/stretchr/testify v1.4.0
+	github.com/ugorji/go v1.1.4 // indirect
 	golang.org/x/crypto v0.0.0-20200429183012-4b2356b1ed79
 	gopkg.in/VividCortex/ewma.v1 v1.1.1 // indirect
 	gopkg.in/cheggaaa/pb.v2 v2.0.7 // indirect

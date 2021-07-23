@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/ihaiker/vik8s/install/tools"
+	"github.com/ihaiker/vik8s/install/paths"
 	"strings"
 )
 
@@ -39,15 +39,15 @@ func (repo *Repo) Set(namespace string) {
 			repo.ReducePullSecrets = fmt.Sprintf("imagePullSecrets name=%s;\n", secret)
 		}
 	} else if repo.User != "" {
-		auth := tools.Json{
-			"auths": tools.Json{
-				"http://" + strings.TrimRight(repo.Url, "/"): tools.Json{
+		auth := paths.Json{
+			"auths": paths.Json{
+				"http://" + strings.TrimRight(repo.Url, "/"): paths.Json{
 					"username": repo.User,
 					"password": repo.Password,
 					"auth":     base64.StdEncoding.EncodeToString([]byte(repo.User + ":" + repo.Password)),
 				},
 				//两个都加上，这样就不用判断了
-				"https://" + strings.TrimRight(repo.Url, "/"): tools.Json{
+				"https://" + strings.TrimRight(repo.Url, "/"): paths.Json{
 					"username": repo.User,
 					"password": repo.Password,
 					"auth":     base64.StdEncoding.EncodeToString([]byte(repo.User + ":" + repo.Password)),

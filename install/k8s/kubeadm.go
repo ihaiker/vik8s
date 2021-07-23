@@ -40,7 +40,7 @@ func installKubeletAndKubeadm(node *ssh.Node) {
 
 	tools.Install("ethtool", "", node)
 
-	switch node.MajorVersion {
+	switch node.Facts.MajorVersion {
 	case "7":
 		tools.Install("ebtables", "", node)
 	case "8":

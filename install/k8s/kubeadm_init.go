@@ -5,6 +5,7 @@ import (
 	"github.com/ihaiker/vik8s/install"
 	"github.com/ihaiker/vik8s/install/etcd"
 	"github.com/ihaiker/vik8s/install/hosts"
+	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/install/tools"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
@@ -38,7 +39,7 @@ func ResetNode(node *ssh.Node) {
 	_, _ = node.Cmd("kubeadm reset -f")
 	Config.RemoveNode(node.Host)
 	if len(Config.Masters) == 0 && len(Config.Nodes) == 0 {
-		_ = os.RemoveAll(tools.Join("kube"))
+		_ = os.RemoveAll(paths.Join("kube"))
 		if err := etcd.Config.Read(); err == nil {
 			_, _ = hosts.Get(etcd.Config.Nodes[0]).Cmd("etcdctl.sh del /registry --prefix")
 			_, _ = hosts.Get(etcd.Config.Nodes[0]).Cmd("etcdctl.sh del /calico --prefix")
@@ -52,24 +53,24 @@ func setHosts(node *ssh.Node, ip, domain string) {
 }
 
 func scpKubeConfig(node *ssh.Node) string {
-	config := string(yamls.MustAsset("yaml/kubeadm-config.yaml"))
+	kubeadmConfigPath := string(yamls.MustAsset("yaml/kubeadm-yaml"))
 
 	if Config.Kubernetes.KubeadmConfig != "" {
 		configBytes, err := ioutil.ReadFile(Config.Kubernetes.KubeadmConfig)
 		utils.Panic(err, "read kubeadm-config file %s", Config.Kubernetes.KubeadmConfig)
-		config = string(configBytes)
+		kubeadmConfigPath = string(configBytes)
 	}
 
-	remote := node.Vik8s("apply/kubeadm-config.yaml")
+	remote := node.Vik8s("apply/kubeadm-yaml")
 	node.Logger("scp kubeadm.yaml %s", remote)
 
-	data := tools.Json{
+	data := paths.Json{
 		"Etcd":    Config.ETCD,
 		"Masters": hosts.Gets(Config.Masters), "Workers": hosts.Gets(Config.Nodes),
-		"Nodes":   hosts.Gets(Config.Masters, Config.Nodes),
+		"Nodes":   hosts.Gets(Config.AllNode()),
 		"Kubeadm": Config.Kubernetes,
 	}
-	kubeadmConfig := tools.Template(config, data)
+	kubeadmConfig := tools.Template(kubeadmConfigPath, data)
 	err := node.ScpContent(kubeadmConfig.Bytes(), remote)
 	utils.Panic(err, "scp kubeadm-config file")
 	return remote
@@ -90,10 +91,10 @@ func copyKubeletConfg(node *ssh.Node) {
 
 func applyApiServerEndpoint(node *ssh.Node) {
 	name := "yaml/vik8s-api-server.conf"
-	data := tools.Json{
+	data := paths.Json{
 		"Etcd":    Config.ETCD,
 		"Masters": hosts.Gets(Config.Masters), "Workers": hosts.Gets(Config.Nodes),
-		"Nodes":   hosts.Gets(Config.Masters, Config.Nodes),
+		"Nodes":   hosts.Gets(Config.AllNode()),
 		"Kubeadm": Config.Kubernetes,
 	}
 	//tools.MustScpAndApplyAssert(node, name, data)

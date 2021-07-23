@@ -64,7 +64,7 @@ func JoinWorker(node *ssh.Node) {
 }
 
 func setNodeHosts(node *ssh.Node) {
-	nodes := hosts.Gets(Config.Masters, Config.Nodes)
+	nodes := hosts.Gets(Config.AllNode())
 	setHosts(node, node.Host, node.Hostname)
 	for _, n := range nodes {
 		setHosts(n, node.Host, node.Hostname)

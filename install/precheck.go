@@ -3,7 +3,7 @@ package install
 import (
 	"fmt"
 	"github.com/hashicorp/go-version"
-	"github.com/ihaiker/vik8s/install/hosts"
+	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/install/tools"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
@@ -14,10 +14,10 @@ func PreCheck(node *ssh.Node) {
 	setAliRepo(node)
 	checkDistribution(node)
 	disableSELinuxAndSwap(node)
-	disableFireWalld(node)
+	disableFirewalld(node)
 }
 
-func disableFireWalld(node *ssh.Node) {
+func disableFirewalld(node *ssh.Node) {
 	_, _ = node.Cmd("systemctl stop firewalld")
 	_, _ = node.Cmd("systemctl disable firewalld")
 	_, _ = node.Cmd("systemctl stop iptables")
@@ -30,9 +30,9 @@ func support(node *ssh.Node) {
 		"CentOS 7",
 		"CentOS 8",
 	}
-	utils.Assert(node.ReleaseName != "unsupport", "unsupport system")
+	utils.Assert(node.Facts.ReleaseName != "unsupport", "unsupport system")
 	for _, s := range ss {
-		if fmt.Sprintf("%s %s", node.ReleaseName, node.MajorVersion) == s {
+		if fmt.Sprintf("%s %s", node.Facts.ReleaseName, node.Facts.MajorVersion) == s {
 			return
 		}
 	}
@@ -42,10 +42,10 @@ func support(node *ssh.Node) {
 func setAliRepo(node *ssh.Node) {
 	tools.Installs(node, "epel-release")
 
-	if tools.China {
-		repoUrl := fmt.Sprintf("http://mirrors.aliyun.com/repo/Centos-%s.repo", node.MajorVersion)
+	if paths.China {
+		repoUrl := fmt.Sprintf("http://mirrors.aliyun.com/repo/Centos-%s.repo", node.Facts.MajorVersion)
 		node.MustCmd("curl --silent -o /etc/yum.repos.d/CentOS-vik8s.repo " + repoUrl)
-		if node.MajorVersion == "7" {
+		if node.Facts.MajorVersion == "7" {
 			node.MustCmd("curl --silent -o /etc/yum.repos.d/epel.repo http://mirrors.aliyun.com/repo/epel-7.repo")
 		}
 	}
@@ -55,10 +55,7 @@ func setAliRepo(node *ssh.Node) {
 func checkDistribution(node *ssh.Node) {
 	v1, _ := version.NewVersion("4.1")
 	support(node)
-	v2, _ := version.NewVersion(node.KernelVersion)
-	if v1.GreaterThanOrEqual(v2) {
-		hosts.Remove(node.Hostname) //fixbug: 如果版本错误，删除本地管理，不然没办法安装
-	}
+	v2, _ := version.NewVersion(node.Facts.KernelVersion)
 	utils.Assert(v1.LessThanOrEqual(v2), "[%s,%s] The kernel version is too low, please upgrade the kernel first, "+
 		"your current version is: %s, the minimum requirement is %s", node.Address(), node.Hostname, v2.String(), v1.String())
 }
@@ -78,7 +75,7 @@ func InstallChronyServices(node *ssh.Node, timezone string, timeServices ...stri
 
 	node.MustCmd(fmt.Sprintf("rm -f /etc/localtime && cp -f %s /etc/localtime", filepath.Join("/usr/share/zoneinfo", timezone)))
 
-	if node.MajorVersion == "7" {
+	if node.Facts.MajorVersion == "7" {
 		tools.Install("chrony", "3.4", node) //fixbug 必须指定版本号，不然如何用户含有自己的repo会导致安装低版本出现问题
 	} else {
 		tools.Install("chrony", "", node)

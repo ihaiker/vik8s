@@ -4,6 +4,7 @@ import (
 	"fmt"
 	etcdcerts "github.com/ihaiker/vik8s/certs/etcd"
 	"github.com/ihaiker/vik8s/install"
+	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/install/repo"
 	"github.com/ihaiker/vik8s/install/tools"
 	"github.com/ihaiker/vik8s/libs/ssh"
@@ -23,7 +24,7 @@ func InitCluster(node *ssh.Node) {
 func makeAndPushCerts(node *ssh.Node) {
 	node.Logger("make certs files")
 	name := node.Hostname
-	dir := tools.Join("etcd", "pki")
+	dir := paths.Join("etcd", "pki")
 	sans := []string{"127.0.0.1", "localhost", node.Hostname, node.Host}
 	sans = append(sans, utils.ParseIPS(Config.Nodes)...)
 	sans = append(sans, Config.ServerCertExtraSans...)
@@ -57,7 +58,7 @@ func checkEtcdadm(node *ssh.Node) {
 	}
 	//etcdadm
 	{
-		local := tools.Join("etcd", "etcdadm")
+		local := paths.Join("etcd", "etcdadm")
 		if utils.NotExists(local) {
 			err = node.Pull(etcdadm, local)
 			utils.Panic(err, "pull etcdadm")
@@ -66,7 +67,7 @@ func checkEtcdadm(node *ssh.Node) {
 	//etcd.tar.gz
 	{
 		tar := fmt.Sprintf("etcd-v%s-linux-amd64.tar.gz", Config.Version)
-		local := tools.Join("etcd", tar)
+		local := paths.Join("etcd", tar)
 		if utils.Exists(local) {
 			remote := fmt.Sprintf("/var/cache/etcdadm/etcd/v%s/%s", Config.Version, tar)
 			err := node.Scp(local, remote)
@@ -77,7 +78,7 @@ func checkEtcdadm(node *ssh.Node) {
 
 func installEtcdadm(node *ssh.Node) string {
 	remoteBin := "/usr/local/bin/etcdadm"
-	localBin := tools.Join("etcd", "etcdadm")
+	localBin := paths.Join("etcd", "etcdadm")
 
 	if utils.NotExists(localBin) {
 		node.Logger("build etcdadm")
@@ -88,7 +89,7 @@ func installEtcdadm(node *ssh.Node) string {
 			source = repo.Etcdadm()
 		}
 		goProxy := ""
-		if tools.China {
+		if paths.China {
 			goProxy = `export GOPROXY="https://goproxy.io"`
 		}
 		shell := fmt.Sprintf(`
@@ -126,7 +127,7 @@ func etcdadmInit(master *ssh.Node) {
 	utils.Panic(err, "etcdadm init")
 
 	tar := fmt.Sprintf("etcd-v%s-linux-amd64.tar.gz", Config.Version)
-	local := tools.Join("etcd", tar)
+	local := paths.Join("etcd", tar)
 	if utils.NotExists(local) {
 		remote := fmt.Sprintf("/var/cache/etcdadm/etcd/v%s/%s", Config.Version, tar)
 		err = master.Pull(remote, local)

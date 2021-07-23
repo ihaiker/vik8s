@@ -9,6 +9,11 @@ import (
 	"strings"
 )
 
+func Logs(format string, args ...interface{}) {
+	fmt.Printf(format, args...)
+	fmt.Println()
+}
+
 func Line(format string, params ...interface{}) {
 	out := bytes.NewBuffer([]byte{})
 	_, _ = fmt.Fprint(out, strings.Repeat("- ", 15))

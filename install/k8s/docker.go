@@ -2,13 +2,12 @@ package k8s
 
 import (
 	"encoding/json"
-	"fmt"
+	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/install/repo"
 	"github.com/ihaiker/vik8s/install/tools"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/kvz/logstreamer"
-	"strings"
 )
 
 func daemonJson() map[string]interface{} {
@@ -21,7 +20,7 @@ func daemonJson() map[string]interface{} {
 		},
 		"registry-mirrors": []string{},
 	}
-	if tools.China {
+	if paths.China {
 		daemon["registry-mirrors"] = append(daemon["registry-mirrors"].([]string), []string{
 			"https://dockerhub.azk8s.cn",
 			"https://docker.mirrors.ustc.edu.cn",
@@ -50,15 +49,17 @@ func checkDocker(node *ssh.Node) {
 	_ = node.CmdStd("yum update -y systemd", logstreamer.NewLogstreamerForStdout(node.Hostname))
 
 	dockerVersion := node.MustCmd2String("rpm -qi docker-ce | grep Version | awk '{printf $3}'")
-	if dockerVersion != "" && (dockerVersion == Config.Docker.Version || !Config.Docker.CheckVersion) {
+	if dockerVersion != "" && (dockerVersion == Config.Docker.Version || !Config.Docker.StraitVersion) {
 		node.Logger("docker installd %s", dockerVersion)
 	} else {
 		node.Logger("install docker %s", dockerVersion)
 
-		tools.AddRepo(repo.Docker(), node)
+		tools.AddRepoFile("docker", repo.Docker(), node)
+
+		//TOME 这里的问题已经 Repo 中修复了，可以修改此处了, 2021-06-30
 		//install containerd.io
 		//TOME 多版本问题，docker镜像里面的最高版本1.2.0，在docker19.+最低版本要求 1.2.2
-		if node.ReleaseName == "CentOS" && node.MajorVersion == "8" {
+		/*if node.ReleaseName == "CentOS" && node.MajorVersion == "8" {
 			node.Logger("CentOS 8 check container.io")
 			//tools.Install("containerd.io", "1.2.10", node) 版本不在docker镜像里面
 			containerIO := node.MustCmd2String("rpm -qa | grep containerd.io || echo NOT_FOUND")
@@ -68,7 +69,7 @@ func checkDocker(node *ssh.Node) {
 				_, err := node.Cmd(fmt.Sprintf("yum install -y %s", repo.Containerd()))
 				utils.Panic(err, "install containerd.io")
 			}
-		}
+		}*/
 
 		tools.Install("docker-ce", Config.Docker.Version, node)
 		tools.Install("docker-ce-cli", Config.Docker.Version, node)

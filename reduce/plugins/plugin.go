@@ -1,7 +1,7 @@
 package plugins
 
 import (
-	"github.com/ihaiker/vik8s/install/tools"
+	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/ihaiker/vik8s/reduce/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -46,7 +46,7 @@ func (m *ReduceHandlers) Handler(version, prefix string, item *config.Directive)
 
 func plugins() []string {
 	files := make([]string, 0)
-	pluginDir := tools.Join("plugins", "reduce")
+	pluginDir := paths.Join("plugins", "reduce")
 	filepath.Walk(pluginDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err

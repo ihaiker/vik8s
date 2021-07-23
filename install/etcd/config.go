@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ihaiker/vik8s/install/hosts"
-	"github.com/ihaiker/vik8s/install/tools"
+	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"io/ioutil"
 	"os"
@@ -12,7 +12,7 @@ import (
 )
 
 type ETCD struct {
-	SSH hosts.SSH `json:"ssh"`
+	SSH hosts.Option `json:"ssh"`
 
 	Nodes               []string `json:"nodes,omitempty"`
 	Version             string   `json:"version,omitempty"`
@@ -28,7 +28,7 @@ type ETCD struct {
 }
 
 func (etcd *ETCD) Write() {
-	etcdConfig := tools.Join("etcd.json")
+	etcdConfig := paths.Join("etcd.json")
 
 	if len(Config.Nodes) == 0 {
 		_ = os.Remove(etcdConfig)
@@ -41,12 +41,12 @@ func (etcd *ETCD) Write() {
 		fmt.Println("Be sure to save the following content to " + etcdConfig + ", very important! very important! very important! 重要！重要！重要！")
 		fmt.Println(string(bs))
 	})
-	utils.Panic(os.MkdirAll(tools.Join(), os.ModePerm), "mkdir config file dir")
+	utils.Panic(os.MkdirAll(paths.Join(), os.ModePerm), "mkdir config file dir")
 	utils.Panic(ioutil.WriteFile(etcdConfig, bs, 0666), "write config file")
 }
 
 func (etcd *ETCD) MustRead() {
-	etcdConfigLoc := tools.Join("etcd.json")
+	etcdConfigLoc := paths.Join("etcd.json")
 
 	etcdConfigBytes, err := ioutil.ReadFile(etcdConfigLoc)
 	utils.Panic(err, "read etcd config file %s", etcdConfigLoc)
@@ -55,7 +55,7 @@ func (etcd *ETCD) MustRead() {
 	utils.Panic(err, "read etcd config file %s", etcdConfigLoc)
 }
 func (etcd *ETCD) Read() error {
-	etcdConfigLoc := tools.Join("etcd.json")
+	etcdConfigLoc := paths.Join("etcd.json")
 
 	etcdConfigBytes, err := ioutil.ReadFile(etcdConfigLoc)
 	if err != nil {

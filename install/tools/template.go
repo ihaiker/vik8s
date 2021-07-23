@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/base64"
+	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
 	yamls "github.com/ihaiker/vik8s/yaml"
@@ -56,7 +57,7 @@ func Template(content string, data interface{}, funcs ...template.FuncMap) *byte
 }
 
 func MustAssert(name string, data interface{}, funcs ...template.FuncMap) []byte {
-	localFile := Join(name)
+	localFile := paths.Join(name)
 
 	var templateFile []byte
 	if utils.Exists(localFile) {
