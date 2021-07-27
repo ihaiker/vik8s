@@ -2,7 +2,7 @@ package etcd
 
 import (
 	"fmt"
-	"github.com/ihaiker/vik8s/install"
+	"github.com/ihaiker/vik8s/install/bases"
 	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
@@ -18,7 +18,7 @@ func JoinCluster(node *ssh.Node) {
 	}
 	master := hosts.Get(Config.Nodes[0])
 
-	install.PreCheck(node)
+	bases.Check(node)
 	checkEtcdadm(node)
 	makeAndPushCerts(node)
 	etcdadmJoin(master, node)

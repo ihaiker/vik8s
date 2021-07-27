@@ -18,14 +18,8 @@ func Nodes() ssh.Nodes {
 }
 
 func Add(args ...string) ssh.Nodes {
-	ns, err := _manager.Add(args...)
-	utils.Panic(err, "add Nodes")
-	return ns
-}
-
-func GetAdd(args ...string) ssh.Nodes {
 	ns, err := _manager.GetAdd(args...)
-	utils.Panic(err, "add or get  Nodes")
+	utils.Panic(err, "add or get nodes")
 	return ns
 }
 
@@ -40,4 +34,10 @@ func Gets(args []string) (ns ssh.Nodes) {
 		ns = append(ns, Get(arg))
 	}
 	return
+}
+
+func MustGatheringFacts(ns ...*ssh.Node) {
+	for _, node := range ns {
+		utils.Panic(node.GatheringFacts(), "gathering facts %s", node.Host)
+	}
 }

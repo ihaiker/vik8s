@@ -2,6 +2,7 @@ package ssh
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/pkg/sftp"
@@ -223,6 +224,9 @@ func (conf *easySSHConfig) Run(command string) (out []byte, err error) {
 	if err = conf.Stream(command, func(stdout io.Reader) {
 		_, _ = io.Copy(stream, stdout)
 	}); err != nil {
+		if stream.Len() > 0 {
+			err = errors.New(stream.String())
+		}
 		return
 	}
 	out = stream.Bytes()
@@ -295,7 +299,7 @@ func (conf *easySSHConfig) Scp(sourceFilePath string, destFilePath string, bars 
 		defer dstFile.Close()
 
 		//processing
-		var bs []byte
+		bs := make([]byte, 1024)
 		var length int
 		fs, _ := srcFile.Stat()
 		total := fs.Size()
@@ -306,6 +310,9 @@ func (conf *easySSHConfig) Scp(sourceFilePath string, destFilePath string, bars 
 				if err == io.EOF {
 					break
 				}
+				return err
+			}
+			if _, err = dstFile.Write(bs[0:length]); err != nil {
 				return err
 			}
 			step += int64(length)

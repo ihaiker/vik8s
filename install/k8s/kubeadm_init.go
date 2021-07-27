@@ -2,7 +2,7 @@ package k8s
 
 import (
 	"fmt"
-	"github.com/ihaiker/vik8s/install"
+	"github.com/ihaiker/vik8s/install/bases"
 	"github.com/ihaiker/vik8s/install/etcd"
 	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/paths"
@@ -26,7 +26,7 @@ func InitCluster(node *ssh.Node) *ssh.Node {
 	{
 		setHosts(node, node.Host, Config.Kubernetes.ApiServer)
 		setHosts(node, node.Host, node.Hostname)
-		install.InstallChronyServices(node, Config.Timezone, Config.NTPServices...)
+		bases.InstallTimeServices(node, Config.Timezone, Config.NTPServices...)
 		makeCerts(node)
 		makeJoinControlPlaneConfigFiles(node)
 		initKubernetes(node)

@@ -1,12 +1,92 @@
 package ssh
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"io"
+	"os"
 	"strings"
 )
 
+func (node *Node) Cmd2(command string) error {
+	return node.CmdWatcher(command, func(stdout io.Reader) {})
+}
+
+func (node *Node) CmdWatcher(command string, watcher StreamWatcher) error {
+	node.Logger("run command: %s", command)
+	return node.easyssh().Stream(command, watcher)
+}
+func (node *Node) CmdOutput(command string, output io.Writer) error {
+	return node.CmdWatcher(command, func(stdout io.Reader) {
+		_, _ = io.Copy(output, stdout)
+	})
+}
+
+func (node *Node) CmdStdout(command string) error {
+	return node.CmdOutput(command, os.Stdout)
+}
+
+func (node *Node) CmdBytes(command string) (*bytes.Buffer, error) {
+	output := bytes.NewBufferString("")
+	err := node.CmdOutput(command, output)
+	return output, err
+}
+
+func (node *Node) CmdString(command string) (string, error) {
+	if outBytes, err := node.CmdBytes(command); err == nil {
+		out := outBytes.Bytes()
+		length := len(out)
+		if length > 0 && out[length-1] == '\n' {
+			out = out[0 : length-1]
+		}
+		return string(out), nil
+	} else {
+		return "", err
+	}
+}
+
+func (node *Node) SudoCmd(command string) error {
+	return node.SudoCmdWatcher(command, func(stdout io.Reader) {})
+}
+
+func (node *Node) SudoCmdWatcher(command string, watcher StreamWatcher) error {
+	if node.User != "root" {
+		command = "sudo " + command
+	}
+	return node.CmdWatcher(command, watcher)
+}
+
+func (node *Node) SudoCmdOutput(command string, output io.Writer) error {
+	return node.SudoCmdWatcher(command, func(stdout io.Reader) {
+		_, _ = io.Copy(output, stdout)
+	})
+}
+
+func (node *Node) SudoCmdStdout(command string) error {
+	return node.SudoCmdOutput(command, os.Stdout)
+}
+
+func (node *Node) SudoCmdBytes(command string) (*bytes.Buffer, error) {
+	output := bytes.NewBufferString("")
+	err := node.SudoCmdOutput(command, output)
+	return output, err
+}
+
+func (node *Node) SudoCmdString(command string) (string, error) {
+	if outBytes, err := node.SudoCmdBytes(command); err == nil {
+		out := outBytes.Bytes()
+		length := len(out)
+		if length > 0 && out[length-1] == '\n' {
+			out = out[0 : length-1]
+		}
+		return string(out), nil
+	} else {
+		return "", err
+	}
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 func (node *Node) MustCmd(cmd string, hide ...bool) {
 	_ = node.MustCmd2String(cmd, hide...)
 }

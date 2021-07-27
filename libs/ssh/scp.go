@@ -1,18 +1,43 @@
 package ssh
 
 import (
-	"github.com/cheggaaa/pb"
-	"github.com/ihaiker/vik8s/libs/utils"
+	"fmt"
+	"github.com/cheggaaa/pb/v3"
 	"os"
+	"path/filepath"
+	"strconv"
 	"time"
 )
 
-func (node *Node) ScpProgress(localPath, remotePath string) error {
-	return node.scp(localPath, remotePath, true)
+func (node *Node) SudoScp(localPath, remotePath string) error {
+	path := fmt.Sprintf("/tmp/vik8s/%s", filepath.Base(localPath))
+
+	if err := node.scp(localPath, path, true); err != nil {
+		return err
+	}
+	dir := filepath.Dir(remotePath)
+	if err := node.SudoCmd("mkdir -p " + dir); err != nil {
+		return err
+	}
+	return node.SudoCmd(fmt.Sprintf("mv %s %s", strconv.Quote(path), strconv.Quote(remotePath)))
+}
+
+func (node *Node) SudoScpContent(content []byte, remotePath string) error {
+	path := fmt.Sprintf("/tmp/vik8s/%s", filepath.Base(remotePath))
+
+	node.Logger("scp content to %s", path)
+	if err := node.ScpContent(content, path); err != nil {
+		return err
+	}
+	dir := filepath.Dir(remotePath)
+	if err := node.SudoCmd("mkdir -p " + dir); err != nil {
+		return err
+	}
+	return node.SudoCmd(fmt.Sprintf("mv %s %s", strconv.Quote(path), strconv.Quote(remotePath)))
 }
 
 func (node *Node) Scp(localPath, remotePath string) error {
-	return node.scp(localPath, remotePath, false)
+	return node.scp(localPath, remotePath, true)
 }
 
 func (node *Node) ScpContent(content []byte, remotePath string) error {
@@ -20,7 +45,6 @@ func (node *Node) ScpContent(content []byte, remotePath string) error {
 }
 
 func (node *Node) scp(localPath, remotePath string, showProgressBar bool) error {
-	node.Logger("scp %s %s", localPath, remotePath)
 
 	var bar *pb.ProgressBar
 	if showProgressBar {
@@ -28,7 +52,8 @@ func (node *Node) scp(localPath, remotePath string, showProgressBar bool) error 
 		defer bar.Finish()
 		bar.SetWriter(os.Stdout)
 		bar.SetRefreshRate(time.Millisecond * 300)
-		bar.Set(pb.Terminal, true)
+		bar.Set("prefix",
+			fmt.Sprintf("%s scp %s %s  ", node.Prefix(), localPath, remotePath))
 		bar.Start()
 	}
 
@@ -38,10 +63,6 @@ func (node *Node) scp(localPath, remotePath string, showProgressBar bool) error 
 			bar.SetCurrent(step)
 		}
 	})
-}
-
-func (node *Node) MustScpContent(content []byte, remotePath string) {
-	utils.Panic(node.ScpContent(content, remotePath), "scp %s", remotePath)
 }
 
 func (node *Node) Pull(remotePath, localPath string) error {

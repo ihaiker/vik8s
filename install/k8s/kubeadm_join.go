@@ -2,7 +2,7 @@ package k8s
 
 import (
 	"fmt"
-	"github.com/ihaiker/vik8s/install"
+	"github.com/ihaiker/vik8s/install/bases"
 	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
@@ -23,7 +23,7 @@ func JoinControl(node *ssh.Node) {
 	node.Logger("join control-plane")
 
 	setNodeHosts(node)
-	install.InstallChronyServices(node, Config.Timezone, master.Host)
+	bases.InstallTimeServices(node, Config.Timezone, master.Host)
 	setApiServerHosts(node)
 	setIpvsadmApiServer(master, node)
 	makeCerts(node)
@@ -50,7 +50,7 @@ func JoinWorker(node *ssh.Node) {
 	node.Logger("join worker")
 
 	setNodeHosts(node)
-	install.InstallChronyServices(node, Config.Timezone, master.Host)
+	bases.InstallTimeServices(node, Config.Timezone, master.Host)
 	setApiServerHosts(node)
 	setIpvsadmApiServer(master, node)
 	makeWorkerConfigFiles(node)

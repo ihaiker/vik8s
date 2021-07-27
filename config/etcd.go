@@ -6,7 +6,7 @@ import (
 
 type ETCD struct {
 	Nodes               []string `flag:"-"`
-	Version             string   `def:"3.3.8" help:"etcd version"`
+	Version             string   `def:"3.4.13" help:"etcd version"`
 	ServerCertExtraSans []string `help:"optional extra Subject Alternative Names for the etcd server signing cert, can be multiple comma separated DNS names or IPs"`
 
 	CertsValidity time.Duration `def:"4y" help:"Certificate validity time"`

@@ -3,7 +3,7 @@ module github.com/ihaiker/vik8s
 go 1.15
 
 require (
-	github.com/cheggaaa/pb v2.0.7+incompatible
+	github.com/cheggaaa/pb/v3 v3.0.8
 	github.com/hashicorp/go-version v1.2.0
 	github.com/ihaiker/cobrax v1.2.5
 	github.com/ihaiker/ngx/v2 v2.0.6

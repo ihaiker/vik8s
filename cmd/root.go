@@ -36,6 +36,16 @@ func hostsLoad(fn func(cmd *cobra.Command, args []string) error) func(cmd *cobra
 	}
 }
 
+//configDown the configuration save it.
+func configDown(fn func(cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		if err := config.Config.Write(); err != nil {
+			return err
+		}
+		return fn(cmd, args)
+	}
+}
+
 func none(cmd *cobra.Command, args []string) error {
 	return nil
 }

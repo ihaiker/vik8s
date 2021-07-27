@@ -1,8 +1,8 @@
 package k8s
 
 import (
+	"github.com/ihaiker/vik8s/install/bases"
 	"github.com/ihaiker/vik8s/install/repo"
-	"github.com/ihaiker/vik8s/install/tools"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
 )
@@ -38,21 +38,21 @@ net.ipv4.ip_forward=1
 func installKubeletAndKubeadm(node *ssh.Node) {
 	utils.Line("Install kubelet & kubeadm")
 
-	tools.Install("ethtool", "", node)
+	bases.Install("ethtool", "", node)
 
 	switch node.Facts.MajorVersion {
 	case "7":
-		tools.Install("ebtables", "", node)
+		bases.Install("ebtables", "", node)
 	case "8":
-		tools.Install("iptables-ebtables", "", node)
-		tools.Install("iproute-tc", "", node)
+		bases.Install("iptables-ebtables", "", node)
+		bases.Install("iproute-tc", "", node)
 	}
 
-	tools.Install("bash-completion", "", node)
-	tools.Install("ipvsadm", "", node)
-	tools.Install("ipset", "", node)
-	tools.Install("kubelet", Config.Kubernetes.Version, node)
-	tools.Install("kubeadm", Config.Kubernetes.Version, node)
+	bases.Install("bash-completion", "", node)
+	bases.Install("ipvsadm", "", node)
+	bases.Install("ipset", "", node)
+	bases.Install("kubelet", Config.Kubernetes.Version, node)
+	bases.Install("kubeadm", Config.Kubernetes.Version, node)
 
 	_, _ = node.Cmd("systemctl enable ipvsadm")
 	_, _ = node.Cmd("systemctl enable kubelet")

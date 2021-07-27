@@ -27,11 +27,15 @@ func Stdout(name string) func(reader io.Reader) {
 	return func(reader io.Reader) {
 		r := bufio.NewReader(reader)
 		for {
-			line, _, err := r.ReadLine()
+			line, isPrefix, err := r.ReadLine()
 			if err != nil {
 				return
 			}
-			fmt.Println(name, string(line))
+			if isPrefix {
+				fmt.Print(string(line))
+			} else {
+				fmt.Println(name, string(line))
+			}
 		}
 	}
 }

@@ -3,7 +3,7 @@ package cmd
 import (
 	"github.com/ihaiker/cobrax"
 	"github.com/ihaiker/vik8s/config"
-	"github.com/ihaiker/vik8s/cri/docker"
+	"github.com/ihaiker/vik8s/install/cri/docker"
 	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/spf13/cobra"

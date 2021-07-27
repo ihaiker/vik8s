@@ -5,6 +5,7 @@ import (
 	"github.com/ihaiker/vik8s/libs/utils"
 	"gopkg.in/fatih/color.v1"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -51,31 +52,42 @@ func (node *Node) easyssh() *easySSHConfig {
 }
 
 func (node *Node) GatheringFacts() error {
-	if hostname, err := node.cmd("hostname -s", false); err != nil {
+	if hostname, err := node.SudoCmdString("hostname -s"); err != nil {
 		return err
 	} else {
-		node.Hostname = string(hostname)
+		node.Hostname = hostname
 	}
-	if distribution, err := node.cmd("uname -r", false); err != nil {
+
+	envMaps := make(map[string]string)
+	if envs, err := node.SudoCmdString("cat /etc/os-release"); err != nil {
 		return err
 	} else {
-		if strings.Index(string(distribution), "el7") != -1 {
-			node.Facts.MajorVersion = "7"
-		} else if strings.Index(string(distribution), "el8") != -1 {
-			node.Facts.MajorVersion = "8"
+		envLines := strings.Split(envs, "\n")
+		for _, envLine := range envLines {
+			keyAndVal := strings.Split(envLine, "=")
+			if unquoteValue, err := strconv.Unquote(keyAndVal[1]); err == nil {
+				envMaps[keyAndVal[0]] = unquoteValue
+			} else {
+				envMaps[keyAndVal[0]] = keyAndVal[1]
+			}
 		}
-		node.Facts.KernelVersion = strings.Split(string(distribution), "-")[0]
 	}
-	if releaseName, err := node.cmd("cat /etc/redhat-release  | awk '{printf $1}'", false); err != nil {
+	node.Facts.ReleaseName = envMaps["ID"]
+	node.Facts.MajorVersion = envMaps["VERSION_ID"]
+	distribution, err := node.SudoCmdBytes("uname -r")
+	if err != nil {
 		return err
-	} else {
-		node.Facts.ReleaseName = string(releaseName)
 	}
+	node.Facts.KernelVersion = strings.Split(distribution.String(), "-")[0]
 	return nil
 }
 
-func (node *Node) Address() string {
-	return fmt.Sprintf("%s:%s", node.Host, node.Port)
+func (node *Node) IsUbuntu() bool {
+	return strings.ToLower(node.Facts.ReleaseName) == "ubuntu"
+}
+
+func (node *Node) IsCentOS() bool {
+	return strings.ToLower(node.Facts.ReleaseName) == "centos"
 }
 
 func (node *Node) HomeDir(join ...string) string {
@@ -90,8 +102,16 @@ func (node *Node) Vik8s(join ...string) string {
 	return node.HomeDir(append([]string{".vik8s"}, join...)...)
 }
 
+func (node *Node) Prefix() string {
+	addr := fmt.Sprintf("%s:%s", node.Host, node.Port)
+	if node.Hostname != "" {
+		addr = node.Hostname
+	}
+	return fmt.Sprintf("[%s@%s]", color.RedString(node.User), color.HiGreenString(addr))
+}
+
 func (node *Node) Logger(format string, params ...interface{}) {
-	fmt.Printf("[%s,%s] ", color.RedString(node.Hostname), color.HiGreenString(node.Address()))
+	fmt.Print(node.Prefix(), " ")
 	fmt.Printf(format, params...)
 	fmt.Println()
 }

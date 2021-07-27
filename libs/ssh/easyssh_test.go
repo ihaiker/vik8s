@@ -14,11 +14,10 @@ func getConfig(prefix string) *sshConfig {
 	port := os.Getenv(prefix + "PORT")
 	user := os.Getenv(prefix + "USER")
 	password := os.Getenv(prefix + "PASSWORD")
+	privateKey := os.Getenv(prefix + "PRIVATEKEY")
 	return &sshConfig{
-		User:     user,
-		Server:   host,
-		Port:     port,
-		Password: password,
+		User: user, Server: host, Port: port,
+		Password: password, KeyPath: privateKey,
 	}
 }
 

@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/ihaiker/vik8s/cni"
+	"github.com/ihaiker/vik8s/install/cni"
 	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/k8s"
 	"github.com/peterh/liner"

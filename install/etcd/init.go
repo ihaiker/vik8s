@@ -3,10 +3,10 @@ package etcd
 import (
 	"fmt"
 	etcdcerts "github.com/ihaiker/vik8s/certs/etcd"
-	"github.com/ihaiker/vik8s/install"
+	"github.com/ihaiker/vik8s/install/bases"
+	"github.com/ihaiker/vik8s/install/cri"
 	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/install/repo"
-	"github.com/ihaiker/vik8s/install/tools"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"os"
@@ -14,7 +14,13 @@ import (
 )
 
 func InitCluster(node *ssh.Node) {
-	install.PreCheck(node)
+	node.Logger("install etcd server")
+	bases.Check(node)
+	cri.Install(node)
+	if true {
+		return
+	}
+
 	checkEtcdadm(node)
 	makeAndPushCerts(node)
 	etcdadmInit(node)
@@ -82,8 +88,8 @@ func installEtcdadm(node *ssh.Node) string {
 
 	if utils.NotExists(localBin) {
 		node.Logger("build etcdadm")
-		tools.Install("git", "", node)
-		tools.Install("golang", "", node)
+		bases.Install("git", "", node)
+		bases.Install("golang", "", node)
 		source := Config.Source
 		if source == "" {
 			source = repo.Etcdadm()
@@ -102,7 +108,7 @@ mv -f etcdadm %s`, source, goProxy, remoteBin)
 		err := node.ShellChannel(shell, utils.Stdout(node.Hostname))
 		utils.Panic(err, "make etcdadm")
 	} else {
-		err := node.ScpProgress(localBin, remoteBin)
+		err := node.Scp(localBin, remoteBin)
 		utils.Panic(err, "scp etcdadm")
 		node.MustCmd(fmt.Sprintf("chmod +x %s", remoteBin))
 	}

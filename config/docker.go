@@ -29,7 +29,8 @@ type DockerConfiguration struct {
 	Hosts         []string `ngx:"hosts" help:"Daemon socket(s) to connect to"`
 	DaemonJson    string   `ngx:"daemon-json" help:"docker cfg file, if set this option, other option will ignore."`
 
-	RegistryMirrors []string `ngx:"registry-mirrors" help:"preferred DockerConfiguration registry mirror"`
+	InsecureRegistries []string `help:"it replaces the daemon insecure registries with a new set of insecure registries."`
+	RegistryMirrors    []string `ngx:"registry-mirrors" help:"preferred DockerConfiguration registry mirror"`
 
 	Storage *DockerStorage `ngx:"storage" flag:"storage"`
 	DNS     *DockerDNS     `flag:"dns" ngx:"dns" `

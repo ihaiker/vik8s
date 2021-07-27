@@ -86,6 +86,17 @@ func (this *defaultManager) All() ssh.Nodes {
 	return this.Nodes
 }
 
+func (this *defaultManager) getProxy(node *ssh.Node) error {
+	if node.Proxy != "" {
+		if proxyNode := this.Get(node.Proxy); proxyNode == nil {
+			return utils.Error("the ssh proxy %s not found", node.Proxy)
+		} else {
+			node.ProxyNode = proxyNode
+		}
+	}
+	return nil
+}
+
 func (this *defaultManager) addOrGet(onlyAdd bool, args ...string) (ns ssh.Nodes, err error) {
 
 	if onlyAdd { //如果是添加，检查参数的有效性
@@ -108,6 +119,9 @@ func (this *defaultManager) addOrGet(onlyAdd bool, args ...string) (ns ssh.Nodes
 				return
 			}
 			if node != nil { //查找到了，直接进入下一个
+				if err = this.getProxy(node); err != nil {
+					return
+				}
 				ns = append(ns, node)
 				continue
 			}
@@ -169,14 +183,10 @@ func (this *defaultManager) addOrGet(onlyAdd bool, args ...string) (ns ssh.Nodes
 			node.Passphrase = this.opts.Passphrase
 			node.Proxy = proxy
 
-			if proxy != "" {
-				if proxyNode := this.Get(proxy); proxyNode == nil {
-					err = utils.Error("the ssh proxy %s not found", proxy)
-					return
-				} else {
-					node.ProxyNode = proxyNode
-				}
+			if err = this.getProxy(node); err != nil {
+				return
 			}
+
 			if this.gatherFacts {
 				utils.Panic(node.GatheringFacts(), "connect host error")
 			}
