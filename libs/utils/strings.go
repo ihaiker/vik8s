@@ -75,6 +75,14 @@ func FirstLine(content string) string {
 	return strings.Split(content, "\n")[0]
 }
 
+// tr -d '\n'
+func Trdn(bs []byte) []byte {
+	if length := len(bs); length > 0 && bs[length-1] == '\n' {
+		return bs[:length-1]
+	}
+	return bs
+}
+
 func Match(str string, patterns ...string) bool {
 	for _, pattern := range patterns {
 		if regexp.MustCompile(pattern).MatchString(str) {

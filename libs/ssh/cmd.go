@@ -35,11 +35,7 @@ func (node *Node) CmdBytes(command string) (*bytes.Buffer, error) {
 
 func (node *Node) CmdString(command string) (string, error) {
 	if outBytes, err := node.CmdBytes(command); err == nil {
-		out := outBytes.Bytes()
-		length := len(out)
-		if length > 0 && out[length-1] == '\n' {
-			out = out[0 : length-1]
-		}
+		out := utils.Trdn(outBytes.Bytes())
 		return string(out), nil
 	} else {
 		return "", err
@@ -75,11 +71,7 @@ func (node *Node) SudoCmdBytes(command string) (*bytes.Buffer, error) {
 
 func (node *Node) SudoCmdString(command string) (string, error) {
 	if outBytes, err := node.SudoCmdBytes(command); err == nil {
-		out := outBytes.Bytes()
-		length := len(out)
-		if length > 0 && out[length-1] == '\n' {
-			out = out[0 : length-1]
-		}
+		out := utils.Trdn(outBytes.Bytes())
 		return string(out), nil
 	} else {
 		return "", err

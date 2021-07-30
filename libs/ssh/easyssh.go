@@ -2,7 +2,6 @@ package ssh
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/pkg/sftp"
@@ -205,16 +204,23 @@ func (conf *easySSHConfig) Stream(command string, watch StreamWatcher) (err erro
 	defer client.Close()
 	defer session.Close()
 
-	reader, writer := io.Pipe()
-	defer reader.Close()
-	defer writer.Close()
-	session.Stderr = writer
-	session.Stdout = writer
-	go watch(reader)
-	if err := session.Start(command); err != nil {
-		return err
+	stdout, _ := session.StdoutPipe()
+	stderr, _ := session.StderrPipe()
+	go watch(stdout)
+
+	if err = session.Start(command); err != nil {
+		return
 	}
-	err = session.Wait()
+	if err = session.Wait(); err != nil {
+		errBytes, _ := ioutil.ReadAll(stderr)
+		if exitErr, match := err.(*ssh.ExitError); match {
+			if len(errBytes) > 0 {
+				err = utils.Wrap(err, string(utils.Trdn(errBytes)))
+			} else {
+				err = utils.Error("exit %v: %v", exitErr.ExitStatus(), string(utils.Trdn([]byte(exitErr.Msg()))))
+			}
+		}
+	}
 	return
 }
 
@@ -224,16 +230,9 @@ func (conf *easySSHConfig) Run(command string) (out []byte, err error) {
 	if err = conf.Stream(command, func(stdout io.Reader) {
 		_, _ = io.Copy(stream, stdout)
 	}); err != nil {
-		if stream.Len() > 0 {
-			err = errors.New(stream.String())
-		}
 		return
 	}
-	out = stream.Bytes()
-	length := len(out)
-	if length > 0 && out[length-1] == '\n' {
-		out = out[0 : length-1]
-	}
+	out = utils.Trdn(stream.Bytes())
 	return
 }
 

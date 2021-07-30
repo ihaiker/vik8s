@@ -5,12 +5,22 @@ import (
 	"crypto/x509"
 	"fmt"
 	"github.com/ihaiker/vik8s/certs"
+	"github.com/ihaiker/vik8s/libs/logs"
 	"github.com/ihaiker/vik8s/libs/utils"
+	"github.com/sirupsen/logrus"
 	"time"
 )
 
+var log = logs.NewLogger("cert", func(hook *logs.FieldsHook, logger *logrus.Logger) {
+	logger.WithField("module", "etcd")
+	logger.SetFormatter(&logs.Formatter{
+		TimestampFormat: "[2006-01-02 15:04:05.000]",
+		HideCaller:      false, HideKeys: true, HideLevel: false,
+	})
+})
+
 func line(name, format string, params ...interface{}) {
-	fmt.Printf("[cert][etcd][%s] %s \n", name, fmt.Sprintf(format, params...))
+	log.Debugf("[cert][etcd][%s] %s \n", name, fmt.Sprintf(format, params...))
 }
 
 type createAction func(name, dir string, sans []string, certificateValidity time.Duration)

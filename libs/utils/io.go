@@ -4,6 +4,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 )
 
 func NotExists(path string) bool {
@@ -26,14 +27,21 @@ func Mkdir(dest string) error {
 }
 
 func Copy(src, dest string) (err error) {
-	var input io.ReadCloser
-	var output io.WriteCloser
-
 	if NotExists(src) {
 		return Error("file not found: %s", src)
 	}
+	if err = os.MkdirAll(filepath.Dir(dest), 0666); err != nil {
+		return
+	}
 
-	if output, err = os.OpenFile(dest, os.O_RDWR|os.O_CREATE, 0666); err != nil {
+	var fs os.FileInfo
+	if fs, err = os.Stat(dest); err != nil {
+		return
+	}
+
+	var input io.ReadCloser
+	var output io.WriteCloser
+	if output, err = os.OpenFile(dest, os.O_RDWR|os.O_CREATE, fs.Mode()); err != nil {
 		return Error("open file %s", dest)
 	}
 
@@ -45,4 +53,10 @@ func Copy(src, dest string) (err error) {
 		return Error("copy file, from %s to %s", src, dest)
 	}
 	return
+}
+
+func Copyto(src, destPath string) (string, error) {
+	name := filepath.Base(src)
+	dest := filepath.Join(destPath, name)
+	return dest, Copy(src, dest)
 }

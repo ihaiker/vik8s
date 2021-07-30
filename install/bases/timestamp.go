@@ -9,7 +9,7 @@ import (
 
 func InstallTimeServices(node *ssh.Node, timezone string, timeServices ...string) {
 	defer func() {
-		EnableAndStartService("chronyd", node)
+		EnableAndStartService("chronyd", true, node)
 		node.MustCmd("chronyc -a makestep")
 	}()
 	node.MustCmd(fmt.Sprintf("rm -f /etc/localtime && cp -f %s /etc/localtime", filepath.Join("/usr/share/zoneinfo", timezone)))

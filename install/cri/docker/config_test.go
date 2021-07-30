@@ -31,20 +31,16 @@ func (t *TestDockerSuite) TestEnableTLS() {
 	err := Config(cfg)
 	t.Nil(err)
 	t.False(cfg.TLS.Custom)
-	t.FileExists(cfg.TLS.CaPrivateKey, "ca key not gen")
-	t.FileExists(cfg.TLS.CaCert, "ca key not gen")
-	t.FileExists(cfg.TLS.ServerKey, "server key not gen")
-	t.FileExists(cfg.TLS.ServerCert, "server cert not gen")
-	t.FileExists(cfg.TLS.ClientKey, "client key not gen")
-	t.FileExists(cfg.TLS.ClientCert, "client cert not gen")
+	t.FileExists(cfg.TLS.CaPrivateKeyPath, "ca key not gen")
+	t.FileExists(cfg.TLS.CaCertPath, "ca key not gen")
+	t.FileExists(cfg.TLS.ClientKeyPath, "client key not gen")
+	t.FileExists(cfg.TLS.ClientCertPath, "client cert not gen")
 }
 
 func (t *TestDockerSuite) TestEnableCustomTLS() {
 	cfg := config.DefaultDockerConfiguration()
 	cfg.TLS.Enable = true
-	cfg.TLS.CaCert = paths.Join(DockerCertsPath, "ca.pem")
-	cfg.TLS.ServerCert = paths.Join(DockerCertsPath, "server.pem")
-	cfg.TLS.ServerKey = paths.Join(DockerCertsPath, "server-key.pem")
+	cfg.TLS.CaCertPath = paths.Join(DockerCertsPath, "ca.pem")
 
 	err := Config(cfg)
 	t.Nil(err)

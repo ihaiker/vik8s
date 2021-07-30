@@ -2,11 +2,13 @@ package docker
 
 import (
 	"encoding/json"
+	dockercerts "github.com/ihaiker/vik8s/certs/docker"
 	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/install/bases"
 	"github.com/ihaiker/vik8s/install/repo"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
+	"strings"
 )
 
 //https://docs.docker.com/config/daemon/
@@ -25,9 +27,19 @@ func daemonJson(node *ssh.Node, cfg *config.DockerConfiguration) []byte {
 		"exec-opts": []string{"native.cgroupdriver=systemd"},
 		"data-root": cfg.DataRoot,
 	}
+
+	if idx := utils.Search(cfg.Hosts, "fd://"); idx == -1 {
+		cfg.Hosts = append(cfg.Hosts, "fd://")
+	}
+	for i, host := range cfg.Hosts { //设置本地IP
+		if strings.Contains(host, "{IP}") {
+			cfg.Hosts[i] = strings.Replace(host, "{IP}", node.Host, 1)
+		}
+	}
 	if cfg.Hosts != nil {
 		daemon["hosts"] = cfg.Hosts
 	}
+
 	if cfg.RegistryMirrors != nil {
 		daemon["registry-mirrors"] = cfg.RegistryMirrors
 	}
@@ -44,15 +56,28 @@ func daemonJson(node *ssh.Node, cfg *config.DockerConfiguration) []byte {
 		daemon["dns-opts"] = cfg.DNS.Opt
 		daemon["dns-search"] = cfg.DNS.Search
 	}
+
 	if cfg.TLS != nil {
-		err := node.SudoScp(cfg.TLS.CaCert, "/etc/docker/certs.d/ca.pem")
-		utils.Panic(err, "upload cert file error: %s", cfg.TLS.CaCert)
+		err := node.SudoScp(cfg.TLS.CaCertPath, "/etc/docker/certs.d/ca.pem")
+		utils.Panic(err, "upload cert file error: %s", cfg.TLS.CaCertPath)
 
-		err = node.SudoScp(cfg.TLS.ServerKey, "/etc/docker/certs.d/key.pem")
-		utils.Panic(err, "upload cert file error: %s", cfg.TLS.ServerKey)
+		if cfg.TLS.ServerKeyPath != "" {
+			err = node.SudoScp(cfg.TLS.ServerKeyPath, "/etc/docker/certs.d/key.pem")
+			utils.Panic(err, "upload cert file error: %s", cfg.TLS.ServerKeyPath)
 
-		err = node.SudoScp(cfg.TLS.ServerCert, "/etc/docker/certs.d/cert.pem")
-		utils.Panic(err, "upload cert file error: %s", cfg.TLS.ServerCert)
+			err = node.SudoScp(cfg.TLS.ServerCertPath, "/etc/docker/certs.d/cert.pem")
+			utils.Panic(err, "upload cert file error: %s", cfg.TLS.ServerCertPath)
+
+		} else {
+			serverCertPath, serverKeyPath, err := dockercerts.GenerateServerCertificates(node, cfg.TLS)
+			utils.Panic(err, "generate server certificates")
+
+			err = node.SudoScp(serverKeyPath, "/etc/docker/certs.d/key.pem")
+			utils.Panic(err, "upload cert file error: %s", serverKeyPath)
+
+			err = node.SudoScp(serverCertPath, "/etc/docker/certs.d/cert.pem")
+			utils.Panic(err, "upload cert file error: %s", serverCertPath)
+		}
 
 		daemon["tls"] = true
 		daemon["tlscacert"] = "/etc/docker/certs.d/ca.pem"
@@ -65,17 +90,6 @@ func daemonJson(node *ssh.Node, cfg *config.DockerConfiguration) []byte {
 }
 
 func installCentOS(cfg *config.DockerConfiguration, node *ssh.Node, china bool) {
-	defer func() {
-		if e := recover(); e == nil {
-			bases.EnableAndStartService("docker", node)
-			//BUGFIX 如果 Node 上安装的 Docker 版本大于 1.12，那么 Docker 会把默认的 iptables FORWARD 策略改为 DROP。
-			//转发丢弃, 这会引发 Pod 网络访问的问题
-			utils.Panic(node.SudoCmd("iptables -P FORWARD ACCEPT"),
-				"open iptables role")
-		} else {
-			panic(e) //继续向下抛
-		}
-	}()
 
 	dockerVersion, err := bases.GetPackageVersion(node, "docker-ce")
 	utils.Panic(err, "get docker version")
@@ -97,19 +111,63 @@ func installCentOS(cfg *config.DockerConfiguration, node *ssh.Node, china bool) 
 	err = node.SudoCmd("mkdir -p /etc/docker")
 	utils.Panic(err, "make docker configuration folder")
 
+	daemonJsonPath := "/etc/docker/daemon.json"
+	daemonChange, serviceChange := false, false
 	if cfg.DaemonJson != "" {
-		err = node.SudoScp(cfg.DaemonJson, "/etc/docker/daemon.json")
-		utils.Panic(err, "scp daemon.json")
+		if daemonChange = !node.Equal(cfg.DaemonJson, daemonJsonPath); daemonChange {
+			err = node.SudoScp(cfg.DaemonJson, daemonJsonPath)
+			utils.Panic(err, "scp daemon.json")
+		}
 	} else {
 		bs := daemonJson(node, cfg)
-		err := node.SudoScpContent(bs, "/etc/docker/daemon.json")
-		utils.Panic(err, "scp daemon.json")
+		if daemonChange = !node.Equal(bs, daemonJsonPath); daemonChange {
+			err = node.SudoScpContent(bs, daemonJsonPath)
+			utils.Panic(err, "scp daemon.json")
+		}
 	}
 
-	serviceConfig := `[Service]
-ExecStart=/usr/bin/dockerd -H fd:// -H tcp://0.0.0.0:2375 --containerd=/run/containerd/containerd.sock`
-	err = node.SudoScpContent([]byte(serviceConfig), "/etc/systemd/system/docker.service.d/hosts.conf")
-	utils.Panic(err, "scp systemctl append file ")
+	serviceConfig := `
+[Unit]
+Description=Docker Application Container Engine
+Documentation=https://docs.docker.com
+After=network-online.target firewalld.service containerd.service
+Wants=network-online.target
+Requires=docker.socket containerd.service
+[Service]
+Type=notify
+ExecStart=/usr/bin/dockerd --containerd=/run/containerd/containerd.sock
+ExecReload=/bin/kill -s HUP $MAINPID
+TimeoutSec=0
+RestartSec=2
+Restart=always
+StartLimitBurst=3
+StartLimitInterval=60s
+LimitNOFILE=infinity
+LimitNPROC=infinity
+LimitCORE=infinity
+TasksMax=infinity
+Delegate=yes
+KillMode=process
+OOMScoreAdjust=-500
+
+[Install]
+WantedBy=multi-user.target
+`
+	dockerServicePath := "/usr/lib/systemd/system/docker.service"
+	if serviceChange = !node.Equal([]byte(serviceConfig), dockerServicePath); serviceChange {
+		err = node.SudoScpContent([]byte(serviceConfig), dockerServicePath)
+		utils.Panic(err, "scp systemctl append file ")
+
+		err = node.SudoCmd("systemctl daemon-reload")
+		utils.Panic(err, "reload daemon")
+	}
+
+	bases.EnableAndStartService("docker", daemonChange || serviceChange, node)
+
+	//BUGFIX 如果 Node 上安装的 Docker 版本大于 1.12，那么 Docker 会把默认的 iptables FORWARD 策略改为 DROP。
+	//转发丢弃, 这会引发 Pod 网络访问的问题
+	utils.Panic(node.SudoCmd("iptables -P FORWARD ACCEPT"), "open iptables role")
+
 }
 
 func installUbuntu(cfg *config.DockerConfiguration, node *ssh.Node, china bool) {

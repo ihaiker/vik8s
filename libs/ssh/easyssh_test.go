@@ -22,16 +22,17 @@ func getConfig(prefix string) *sshConfig {
 }
 
 func TestSSH(t *testing.T) {
-	conf := getConfig("SSH_TEST_PROXY_")
+	conf := getConfig("SSH_FACTS_")
 	if conf == nil {
 		t.Log("skip ssh test. no config")
 		return
 	}
 	con := &easySSHConfig{sshConfig: *conf}
-	stdout, err := con.Run("hostname")
+	stdout, err := con.Run("sudo systemctl stop iptables")
+	t.Log(err)
 	assert.Nil(t, err)
 	assert.NotEmpty(t, stdout)
-	t.Log(stdout)
+	t.Log(string(stdout))
 }
 
 func TestProxySSH(t *testing.T) {

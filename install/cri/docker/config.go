@@ -17,36 +17,32 @@ func dockerGenCert(this *config.DockerConfiguration) (err error) {
 	if this.TLS != nil && this.TLS.Enable {
 		destDir := paths.Join(DockerCertsPath)
 
-		this.TLS.Custom = this.TLS.CaCert != ""
+		//用户使用自己定义的证书文件
+		this.TLS.Custom = this.TLS.CaCertPath != ""
 
 		if !this.TLS.Custom {
 			utils.Logs("generator docker certs")
-			if this.TLS, err = dockercerts.GenerateCertificate(destDir); err != nil {
+			if this.TLS, err = dockercerts.GenerateBootstrapCertificates(destDir); err != nil {
 				return err
 			}
 			this.TLS.Enable = true
 		}
 
-		if !strings.HasPrefix(this.TLS.CaCert, destDir) {
-			utils.Logs("copys cert files to .vik8s")
-			caPath := filepath.Join(destDir, "ca.pem")
-			if err := utils.Copy(this.TLS.CaCert, caPath); err != nil {
-				return err
+		if !strings.HasPrefix(this.TLS.CaCertPath, destDir) {
+			utils.Logs("copy certificates files to .vik8s")
+			if this.TLS.CaCertPath, err = utils.Copyto(this.TLS.CaCertPath, destDir); err != nil {
+				return
 			}
-			this.TLS.CaCert = caPath
-
-			certPath := filepath.Join(destDir, "cert.pem")
-			if err := utils.Copy(this.TLS.ServerCert, certPath); err != nil {
-				return err
+			if this.TLS.ClientKeyPath, err = utils.Copyto(this.TLS.ClientKeyPath, destDir); err != nil {
+				return
 			}
-			this.TLS.ServerCert = certPath
-
-			keyPath := filepath.Join(destDir, "key.pem")
-			if err := utils.Copy(this.TLS.ServerKey, keyPath); err != nil {
-				return err
+			if this.TLS.ClientCertPath, err = utils.Copyto(this.TLS.ClientCertPath, destDir); err != nil {
+				return
 			}
-			this.TLS.ServerKey = keyPath
 		}
+		_ = os.Symlink(this.TLS.CaCertPath, filepath.Join(destDir, "ca.pem"))
+		_ = os.Symlink(this.TLS.ClientKeyPath, filepath.Join(destDir, "key.pem"))
+		_ = os.Symlink(this.TLS.ClientCertPath, filepath.Join(destDir, "cert.pem"))
 	}
 	return
 }

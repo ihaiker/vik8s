@@ -20,6 +20,9 @@ func setRepo(node *ssh.Node) {
 	utils.Panic(err, "send /etc/yum.repos.d/kubernetes.repo")
 }
 func sysctl(node *ssh.Node) {
+	//sysctl -w "net.netfilter.nf_conntrack_tcp_be_liberal=1"
+	//https://juejin.cn/post/6976101827179708453
+
 	err := node.ScpContent([]byte(`
 net.bridge.bridge-nf-call-ip6tables=1
 net.bridge.bridge-nf-call-iptables=1

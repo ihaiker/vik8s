@@ -64,7 +64,7 @@ func (node *Node) GatheringFacts() error {
 	} else {
 		envLines := strings.Split(envs, "\n")
 		for _, envLine := range envLines {
-			keyAndVal := strings.Split(envLine, "=")
+			keyAndVal := strings.SplitN(envLine, "=", 2)
 			if unquoteValue, err := strconv.Unquote(keyAndVal[1]); err == nil {
 				envMaps[keyAndVal[0]] = unquoteValue
 			} else {
