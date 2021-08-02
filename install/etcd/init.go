@@ -3,6 +3,7 @@ package etcd
 import (
 	"fmt"
 	etcdcerts "github.com/ihaiker/vik8s/certs/etcd"
+	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/install/bases"
 	"github.com/ihaiker/vik8s/install/cri"
 	"github.com/ihaiker/vik8s/install/paths"
@@ -17,24 +18,30 @@ func InitCluster(node *ssh.Node) {
 	node.Logger("install etcd server")
 	bases.Check(node)
 	cri.Install(node)
-	if true {
-		return
-	}
-
-	checkEtcdadm(node)
+	pullContainerImage(node)
 	makeAndPushCerts(node)
-	etcdadmInit(node)
-	Config.Join(node.Host)
+}
+
+func pullContainerImage(node *ssh.Node) {
+	var err error
+	if config.Config.Docker != nil {
+		dockerUrl := fmt.Sprintf("docker pull %s/%s:%s", repo.QuayIO(""), "coreos/etcd", config.Config.ETCD.Version)
+		err = node.SudoCmdOutput(dockerUrl, os.Stdout)
+	} else {
+		err = node.SudoCmdOutput("ctr pull ", os.Stdout)
+	}
+	utils.Panic(err, "pull image")
 }
 
 func makeAndPushCerts(node *ssh.Node) {
 	node.Logger("make certs files")
+
 	name := node.Hostname
 	dir := paths.Join("etcd", "pki")
 	sans := []string{"127.0.0.1", "localhost", node.Hostname, node.Host}
-	sans = append(sans, utils.ParseIPS(Config.Nodes)...)
-	sans = append(sans, Config.ServerCertExtraSans...)
-	vt := Config.CertsValidity
+	sans = append(sans, utils.ParseIPS(config.Config.ETCD.Nodes)...)
+	sans = append(sans, config.Config.ETCD.ServerCertExtraSans...)
+	vt := config.Config.ETCD.CertsValidity
 	etcdcerts.CreatePKIAssets(name, dir, sans, vt)
 
 	certsFiles := map[string]string{
@@ -46,97 +53,11 @@ func makeAndPushCerts(node *ssh.Node) {
 		"healthcheck-client":    "healthcheck-client",
 	}
 
-	for lf, rf := range certsFiles {
+	for localFile, remoteFile := range certsFiles {
 		for _, exp := range []string{".key", ".crt"} {
-			local := filepath.Join(dir, lf+exp)
-			remote := filepath.Join(Config.CertsDir, rf+exp)
-			utils.Panic(node.Scp(local, remote), "scp %s %s", local, remote)
+			local := filepath.Join(dir, localFile+exp)
+			remote := filepath.Join(config.Config.ETCD.CertsDir, remoteFile+exp)
+			utils.Panic(node.SudoScp(local, remote), "scp %s %s", local, remote)
 		}
-	}
-}
-
-func checkEtcdadm(node *ssh.Node) {
-	utils.Line("check and install etcdadm")
-
-	etcdadm, err := node.Cmd2String("command -v etcdadm")
-	if err != nil {
-		etcdadm = installEtcdadm(node)
-	}
-	//etcdadm
-	{
-		local := paths.Join("etcd", "etcdadm")
-		if utils.NotExists(local) {
-			err = node.Pull(etcdadm, local)
-			utils.Panic(err, "pull etcdadm")
-		}
-	}
-	//etcd.tar.gz
-	{
-		tar := fmt.Sprintf("etcd-v%s-linux-amd64.tar.gz", Config.Version)
-		local := paths.Join("etcd", tar)
-		if utils.Exists(local) {
-			remote := fmt.Sprintf("/var/cache/etcdadm/etcd/v%s/%s", Config.Version, tar)
-			err := node.Scp(local, remote)
-			utils.Panic(err, "scp %s %s", local, remote)
-		}
-	}
-}
-
-func installEtcdadm(node *ssh.Node) string {
-	remoteBin := "/usr/local/bin/etcdadm"
-	localBin := paths.Join("etcd", "etcdadm")
-
-	if utils.NotExists(localBin) {
-		node.Logger("build etcdadm")
-		bases.Install("git", "", node)
-		bases.Install("golang", "", node)
-		source := Config.Source
-		if source == "" {
-			source = repo.Etcdadm()
-		}
-		goProxy := ""
-		if paths.China {
-			goProxy = `export GOPROXY="https://goproxy.io"`
-		}
-		shell := fmt.Sprintf(`
-cd /tmp
-git clone %s --local etcdadm
-cd etcdadm
-%s
-go build
-mv -f etcdadm %s`, source, goProxy, remoteBin)
-		err := node.ShellChannel(shell, utils.Stdout(node.Hostname))
-		utils.Panic(err, "make etcdadm")
-	} else {
-		err := node.Scp(localBin, remoteBin)
-		utils.Panic(err, "scp etcdadm")
-		node.MustCmd(fmt.Sprintf("chmod +x %s", remoteBin))
-	}
-	return remoteBin
-}
-
-func etcdadmInit(master *ssh.Node) {
-	utils.Line("etcdadm init")
-	cmd := "etcdadm init --name " + master.Hostname +
-		" --install-dir /usr/local/bin " +
-		" --certs-dir " + Config.CertsDir +
-		" --version " + Config.Version
-	if Config.Snapshot != "" {
-		cmd += " --snapshot " + Config.Snapshot
-	}
-	/* use certs make
-	for _, san := range Config.ServerCertExtraSans {
-		cmd += " --server-cert-extra-sans " + san
-	}
-	*/
-	err := master.CmdStd(cmd, os.Stdout)
-	utils.Panic(err, "etcdadm init")
-
-	tar := fmt.Sprintf("etcd-v%s-linux-amd64.tar.gz", Config.Version)
-	local := paths.Join("etcd", tar)
-	if utils.NotExists(local) {
-		remote := fmt.Sprintf("/var/cache/etcdadm/etcd/v%s/%s", Config.Version, tar)
-		err = master.Pull(remote, local)
-		utils.Panic(err, "pull %s %s", remote, local)
 	}
 }

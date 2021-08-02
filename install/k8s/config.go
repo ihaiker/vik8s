@@ -3,7 +3,6 @@ package k8s
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ihaiker/vik8s/install/etcd"
 	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/install/repo"
@@ -108,8 +107,9 @@ func (cfg *config) Write() {
 
 func (cfg *config) readInstallETCDCluster() {
 	//用户自己架设的外部etcd集群
-	if len(cfg.ETCD.Nodes) == 0 {
-		if err := etcd.Config.Read(); err == nil {
+	//TODO .......-----==-=-=-=-
+	/*if len(cfg.ETCD.Nodes) == 0 {
+		if err := config.Config.Read(); err == nil {
 			if len(etcd.Config.Nodes) > 0 {
 				cfg.ETCD.External = true
 				cfg.ETCD.Nodes = utils.Append(utils.ParseIPS(etcd.Config.Nodes), ":2379")
@@ -118,7 +118,7 @@ func (cfg *config) readInstallETCDCluster() {
 				cfg.ETCD.ApiServerCertFile = paths.Join("etcd/pki/apiserver-etcd-client.crt")
 			}
 		}
-	}
+	}*/
 }
 
 func (cfg *config) Parse() {

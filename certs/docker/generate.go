@@ -41,7 +41,7 @@ func GenerateServerCertificates(node *ssh.Node, options *config.DockerCertsConfi
 		{
 			config.Organization = []string{"system:server"}
 			config.Usages = []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth}
-			config.AltNames = *certs.GetAltNames([]string{node.Host, "127.0.0.1", "localhost"}, "server")
+			config.AltNames = *certs.GetAltNames([]string{node.Hostname, node.Host, "127.0.0.1", "localhost"}, "server")
 		}
 		serverCert, serverKey := certs.NewCertAndKey(caCert, caKey, config)
 		certs.WriteCertAndKey(dir, "server-"+node.Host, serverCert, serverKey)

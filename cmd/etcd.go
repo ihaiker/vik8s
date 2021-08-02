@@ -16,18 +16,14 @@ var etcdCmd = &cobra.Command{
 This program uses etcdadm for installation, for details https://github.com/kubernetes-sigs/etcdadm`,
 }
 
-func init() {
-	etcdCmd.AddCommand(etcdInitCmd, etcdJoinCmd, etcdResetCmd)
-}
-
 var etcdConfig = new(config.ETCD)
 var etcdInitCmd = &cobra.Command{
 	Use: "init", Short: "Initialize a new etcd cluster", Args: cobra.MinimumNArgs(1),
 	PreRunE: configLoad(hostsLoad(none)), PostRunE: configDown(none),
-	Example: `
-	vik8s etcd init 172.16.100.11-172.16.100.13
-	vik8s etcd init 172.16.100.11 172.16.100.12 172.16.100.13`,
+	Example: `  vik8s etcd init 172.16.100.11-172.16.100.13
+  vik8s etcd init 172.16.100.11 172.16.100.12 172.16.100.13`,
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
+		config.Config.ETCD = etcdConfig
 		ips := hosts.Add(args...)
 		hosts.MustGatheringFacts(ips...)
 		etcd.InitCluster(ips[0])
@@ -51,7 +47,6 @@ var etcdJoinCmd = &cobra.Command{
 	Args:    cobra.MinimumNArgs(1),
 	PreRunE: configLoad(hostsLoad(none)), PostRunE: configDown(none),
 	Run: func(cmd *cobra.Command, args []string) {
-		etcd.Config.MustRead()
 		ips := hosts.Add(args...)
 		for _, ip := range ips {
 			etcd.JoinCluster(ip)
@@ -66,10 +61,9 @@ var etcdResetCmd = &cobra.Command{
 reset one node: vik8s etcd reset 172.16.100.10`,
 	PreRunE: configLoad(hostsLoad(none)), PostRunE: configDown(none),
 	Run: func(cmd *cobra.Command, args []string) {
-		etcd.Config.MustRead()
 		ips := utils.ParseIPS(args)
 		if len(ips) == 0 {
-			ips = etcd.Config.Nodes
+			ips = config.Config.ETCD.Nodes
 		}
 		nodes := hosts.Add(ips...)
 		for _, node := range nodes {
@@ -77,4 +71,8 @@ reset one node: vik8s etcd reset 172.16.100.10`,
 		}
 		fmt.Println("-=-=-=- SUCCESS -=-=-=-")
 	},
+}
+
+func init() {
+	etcdCmd.AddCommand(etcdInitCmd, etcdJoinCmd, etcdResetCmd)
 }

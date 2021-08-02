@@ -24,17 +24,18 @@ Vagrant.configure("2") do |config|
   config.vbguest.iso_path = guest_iso_path
   config.vbguest.auto_update = false
 
+  if box != "ubuntu"
+    config.vm.provision "ansible" do |ansible|
+      ansible.playbook = "playbook.yml"
+    end
+  end
+
   config.vm.define "master0" do |node|
     node.vm.hostname = "master0.vik8s.com"
     node.vm.network "private_network", ip: "10.24.0.10"
     node.vm.provider "virtualbox" do |v|
       v.cpus = "2"
       v.memory = "2048"
-    end
-    if box != "ubuntu"
-      node.vm.provision "ansible" do |ansible|
-        ansible.playbook = "playbook.yml"
-      end
     end
   end
 

@@ -3,7 +3,6 @@ package k8s
 import (
 	"fmt"
 	"github.com/ihaiker/vik8s/install/bases"
-	"github.com/ihaiker/vik8s/install/etcd"
 	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/install/tools"
@@ -40,10 +39,11 @@ func ResetNode(node *ssh.Node) {
 	Config.RemoveNode(node.Host)
 	if len(Config.Masters) == 0 && len(Config.Nodes) == 0 {
 		_ = os.RemoveAll(paths.Join("kube"))
-		if err := etcd.Config.Read(); err == nil {
+		//TODO 这里设置
+		/*if err := etcd.Config.Read(); err == nil {
 			_, _ = hosts.Get(etcd.Config.Nodes[0]).Cmd("etcdctl.sh del /registry --prefix")
 			_, _ = hosts.Get(etcd.Config.Nodes[0]).Cmd("etcdctl.sh del /calico --prefix")
-		}
+		}*/
 	}
 }
 

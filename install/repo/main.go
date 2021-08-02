@@ -86,14 +86,6 @@ func KubeletImage() string {
 	}
 }
 
-func Ceph() string {
-	if paths.China {
-		return "http://mirrors.aliyun.com/ceph"
-	} else {
-		return "https://download.ceph.com"
-	}
-}
-
 func QuayIO(repo string) string {
 	if repo != "" {
 		return repo
