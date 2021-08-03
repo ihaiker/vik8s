@@ -22,16 +22,15 @@ var etcdInitCmd = &cobra.Command{
 	PreRunE: configLoad(hostsLoad(none)), PostRunE: configDown(none),
 	Example: `  vik8s etcd init 172.16.100.11-172.16.100.13
   vik8s etcd init 172.16.100.11 172.16.100.12 172.16.100.13`,
-	RunE: func(cmd *cobra.Command, args []string) (err error) {
+	Run: func(cmd *cobra.Command, args []string) {
 		config.Config.ETCD = etcdConfig
-		ips := hosts.Add(args...)
-		hosts.MustGatheringFacts(ips...)
-		etcd.InitCluster(ips[0])
-		for _, ip := range ips[1:] {
+		nodes := hosts.Add(args...)
+		hosts.MustGatheringFacts(nodes...)
+		etcd.InitCluster(nodes[0])
+		for _, ip := range nodes[1:] {
 			etcd.JoinCluster(ip)
 		}
 		fmt.Println("-=-=-=- SUCCESS -=-=-=-")
-		return
 	},
 }
 
@@ -47,9 +46,12 @@ var etcdJoinCmd = &cobra.Command{
 	Args:    cobra.MinimumNArgs(1),
 	PreRunE: configLoad(hostsLoad(none)), PostRunE: configDown(none),
 	Run: func(cmd *cobra.Command, args []string) {
-		ips := hosts.Add(args...)
-		for _, ip := range ips {
-			etcd.JoinCluster(ip)
+		nodes := hosts.Add(args...)
+		hosts.MustGatheringFacts(nodes...)
+		for _, node := range nodes {
+			utils.Assert(utils.Search(config.Config.ETCD.Nodes, node.Host) == -1,
+				"has joined %s", node.Host)
+			etcd.JoinCluster(node)
 		}
 		fmt.Println("-=-=-=- SUCCESS -=-=-=-")
 	},
@@ -61,13 +63,15 @@ var etcdResetCmd = &cobra.Command{
 reset one node: vik8s etcd reset 172.16.100.10`,
 	PreRunE: configLoad(hostsLoad(none)), PostRunE: configDown(none),
 	Run: func(cmd *cobra.Command, args []string) {
-		ips := utils.ParseIPS(args)
-		if len(ips) == 0 {
-			ips = config.Config.ETCD.Nodes
+		nodes := hosts.Add(args...)
+		if len(nodes) == 0 {
+			nodes = hosts.Gets(config.Config.ETCD.Nodes)
 		}
-		nodes := hosts.Add(ips...)
 		for _, node := range nodes {
 			etcd.ResetCluster(node)
+		}
+		if len(config.Config.ETCD.Nodes) == 0 {
+			config.Config.ETCD = nil
 		}
 		fmt.Println("-=-=-=- SUCCESS -=-=-=-")
 	},

@@ -14,7 +14,7 @@ func Install(node *ssh.Node) {
 		config.Config.Docker = config.DefaultDockerConfiguration()
 	}
 
-	if config.Config.Docker != nil {
+	if config.Config.IsDockerCri() {
 		docker.Install(config.Config.Docker, node, paths.China)
 	} else {
 		containerd.Install(config.Config.Docker, node, paths.China)

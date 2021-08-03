@@ -1,12 +1,12 @@
 package config
 
 type K8SConfiguration struct {
-	Version       string `json:"k8s-version"`
-	KubeadmConfig string `json:"kubeadm-cfg,omitempty"`
+	Version       string `ngx:"version"`
+	KubeadmConfig string `ngx:"kubeadm-config"`
 
-	ApiServer              string   `json:"apiserver"`
-	ApiServerCertExtraSans []string `json:"apiServerCertExtraSans"`
-	ApiServerVIP           string   `json:"apiserver-vip"`
+	ApiServer              string   `json:"api-server"`
+	ApiServerCertExtraSans []string `json:"api-server-cert-extra-sans"`
+	ApiServerVIP           string   `json:"api-server-vip"`
 
 	Repo string `json:"repo,omitempty"`
 

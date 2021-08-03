@@ -20,6 +20,19 @@ var (
 	Config = &Configuration{}
 )
 
+func Docker() *DockerConfiguration {
+	return Config.Docker
+}
+func Containerd() *ContainerdConfiguration {
+	return Config.Containerd
+}
+func K8S() *K8SConfiguration {
+	return Config.K8S
+}
+func Etcd() *ETCD {
+	return Config.ETCD
+}
+
 //加载vik8s.conf配置，如果配置文件不存在，直接返回空配置
 func Load(filename string) (err error) {
 	Config.filename = filename
@@ -42,4 +55,8 @@ func (cfg *Configuration) Write() error {
 		return err
 	}
 	return ioutil.WriteFile(cfg.filename, data, 0666)
+}
+
+func (cfg *Configuration) IsDockerCri() bool {
+	return cfg.Docker != nil
 }

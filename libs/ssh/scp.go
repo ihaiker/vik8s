@@ -34,6 +34,7 @@ func (node *Node) Equal(local interface{}, remote string) bool {
 }
 
 func (node *Node) SudoScp(localPath, remotePath string) error {
+	node.Logger("scp %s -> %s", localPath, remotePath)
 	path := fmt.Sprintf("/tmp/vik8s/%s", filepath.Base(localPath))
 	if err := node.scp(localPath, path, true); err != nil {
 		return err
@@ -59,6 +60,7 @@ func (node *Node) SudoScpContent(content []byte, remotePath string) error {
 }
 
 func (node *Node) Scp(localPath, remotePath string) error {
+	node.Logger("scp %s -> %s", localPath, remotePath)
 	return node.scp(localPath, remotePath, true)
 }
 

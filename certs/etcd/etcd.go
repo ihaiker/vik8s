@@ -15,12 +15,12 @@ var log = logs.NewLogger("cert", func(hook *logs.FieldsHook, logger *logrus.Logg
 	logger.WithField("module", "etcd")
 	logger.SetFormatter(&logs.Formatter{
 		TimestampFormat: "[2006-01-02 15:04:05.000]",
-		HideCaller:      false, HideKeys: true, HideLevel: false,
+		HideCaller:      true, HideKeys: true, HideLevel: false,
 	})
 })
 
 func line(name, format string, params ...interface{}) {
-	log.Debugf("[cert][etcd][%s] %s \n", name, fmt.Sprintf(format, params...))
+	log.Infof("[etcd][%s] %s", name, fmt.Sprintf(format, params...))
 }
 
 type createAction func(name, dir string, sans []string, certificateValidity time.Duration)

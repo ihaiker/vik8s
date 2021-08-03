@@ -5,14 +5,6 @@ import (
 	"strings"
 )
 
-func Etcdadm() string {
-	if paths.China {
-		return "https://gitee.com/ihaiker/etcdadm"
-	} else {
-		return "https://github.com/kubernetes-sigs/etcdadm"
-	}
-}
-
 func Containerd() string {
 	if paths.China {
 		return "https://mirrors.aliyun.com/docker-ce/linux/centos/7/x86_64/stable/Packages/containerd.io-1.2.10-3.2.el7.`uname -p`.rpm"

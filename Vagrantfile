@@ -39,21 +39,22 @@ Vagrant.configure("2") do |config|
     end
   end
 
-  # config.vm.define "slave20" do |node|
-  #   node.vm.hostname = "slave20.vik8s.com"
-  #   node.vm.network "private_network", ip: "10.24.0.20"
-  #   node.vm.provider "virtualbox" do |v|
-  #     v.cpus = "1"
-  #     v.memory = "1024"
-  #   end
-  # end
-  # config.vm.define "slave21" do |node|
-  #   node.vm.hostname = "slave21.vik8s.com"
-  #   node.vm.network "private_network", ip: "10.24.0.21"
-  #   node.vm.provider "virtualbox" do |v|
-  #     v.cpus = "1"
-  #     v.memory = "1024"
-  #   end
-  # end
+  config.vm.define "slave20" do |node|
+    node.vm.hostname = "slave20.vik8s.com"
+    node.vm.network "private_network", ip: "10.24.0.20"
+    node.vm.provider "virtualbox" do |v|
+      v.cpus = "1"
+      v.memory = "1024"
+    end
+  end
+
+  config.vm.define "slave21" do |node|
+    node.vm.hostname = "slave21.vik8s.com"
+    node.vm.network "private_network", ip: "10.24.0.21"
+    node.vm.provider "virtualbox" do |v|
+      v.cpus = "1"
+      v.memory = "1024"
+    end
+  end
 
 end

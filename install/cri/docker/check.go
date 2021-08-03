@@ -28,16 +28,19 @@ func daemonJson(node *ssh.Node, cfg *config.DockerConfiguration) []byte {
 		"data-root": cfg.DataRoot,
 	}
 
-	if idx := utils.Search(cfg.Hosts, "fd://"); idx == -1 {
-		cfg.Hosts = append(cfg.Hosts, "fd://")
+	hosts := make([]string, len(cfg.Hosts))
+	copy(hosts, cfg.Hosts)
+
+	if idx := utils.Search(hosts, "fd://"); idx == -1 {
+		hosts = append(hosts, "fd://")
 	}
-	for i, host := range cfg.Hosts { //设置本地IP
+	for i, host := range hosts { //设置本地IP
 		if strings.Contains(host, "{IP}") {
-			cfg.Hosts[i] = strings.Replace(host, "{IP}", node.Host, 1)
+			hosts[i] = strings.Replace(host, "{IP}", node.Host, 1)
 		}
 	}
-	if cfg.Hosts != nil {
-		daemon["hosts"] = cfg.Hosts
+	if hosts != nil {
+		daemon["hosts"] = hosts
 	}
 
 	if cfg.RegistryMirrors != nil {
@@ -57,7 +60,7 @@ func daemonJson(node *ssh.Node, cfg *config.DockerConfiguration) []byte {
 		daemon["dns-search"] = cfg.DNS.Search
 	}
 
-	if cfg.TLS != nil {
+	if cfg.TLS != nil && cfg.TLS.Enable {
 		err := node.SudoScp(cfg.TLS.CaCertPath, "/etc/docker/certs.d/ca.pem")
 		utils.Panic(err, "upload cert file error: %s", cfg.TLS.CaCertPath)
 

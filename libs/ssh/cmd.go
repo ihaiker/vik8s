@@ -63,6 +63,10 @@ func (node *Node) SudoCmdStdout(command string) error {
 	return node.SudoCmdOutput(command, os.Stdout)
 }
 
+func (node *Node) SudoCmdPrefixStdout(command string) error {
+	return node.SudoCmdWatcher(command, utils.Stdout(node.Prefix()))
+}
+
 func (node *Node) SudoCmdBytes(command string) (*bytes.Buffer, error) {
 	output := bytes.NewBufferString("")
 	err := node.SudoCmdOutput(command, output)

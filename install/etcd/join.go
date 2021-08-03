@@ -10,16 +10,32 @@ import (
 )
 
 func JoinCluster(node *ssh.Node) {
-	master := hosts.Get(config.Config.ETCD.Nodes[0])
-
 	bases.Check(node)
 	cri.Install(node)
-	pullContainerImage(node)
+	image := pullContainerImage(node)
 	makeAndPushCerts(node)
-
-	etcdadmJoin(master, node)
+	addEtcdMember(node)
+	joinEtcd(node, image)
+	waitEtcdReady(node)
+	showClusterStatus(node)
+	config.Config.ETCD.Nodes = append(config.Config.ETCD.Nodes, node.Host)
 }
 
-func etcdadmJoin(master *ssh.Node, node *ssh.Node) {
-	utils.Line("etcd join")
+func joinEtcd(node *ssh.Node, image string) {
+	if config.Config.IsDockerCri() {
+		initEtcdDocker(node, image, "existing")
+	}
+}
+
+func addEtcdMember(node *ssh.Node) {
+	node.Logger("add etcd node")
+	master := hosts.Get(config.Config.ETCD.Nodes[0])
+	num, err := master.SudoCmdString("docker exec vik8s-etcd /usr/local/bin/etcdctl member list " +
+		"| grep " + node.Host + ":2380 | wc -l")
+	utils.Panic(err, "etcd list member")
+	if num == "0" {
+		err = master.SudoCmdPrefixStdout("docker exec vik8s-etcd " +
+			"/usr/local/bin/etcdctl member add " + node.Hostname + " --peer-urls https://" + node.Host + ":2380")
+		utils.Panic(err, "etcd add member")
+	}
 }

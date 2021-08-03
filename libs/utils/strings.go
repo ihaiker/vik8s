@@ -5,9 +5,11 @@ import (
 	"encoding/base64"
 	"github.com/hashicorp/go-version"
 	"io/ioutil"
+	"math/rand"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 )
 
@@ -226,4 +228,14 @@ func Int32(str string, base int) *int32 {
 func Int64(str string, base int) *int64 {
 	i, _ := strconv.ParseInt(str, base, 64)
 	return &i
+}
+
+func Random(n int) string {
+	rand.Seed(time.Now().UnixNano())
+	key := ""
+	seed := "0123456789abcdef"
+	for i := 0; i < n; i++ {
+		key += string(seed[rand.Intn(16)])
+	}
+	return key
 }
