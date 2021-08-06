@@ -9,8 +9,11 @@ import (
 	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/install/repo"
+	"github.com/ihaiker/vik8s/libs/logs"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -27,11 +30,12 @@ func InitCluster(node *ssh.Node) {
 	bases.Check(node)
 	cri.Install(node)
 	image := pullContainerImage(node)
+	cleanEtcdData(node)
 	makeAndPushCerts(node)
+	restoreSnapshot(node, image)
 	initEtcd(node, image)
 	waitEtcdReady(node)
 	showClusterStatus(node)
-
 	config.Config.ETCD.Nodes = append(config.Config.ETCD.Nodes, node.Host)
 }
 
@@ -84,8 +88,6 @@ func initEtcd(node *ssh.Node, image string) {
 }
 
 func initEtcdDocker(node *ssh.Node, image string, state string) {
-	_ = node.SudoCmd("docker rm -vf vik8s-etcd")
-
 	envs := map[string]string{
 		"initial-advertise-peer-urls": "https://" + node.Host + ":2380",                        //对外通告该节点的同伴（Peer）监听地址，这个值会告诉集群中其他节点。
 		"listen-peer-urls":            "https://" + node.Host + ":2380",                        //指定和 Cluster 其他 Node 通信的地址
@@ -111,7 +113,7 @@ func initEtcdDocker(node *ssh.Node, image string, state string) {
 		"cert":      "/etc/etcd/pki/etcdctl-etcd-client.crt",
 		"key":       "/etc/etcd/pki/etcdctl-etcd-client.key ",
 	}
-	cmd := "docker run -d --name vik8s-etcd --restart always --network host --hostname " + node.Hostname +
+	cmd := "docker run -d --name vik8s-etcd --workdir /var/lib/etcd  --restart always --network host --hostname " + node.Hostname +
 		" -v " + config.Config.ETCD.CertsDir + ":/etc/etcd/pki" +
 		" -v " + config.Config.ETCD.Data + ":/var/lib/etcd "
 	for key, value := range envs {
@@ -132,6 +134,47 @@ func initEtcdDocker(node *ssh.Node, image string, state string) {
 
 	err = node.SudoCmd("chmod +x " + etcdPath)
 	utils.Panic(err, "chmod etcdctl command")
+}
+
+func restoreSnapshot(node *ssh.Node, image string) {
+	if config.Etcd().RemoteSnapshot != "" {
+		logs.Infof("download etcd snapshot file: %s", config.Etcd().RemoteSnapshot)
+
+		resp, err := http.Get(config.Etcd().RemoteSnapshot)
+		utils.Panic(err, "etcd get remote snapshot")
+		utils.Assert(resp.StatusCode == 200,
+			"etcd get remote, the response status is %d not 200 %s", resp.StatusCode, resp.Status)
+		defer resp.Body.Close()
+
+		config.Config.ETCD.Snapshot = paths.Join("etcd", "remote.snapshot")
+		err = os.MkdirAll(filepath.Dir(config.Etcd().Snapshot), os.ModePerm)
+		utils.Panic(err, "make etcd config directory")
+
+		fs, err := os.Create(config.Etcd().Snapshot)
+		utils.Panic(err, "etcd get remote snapshot")
+		defer fs.Close()
+
+		_, err = io.Copy(fs, resp.Body)
+	}
+
+	utils.Assert(config.Etcd().Snapshot == "" || utils.Exists(config.Etcd().Snapshot),
+		"etcd snapshot file not found: %s", config.Etcd().Snapshot)
+
+	if config.Etcd().Snapshot != "" {
+		node.Logger("found etcd snapshot: %s", config.Etcd().Snapshot)
+
+		remotePath := node.HomeDir("snapshot.db")
+		err := node.Scp(config.Etcd().Snapshot, remotePath)
+		utils.Panic(err, "upload etcd snapshot")
+
+		restoreCmd := "docker run --rm --name etcd-restore-" + config.Etcd().Token +
+			" -v " + remotePath + ":/snapshot.db " +
+			" -v " + filepath.Dir(config.Etcd().Data) + ":/snapshot" +
+			" " + image +
+			" etcdctl snapshot restore /snapshot.db --data-dir /snapshot/etcd"
+		err = node.SudoCmd(restoreCmd)
+		utils.Panic(err, "etcd load snapshot error")
+	}
 }
 
 func initialCluster(node *ssh.Node) string {
@@ -158,9 +201,13 @@ func waitEtcdReady(node *ssh.Node) {
 
 func showClusterStatus(node *ssh.Node) {
 	node.Logger("show etcd cluster")
-	err := node.SudoCmdStdout("docker exec vik8s-etcd /usr/local/bin/etcdctl endpoint status -w table")
+	err := node.SudoCmdStdout(etcdctl("endpoint status -w table"))
 	utils.Panic(err, "show etcd cluster")
 
-	err = node.SudoCmdStdout("docker exec vik8s-etcd /usr/local/bin/etcdctl member list -w table")
+	err = node.SudoCmdStdout(etcdctl("member list -w table"))
 	utils.Panic(err, "show etcd cluster")
+}
+
+func etcdctl(cmd string) string {
+	return "docker exec vik8s-etcd /usr/local/bin/etcdctl " + cmd
 }

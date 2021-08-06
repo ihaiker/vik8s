@@ -13,6 +13,7 @@ func JoinCluster(node *ssh.Node) {
 	bases.Check(node)
 	cri.Install(node)
 	image := pullContainerImage(node)
+	cleanEtcdData(node)
 	makeAndPushCerts(node)
 	addEtcdMember(node)
 	joinEtcd(node, image)
@@ -30,12 +31,11 @@ func joinEtcd(node *ssh.Node, image string) {
 func addEtcdMember(node *ssh.Node) {
 	node.Logger("add etcd node")
 	master := hosts.Get(config.Config.ETCD.Nodes[0])
-	num, err := master.SudoCmdString("docker exec vik8s-etcd /usr/local/bin/etcdctl member list " +
-		"| grep " + node.Host + ":2380 | wc -l")
+	num, err := master.SudoCmdString(etcdctl("member list | grep " + node.Host + ":2380 | wc -l"))
 	utils.Panic(err, "etcd list member")
 	if num == "0" {
-		err = master.SudoCmdPrefixStdout("docker exec vik8s-etcd " +
-			"/usr/local/bin/etcdctl member add " + node.Hostname + " --peer-urls https://" + node.Host + ":2380")
+		err = master.SudoCmdPrefixStdout(etcdctl("member add " + node.Hostname +
+			" --peer-urls https://" + node.Host + ":2380"))
 		utils.Panic(err, "etcd add member")
 	}
 }

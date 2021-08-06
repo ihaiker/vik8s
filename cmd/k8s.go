@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/ihaiker/cobrax"
+	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/install/cni"
 	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/k8s"
@@ -9,13 +11,14 @@ import (
 	"github.com/ihaiker/vik8s/libs/utils"
 	yamls "github.com/ihaiker/vik8s/yaml"
 	"github.com/spf13/cobra"
-	"time"
 )
 
+var k8sConfig = config.DefaultK8SConfiguration()
 var initCmd = &cobra.Command{
 	Use: "init", Short: "Initialize the kubernates cluster",
 	Example: `vik8s init --master 172.10.0.2 --master 172.10.0.3 --master 172.10.0.4 --node 172.10.0.5 --ssh-user root --ssh-pk ~/.ssh/id_rsa
 vik8s init -m 172.10.0.2 -m 172.10.0.3 -m 172.10.0.4 -n 172.10.0.5 -p password`,
+	PreRunE: configLoad(hostsLoad(none)), PostRunE: configDown(none),
 	Run: func(cmd *cobra.Command, args []string) {
 		k8s.Config.Parse()
 		masters := getFlagsIps(cmd, "master")
@@ -36,46 +39,9 @@ vik8s init -m 172.10.0.2 -m 172.10.0.3 -m 172.10.0.4 -n 172.10.0.5 -p password`,
 }
 
 func init() {
-	tenYear := time.Now().AddDate(44, 0, 0).Sub(time.Now())
-
-	// Here you will define your flags and configuration settings.
-	initCmd.Flags().IntVarP(&k8s.Config.SSH.Port, "ssh-port", "P", 22, "default port for ssh")
-	initCmd.Flags().StringVarP(&k8s.Config.SSH.PrivateKey, "ssh-pk", "i", "$HOME/.ssh/id_rsa", "private key for ssh")
-	initCmd.Flags().StringVarP(&k8s.Config.SSH.Password, "ssh-passwd", "p", "", "password for ssh\n")
-
-	initCmd.Flags().StringSliceP("master", "m", []string{}, "k8s multi-masters. rule: XXX.XXX.XXX.XXX[-XXX.XXX.XXX.XXX][:PORT] ")
-	initCmd.Flags().StringSliceP("node", "n", []string{}, "k8s multi-nodes. rule: XXX.XXX.XXX.XXX[-XXX.XXX.XXX.XXX][:PORT]\n")
-
-	initCmd.Flags().StringVar(&k8s.Config.Docker.Version, "docker-version", "v1.19.12", "Specify docker version")
-	initCmd.Flags().StringVar(&k8s.Config.Docker.DaemonJson, "docker-daemon-json", "", "docker config file it will overwirte `/etc/docker/daemon.json`")
-	initCmd.Flags().StringSliceVar(&k8s.Config.Docker.Registry, "docker-registry-mirror", []string{}, "Customize docker registry, ignore it when set --docker-daemon-json")
-	initCmd.Flags().BoolVar(&k8s.Config.Docker.StraitVersion, "docker-strait-version", false, "Strict check DOCKER version if inconsistent will upgrade\n")
-
-	initCmd.Flags().StringVar(&k8s.Config.Kubernetes.KubeadmConfig, "kubeadm-config", "", "Path to a kubeadm configuration file. see kubeadm --config")
-	initCmd.Flags().StringVar(&k8s.Config.Kubernetes.ApiServer, "apiserver", "vik8s-api-server", "Specify a stable IP address or DNS name for the control plane. see kubeadm  --control-plane-endpoint")
-	initCmd.Flags().StringSliceVar(&k8s.Config.Kubernetes.ApiServerCertExtraSans, "apiserver-cert-extra-sans", []string{}, "see kubeadm init --apiserver-cert-extra-sans")
-	initCmd.Flags().StringVar(&k8s.Config.Kubernetes.Version, "k8s-version", "v19.03.15", "Specify k8s version, support 1.17.+")
-	initCmd.Flags().StringVar(&k8s.Config.Kubernetes.Interface, "interface", "eth.*|en.*|em.*", "name of network interface")
-	initCmd.Flags().StringVar(&k8s.Config.Kubernetes.PodCIDR, "pod-cidr", "100.64.0.0/24", "Specify range of IP addresses for the pod network")
-	initCmd.Flags().StringVar(&k8s.Config.Kubernetes.SvcCIDR, "svc-cidr", "10.96.0.0/12", "Use alternative range of IP address for service VIPs")
-	initCmd.Flags().StringVar(&k8s.Config.Kubernetes.Repo, "repo", "", `Choose a container registry to pull control plane images from.
-(default: Best choice from k8s.gcr.io and registry.aliyuncs.com/google_containers.)
-`)
-
-	initCmd.Flags().DurationVar(&k8s.Config.CertsValidity, "certs-validity", tenYear, "Certificate validity time")
-
-	initCmd.Flags().BoolVar(&k8s.Config.ETCD.External, "etcd", false, `Use external ETCD cluster. 
-If you installed the etcd cluster using 'vik8s etcd init', the cluster is used by default`)
-	initCmd.Flags().StringSliceVar(&k8s.Config.ETCD.Nodes, "etcd-endpoints", []string{}, "the etcd cluster endpoints, for example: 172.16.100.10:2379")
-	initCmd.Flags().StringVar(&k8s.Config.ETCD.CAFile, "etcd-ca", "", "the self-signed CA to provision identities for etcd")
-	initCmd.Flags().StringVar(&k8s.Config.ETCD.ApiServerKeyFile, "etcd-apiserver-key-file", "", "the key file the apiserver uses to access etcd")
-	initCmd.Flags().StringVar(&k8s.Config.ETCD.ApiServerCertFile, "etcd-apiserver-cert-file", "", "the certificate the apiserver uses to access etcd\n")
-
-	initCmd.Flags().StringVar(&k8s.Config.Timezone, "timezone", "Asia/Shanghai", "")
-	initCmd.Flags().StringSliceVar(&k8s.Config.NTPServices, "ntp-services", []string{"ntp1.aliyun.com", "ntp2.aliyun.com", "ntp3.aliyun.com"}, "time server")
-
+	err := cobrax.FlagsWith(initCmd, cobrax.GetFlags, k8sConfig, "", "VIK8S_K8S")
+	utils.Panic(err, "setting `init` flag error")
 	cni.Plugins.Flags(initCmd)
-
 	initCmd.Flags().SortFlags = false
 }
 

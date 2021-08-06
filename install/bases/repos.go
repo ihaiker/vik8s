@@ -54,8 +54,10 @@ func setAliRepoCentOS(node *ssh.Node) {
 		utils.Panic(err, "download AliCloud repos")
 
 		if node.Facts.MajorVersion == "7" {
-			node.MustCmd("curl --silent -o /etc/yum.repos.d/epel.repo http://mirrors.aliyun.com/repo/epel-7.repo")
+			err = node.SudoCmd("curl --silent -o /etc/yum.repos.d/epel.repo http://mirrors.aliyun.com/repo/epel-7.repo")
+			utils.Panic(err, "download AliCloud repos")
 		}
 	}
 	Installs(node, "yum-utils", "lvm2", "device-mapper-persistent-data")
+	_ = node.SudoCmd("yum makecache")
 }

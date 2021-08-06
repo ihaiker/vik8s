@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type (
@@ -38,20 +39,22 @@ func (node *Node) easyssh() *easySSHConfig {
 		sshConfig: sshConfig{
 			User: node.User, Server: node.Host, Port: node.Port,
 			KeyPath: node.PrivateKey, Passphrase: node.Passphrase,
-			Password: node.Password,
+			Password: node.Password, Timeout: time.Second * 3,
 		},
 	}
 	if node.Proxy != "" {
 		config.Proxy = &sshConfig{
 			User: node.ProxyNode.User, Server: node.ProxyNode.Host, Port: node.ProxyNode.Port,
 			KeyPath: node.ProxyNode.PrivateKey, Passphrase: node.ProxyNode.Passphrase,
-			Password: node.ProxyNode.Password,
+			Password: node.ProxyNode.Password, Timeout: time.Second * 3,
 		}
 	}
 	return config
 }
 
 func (node *Node) GatheringFacts() error {
+	node.Logger("gathering facts")
+
 	if hostname, err := node.SudoCmdString("hostname -s"); err != nil {
 		return err
 	} else {
@@ -90,8 +93,12 @@ func (node *Node) IsCentOS() bool {
 	return strings.ToLower(node.Facts.ReleaseName) == "centos"
 }
 
+func (node *Node) IsRoot() bool {
+	return node.User == "root"
+}
+
 func (node *Node) HomeDir(join ...string) string {
-	if node.User == "root" {
+	if node.IsRoot() {
 		return filepath.Join(append([]string{"/root"}, join...)...)
 	} else {
 		return filepath.Join(append([]string{"/home", node.User}, join...)...)

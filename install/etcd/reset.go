@@ -42,15 +42,17 @@ func removeEtcdMember(node *ssh.Node) {
 			err = node.SudoCmdPrefixStdout("docker exec vik8s-etcd /usr/local/bin/etcdctl member remove " + id)
 			utils.Panic(err, "etcd add member")
 		}
-
-		node.Logger("remove docker container vik8s-etcd")
-		err = node.SudoCmdPrefixStdout("docker rm -vf vik8s-etcd")
-		utils.Panic(err, "remove docker etcd")
 	} else {
 		node.Logger("this etcd node not found: %s", node.Host)
 	}
 
+	cleanEtcdData(node)
+}
+
+func cleanEtcdData(node *ssh.Node) {
+	node.Logger("remove docker container vik8s-etcd")
+	_ = node.SudoCmdPrefixStdout("docker rm -vf vik8s-etcd")
+
 	node.Logger("remove etcd member data %s", config.Config.ETCD.Data)
-	err = node.SudoCmdPrefixStdout("rm -rf " + config.Config.ETCD.Data)
-	utils.Panic(err, "remove etcd member data")
+	_ = node.SudoCmdPrefixStdout("rm -rf " + config.Config.ETCD.Data)
 }

@@ -46,6 +46,9 @@ var etcdJoinCmd = &cobra.Command{
 	Args:    cobra.MinimumNArgs(1),
 	PreRunE: configLoad(hostsLoad(none)), PostRunE: configDown(none),
 	Run: func(cmd *cobra.Command, args []string) {
+		utils.Assert(config.Config.ETCD != nil && len(config.Config.ETCD.Nodes) != 0,
+			"etcd cluster not initialized yet")
+
 		nodes := hosts.Add(args...)
 		hosts.MustGatheringFacts(nodes...)
 		for _, node := range nodes {
@@ -63,6 +66,9 @@ var etcdResetCmd = &cobra.Command{
 reset one node: vik8s etcd reset 172.16.100.10`,
 	PreRunE: configLoad(hostsLoad(none)), PostRunE: configDown(none),
 	Run: func(cmd *cobra.Command, args []string) {
+		utils.Assert(config.Config.ETCD != nil && len(config.Config.ETCD.Nodes) > 0,
+			"not found etcd cluster")
+
 		nodes := hosts.Add(args...)
 		if len(nodes) == 0 {
 			nodes = hosts.Gets(config.Config.ETCD.Nodes)

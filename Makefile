@@ -14,18 +14,6 @@ build: chmod ## 编译程序
 cicd: build ## 运行CI/CD测试
 	./scripts/cicd.sh
 
-.PHONY: ssh
-ssh: ## CentOS使用root登录
-	ssh -q root@10.24.0.10 -i .vagrant/machines/master0/virtualbox/private_key
-
-.PHONY: ssh-slave20
-ssh-slave20: ## CentOS使用slave20登录
-	ssh -q root@10.24.0.20 -i .vagrant/machines/slave20/virtualbox/private_key
-
-.PHONY: ssh-slave21
-ssh-slave21: ## CentOS使用slave21登录
-	ssh -q root@10.24.0.21 -i .vagrant/machines/slave21/virtualbox/private_key
-
 .PHONY: docker
 docker: build ## 生成docker证书
 	./bin/vik8s -f ./bin docker --tls.enable --hosts "tcp://{IP}:2375"
@@ -34,7 +22,15 @@ docker: build ## 生成docker证书
 etcd: build
 	./bin/vik8s -f ./bin/ etcd init 10.24.0.10
 	./bin/vik8s -f ./bin/ etcd join 10.24.0.20
+	./bin/vik8s -f ./bin/ etcd join 10.24.0.21
+
+.PHONY: etcd-clean
+etcd-clean:
 	./bin/vik8s -f ./bin/ etcd reset
+
+.PHONY: init
+init: build
+	./bin/vik8s -f ./bin/ init -h
 
 .PHONY: mkdocs
 mkdocs: ## 构建文档
