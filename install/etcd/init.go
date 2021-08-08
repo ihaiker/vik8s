@@ -57,7 +57,7 @@ func makeAndPushCerts(node *ssh.Node) {
 	node.Logger("make certs files")
 
 	name := node.Hostname
-	dir := paths.Join("etcd", "pki")
+	dir := CertsDir()
 	sans := []string{"127.0.0.1", "localhost", node.Hostname, node.Host}
 	sans = append(sans, config.Config.ETCD.ServerCertExtraSans...)
 	vt := config.Config.ETCD.CertsValidity
@@ -67,7 +67,7 @@ func makeAndPushCerts(node *ssh.Node) {
 		"ca":                    "ca",
 		"server-" + name:        "server",
 		"peer-" + name:          "peer",
-		"etcdctl-etcd-client":   "etcdctl-etcd-client",
+		"Etcdctl-etcd-client":   "Etcdctl-etcd-client",
 		"apiserver-etcd-client": "apiserver-etcd-client",
 		"healthcheck-client":    "healthcheck-client",
 	}
@@ -110,8 +110,8 @@ func initEtcdDocker(node *ssh.Node, image string, state string) {
 	ctlEnvs := map[string]string{
 		"endpoints": "https://127.0.0.1:2379",
 		"cacert":    "/etc/etcd/pki/ca.crt",
-		"cert":      "/etc/etcd/pki/etcdctl-etcd-client.crt",
-		"key":       "/etc/etcd/pki/etcdctl-etcd-client.key ",
+		"cert":      "/etc/etcd/pki/Etcdctl-etcd-client.crt",
+		"key":       "/etc/etcd/pki/Etcdctl-etcd-client.key ",
 	}
 	cmd := "docker run -d --name vik8s-etcd --workdir /var/lib/etcd  --restart always --network host --hostname " + node.Hostname +
 		" -v " + config.Config.ETCD.CertsDir + ":/etc/etcd/pki" +
@@ -127,13 +127,13 @@ func initEtcdDocker(node *ssh.Node, image string, state string) {
 	err := node.SudoCmd(cmd)
 	utils.Panic(err, "start etcd in docker")
 
-	etcdPath := "/usr/local/bin/etcdctl"
+	etcdPath := "/usr/local/bin/Etcdctl"
 	err = node.SudoScpContent([]byte("#!/bin/bash\nset -e\n"+
-		"docker exec -it vik8s-etcd /usr/local/bin/etcdctl $@"), etcdPath)
-	utils.Panic(err, "make etcdctl command")
+		"docker exec -it vik8s-etcd /usr/local/bin/Etcdctl $@"), etcdPath)
+	utils.Panic(err, "make Etcdctl command")
 
 	err = node.SudoCmd("chmod +x " + etcdPath)
-	utils.Panic(err, "chmod etcdctl command")
+	utils.Panic(err, "chmod Etcdctl command")
 }
 
 func restoreSnapshot(node *ssh.Node, image string) {
@@ -146,7 +146,7 @@ func restoreSnapshot(node *ssh.Node, image string) {
 			"etcd get remote, the response status is %d not 200 %s", resp.StatusCode, resp.Status)
 		defer resp.Body.Close()
 
-		config.Config.ETCD.Snapshot = paths.Join("etcd", "remote.snapshot")
+		config.Config.ETCD.Snapshot = paths.Join("etcd", "snapshot.db")
 		err = os.MkdirAll(filepath.Dir(config.Etcd().Snapshot), os.ModePerm)
 		utils.Panic(err, "make etcd config directory")
 
@@ -171,7 +171,7 @@ func restoreSnapshot(node *ssh.Node, image string) {
 			" -v " + remotePath + ":/snapshot.db " +
 			" -v " + filepath.Dir(config.Etcd().Data) + ":/snapshot" +
 			" " + image +
-			" etcdctl snapshot restore /snapshot.db --data-dir /snapshot/etcd"
+			" Etcdctl snapshot restore /snapshot.db --data-dir /snapshot/etcd"
 		err = node.SudoCmd(restoreCmd)
 		utils.Panic(err, "etcd load snapshot error")
 	}
@@ -201,13 +201,17 @@ func waitEtcdReady(node *ssh.Node) {
 
 func showClusterStatus(node *ssh.Node) {
 	node.Logger("show etcd cluster")
-	err := node.SudoCmdStdout(etcdctl("endpoint status -w table"))
+	err := node.SudoCmdStdout(Etcdctl("endpoint status -w table"))
 	utils.Panic(err, "show etcd cluster")
 
-	err = node.SudoCmdStdout(etcdctl("member list -w table"))
+	err = node.SudoCmdStdout(Etcdctl("member list -w table"))
 	utils.Panic(err, "show etcd cluster")
 }
 
-func etcdctl(cmd string) string {
-	return "docker exec vik8s-etcd /usr/local/bin/etcdctl " + cmd
+func Etcdctl(cmd string) string {
+	return "docker exec vik8s-etcd /usr/local/bin/Etcdctl " + cmd
+}
+
+func CertsDir() string {
+	return paths.Join("etcd", "pki")
 }

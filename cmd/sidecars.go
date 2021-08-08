@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"github.com/ihaiker/vik8s/install/k8s"
 	"github.com/ihaiker/vik8s/sidecars"
 	"github.com/spf13/cobra"
 	"strings"
@@ -9,7 +8,7 @@ import (
 
 var sidecarsCmd = &cobra.Command{
 	Use: "sidecars", Aliases: []string{"ss"},
-	PersistentPreRun: k8s.Config.LoadCmd,
+	PreRunE: configLoad(hostsLoad(none)),
 }
 
 func uninstallSidecarsCmd() *cobra.Command {

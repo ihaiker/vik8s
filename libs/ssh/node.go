@@ -27,6 +27,7 @@ type (
 		Facts Facts `ngx:"-"`
 	}
 	Facts struct {
+		Hostname      string `ngx:"hostname"`
 		ReleaseName   string `ngx:"releaseName"`
 		MajorVersion  string `ngx:"majorVersion"`
 		KernelVersion string `ngx:"kernelVersion"`
@@ -59,6 +60,12 @@ func (node *Node) GatheringFacts() error {
 		return err
 	} else {
 		node.Hostname = hostname
+	}
+
+	if hostname, err := node.SudoCmdString("hostname"); err != nil {
+		return err
+	} else {
+		node.Facts.Hostname = hostname
 	}
 
 	envMaps := make(map[string]string)

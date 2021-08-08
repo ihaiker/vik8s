@@ -4,6 +4,7 @@ kubernetesVersion: {{.Kubeadm.Version}}
 controlPlaneEndpoint: "{{.Kubeadm.ApiServer}}:6443"
 imageRepository: {{.Kubeadm.Repo}}
 networking:
+  dnsDomain: cluster.local
   podSubnet: {{.Kubeadm.PodCIDR}}
   serviceSubnet: {{.Kubeadm.SvcCIDR}}
 apiServer:
@@ -39,6 +40,9 @@ scheduler:
       name: localtime
       readOnly: true
       pathType: File
+
+dns:
+  type: CoreDNS
 
 {{ if .Etcd.External }}
 etcd:

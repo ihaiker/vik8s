@@ -70,7 +70,10 @@ repo_gpgcheck = 1
 	}
 }
 
-func KubeletImage() string {
+func KubeletImage(repo string) string {
+	if repo != "" {
+		return repo
+	}
 	if paths.China {
 		return "registry.aliyuncs.com/google_containers"
 	} else {

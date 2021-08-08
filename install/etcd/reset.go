@@ -33,13 +33,13 @@ func removeEtcdMember(node *ssh.Node) {
 	node.Logger("remove etcd node %s", node.Host)
 
 	id, err := node.SudoCmdString("docker exec vik8s-etcd " +
-		"/usr/local/bin/etcdctl member list | grep " + node.Host + ":2380 | awk -F',' '{print $1}'")
+		"/usr/local/bin/Etcdctl member list | grep " + node.Host + ":2380 | awk -F',' '{print $1}'")
 	utils.Panic(err, "etcd list member")
 
 	if id != "" {
 		if len(config.Config.ETCD.Nodes) != 1 {
 			node.Logger("remove etcd member %s", id)
-			err = node.SudoCmdPrefixStdout("docker exec vik8s-etcd /usr/local/bin/etcdctl member remove " + id)
+			err = node.SudoCmdPrefixStdout("docker exec vik8s-etcd /usr/local/bin/Etcdctl member remove " + id)
 			utils.Panic(err, "etcd add member")
 		}
 	} else {

@@ -81,11 +81,11 @@ func init() {
 		"Multi-kubernetes cluster selection")
 	rootCmd.PersistentFlags().BoolVar(&paths.China, "china", true, "Whether domestic network")
 
-	rootCmd.AddCommand(dataCmd, hostsCmd, etcdCmd)
-	rootCmd.AddCommand(configCmd, initCmd, joinCmd, resetCmd, cleanCmd)
-	rootCmd.AddCommand(ingressRootCmd, sidecarsCmd)
-	rootCmd.AddCommand(completionCmd)
-	rootCmd.AddCommand(bashCmd)
+	rootCmd.AddCommand(hostsCmd, etcdCmd)
+	rootCmd.AddCommand(initCmd, joinCmd, resetCmd, cleanCmd)
+	//rootCmd.AddCommand(ingressRootCmd, sidecarsCmd)
+	//rootCmd.AddCommand(completionCmd)
+	//rootCmd.AddCommand(bashCmd)
 	rootCmd.Flags().SortFlags = false
 }
 

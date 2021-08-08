@@ -1,7 +1,7 @@
 package cni
 
 import (
-	"github.com/ihaiker/vik8s/install/k8s"
+	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/install/repo"
 	"github.com/ihaiker/vik8s/libs/ssh"
@@ -31,17 +31,18 @@ func (f *flannel) Apply(node *ssh.Node) {
 
 	data := paths.Json{
 		"Version": f.version, "Repo": repo.QuayIO(f.repo),
-		"CIDR": k8s.Config.Kubernetes.PodCIDR, "Interface": k8s.Config.Kubernetes.Interface,
+		"CIDR": config.K8S().PodCIDR, "Interface": config.K8S().Interface,
 		"LimitCPU": f.limitCPU, "LimitMemory": f.limitMemory,
 	}
 
 	name := "yaml/cni/flannel.conf"
 	reduce.MustApplyAssert(node, name, data)
 
-	k8s.Config.CNI.Params = map[string]string{
+	//TODO
+	/*k8s.Config.CNI.Params = map[string]string{
 		"Version": f.version, "Repo": repo.QuayIO(f.repo),
 		"LimitCPU": f.limitCPU, "LimitMemory": f.limitMemory,
-	}
+	}*/
 }
 
 func (f *flannel) Clean(node *ssh.Node) {

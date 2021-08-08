@@ -2,7 +2,7 @@ package cni
 
 import (
 	"fmt"
-	"github.com/ihaiker/vik8s/install/k8s"
+	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/spf13/cobra"
@@ -20,8 +20,8 @@ func (p *plugins) Flags(cmd *cobra.Command) {
 	for _, plugin := range *p {
 		support += "," + plugin.Name()
 	}
-	cmd.Flags().StringVar(&k8s.Config.CNI.Name, "cni", DefaultPlugin,
-		fmt.Sprintf("the kubernates cni plugins. support: %s", support))
+	//cmd.Flags().StringVar(&config.K8S().CNI, "cni", DefaultPlugin,
+	//	fmt.Sprintf("the kubernates cni plugins. support: %s", support))
 	for _, plugin := range *p {
 		support += "," + plugin.Name()
 		plugin.Flags(cmd)
@@ -29,7 +29,7 @@ func (p *plugins) Flags(cmd *cobra.Command) {
 }
 
 func (p *plugins) Apply(node *ssh.Node) {
-	cni := k8s.Config.CNI.Name
+	cni := config.K8S().CNI
 	if cni == "ignore" || cni == "" {
 		fmt.Println("[warn] cni plugin is ignore")
 		return

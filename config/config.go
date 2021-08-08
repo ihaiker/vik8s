@@ -33,6 +33,10 @@ func Etcd() *ETCD {
 	return Config.ETCD
 }
 
+func ExternalETCD() bool {
+	return Config.ETCD != nil && len(Config.ETCD.Nodes) > 0
+}
+
 //加载vik8s.conf配置，如果配置文件不存在，直接返回空配置
 func Load(filename string) (err error) {
 	Config.filename = filename

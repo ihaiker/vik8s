@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/ihaiker/vik8s/install/k8s"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/ihaiker/vik8s/reduce/kube"
 	"github.com/ihaiker/vik8s/reduce/plugins"
@@ -14,10 +13,8 @@ import (
 
 var reduceCmd = &cobra.Command{
 	Use: "reduce", Short: "Simplify kubernetes configuration file",
-	Args: cobra.ExactArgs(1),
-	PreRun: func(cmd *cobra.Command, args []string) {
-		utils.Try(k8s.Config.Load)
-	},
+	Args:    cobra.ExactArgs(1),
+	PreRunE: configLoad(hostsLoad(none)),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if utils.NotExists(args[0]) {
 			return fmt.Errorf("file not found: %s", args[0])
@@ -36,10 +33,7 @@ var reduceCmd = &cobra.Command{
 var reduceDemoCmd = &cobra.Command{
 	Use: "demo", Short: "show config demo",
 	Args: cobra.ExactValidArgs(1), ValidArgs: []string{},
-	PreRun: func(cmd *cobra.Command, args []string) {
-		utils.Try(k8s.Config.Load)
-		plugins.Load()
-	},
+	PreRunE: configLoad(hostsLoad(none)),
 	Run: func(cmd *cobra.Command, args []string) {
 		for _, m := range plugins.Manager {
 			for _, name := range m.Names {

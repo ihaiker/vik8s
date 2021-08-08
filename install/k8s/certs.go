@@ -4,6 +4,8 @@ import (
 	"fmt"
 	etcdcerts "github.com/ihaiker/vik8s/certs/etcd"
 	kubecerts "github.com/ihaiker/vik8s/certs/kubernetes"
+	"github.com/ihaiker/vik8s/config"
+	"github.com/ihaiker/vik8s/install/etcd"
 	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/install/tools"
@@ -13,8 +15,8 @@ import (
 	"path/filepath"
 )
 
-func makeCerts(node *ssh.Node) {
-	if Config.ETCD.External {
+func makeKubernetesCerts(node *ssh.Node) {
+	if config.ExternalETCD() {
 		scpExternalEtcdCa(node)
 	} else {
 		makeEtcdCerts(node)
@@ -24,21 +26,22 @@ func makeCerts(node *ssh.Node) {
 
 func makeJoinControlPlaneConfigFiles(node *ssh.Node) {
 	dir := paths.Join("kube")
-	endpoint := fmt.Sprintf("https://%s:6443", Config.Kubernetes.ApiServer)
-	files := kubecerts.CreateJoinControlPlaneKubeConfigFiles(dir, node.Hostname, endpoint, Config.CertsValidity)
+	endpoint := fmt.Sprintf("https://%s:6443", config.K8S().ApiServer)
+	files := kubecerts.CreateJoinControlPlaneKubeConfigFiles(dir, node.Hostname, endpoint, config.K8S().CertsValidity)
 	for key, path := range files {
 		remote := filepath.Join("/etc/kubernetes", fmt.Sprintf("%s.conf", key))
-		utils.Panic(node.Scp(path, remote), "scp %s %s", path, remote)
+		err := node.SudoScp(path, remote)
+		utils.Panic(err, "scp %s %s", path, remote)
 	}
 }
 
 func makeWorkerConfigFiles(node *ssh.Node) {
 	dir := paths.Join("kube")
-	endpoint := fmt.Sprintf("https://%s:6443", Config.Kubernetes.ApiServer)
-	files := kubecerts.CreateWorkerKubeConfigFile(dir, node.Hostname, endpoint, Config.CertsValidity)
+	endpoint := fmt.Sprintf("https://%s:6443", config.K8S().ApiServer)
+	files := kubecerts.CreateWorkerKubeConfigFile(dir, node.Hostname, endpoint, config.K8S().CertsValidity)
 	for key, path := range files {
 		remote := filepath.Join("/etc/kubernetes", fmt.Sprintf("%s.conf", key))
-		utils.Panic(node.Scp(path, remote), "scp %s %s", path, remote)
+		utils.Panic(node.SudoScp(path, remote), "scp %s %s", path, remote)
 	}
 }
 
@@ -49,12 +52,13 @@ func makeEtcdCerts(node *ssh.Node) {
 	dir := paths.Join("kube", "pki", "etcd")
 
 	sans := []string{"127.0.0.1", "localhost", node.Hostname, node.Host, net.IPv6loopback.String()}
-	sans = append(sans, utils.ParseIPS(Config.Masters)...)
-	if Config.CNI.Name == "calico" {
-		sans = append(sans, tools.GetVip(Config.Kubernetes.SvcCIDR, tools.Vik8sCalicoETCD), "vik8s-calico-etcd")
-	}
-	vt := Config.CertsValidity
+	sans = append(sans, utils.ParseIPS(config.K8S().Masters)...)
 
+	if config.K8S().CNI == "calico" {
+		sans = append(sans, tools.GetVip(config.K8S().SvcCIDR, tools.Vik8sCalicoETCD), "vik8s-calico-etcd")
+	}
+
+	vt := config.K8S().CertsValidity
 	etcdcerts.CreatePKIAssets(name, dir, sans, vt)
 
 	certsFiles := map[string]string{
@@ -68,16 +72,15 @@ func makeEtcdCerts(node *ssh.Node) {
 }
 
 func scpExternalEtcdCa(node *ssh.Node) {
-	if !Config.ETCD.External {
-		return
-	}
+	dir := etcd.CertsDir()
 	files := map[string]string{
-		Config.ETCD.CAFile:            "/etc/kubernetes/pki/etcd/ca.crt",
-		Config.ETCD.ApiServerKeyFile:  "/etc/kubernetes/pki/etcd/apiserver-etcd-client.key",
-		Config.ETCD.ApiServerCertFile: "/etc/kubernetes/pki/etcd/apiserver-etcd-client.crt",
+		filepath.Join(dir, "ca.crt"):                    "/etc/kubernetes/pki/etcd/ca.crt",
+		filepath.Join(dir, "apiserver-etcd-client.key"): "/etc/kubernetes/pki/etcd/apiserver-etcd-client.key",
+		filepath.Join(dir, "apiserver-etcd-client.crt"): "/etc/kubernetes/pki/etcd/apiserver-etcd-client.crt",
 	}
 	for local, remote := range files {
-		utils.Panic(node.Scp(local, remote), "[%s] scp %s %s", node.Host, local, remote)
+		err := node.SudoScp(local, remote)
+		utils.Panic(err, "scp %s %s", local, remote)
 	}
 }
 
@@ -85,13 +88,13 @@ func makeKubeCerts(node *ssh.Node) {
 	certNode := kubecerts.Node{
 		Name:                node.Hostname,
 		Host:                node.Host,
-		ApiServer:           Config.Kubernetes.ApiServer,
-		SvcCIDR:             Config.Kubernetes.SvcCIDR,
-		CertificateValidity: Config.CertsValidity,
-		SANS:                Config.Kubernetes.ApiServerCertExtraSans,
+		ApiServer:           config.K8S().ApiServer,
+		SvcCIDR:             config.K8S().SvcCIDR,
+		CertificateValidity: config.K8S().CertsValidity,
+		SANS:                config.K8S().ApiServerCertExtraSans,
 	}
 	//apisever = MasterIPS + VIP + CertSANS
-	for _, masterIp := range Config.Masters {
+	for _, masterIp := range config.K8S().Masters {
 		masterNode := hosts.Get(masterIp)
 		certNode.SANS = append(certNode.SANS, masterNode.Hostname, masterNode.Host)
 	}
@@ -103,8 +106,8 @@ func makeKubeCerts(node *ssh.Node) {
 
 	//sa
 	{
-		utils.Panic(node.Scp(filepath.Join(dir, "sa.key"), "/etc/kubernetes/pki/sa.key"), "scp sa.key")
-		utils.Panic(node.Scp(filepath.Join(dir, "sa.pub"), "/etc/kubernetes/pki/sa.pub"), "scp sa")
+		utils.Panic(node.SudoScp(filepath.Join(dir, "sa.key"), "/etc/kubernetes/pki/sa.key"), "scp sa.key")
+		utils.Panic(node.SudoScp(filepath.Join(dir, "sa.pub"), "/etc/kubernetes/pki/sa.pub"), "scp sa")
 	}
 	certsFiles := map[string]string{
 		//public
@@ -123,7 +126,7 @@ func scpCerts(certsFiles map[string]string, node *ssh.Node, localDir string) {
 		for _, exp := range []string{".key", ".crt"} {
 			local := filepath.Join(localDir, lf+exp)
 			remote := filepath.Join(remoteDir, rf+exp)
-			utils.Panic(node.Scp(local, remote), "scp %s %s", local, remote)
+			utils.Panic(node.SudoScp(local, remote), "scp %s %s", local, remote)
 		}
 	}
 }

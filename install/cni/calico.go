@@ -1,17 +1,17 @@
 package cni
 
 import (
-	"encoding/json"
 	"fmt"
 	etcdcerts "github.com/ihaiker/vik8s/certs/etcd"
-	"github.com/ihaiker/vik8s/install/k8s"
+	"github.com/ihaiker/vik8s/config"
+	"github.com/ihaiker/vik8s/install/etcd"
 	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/install/tools"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/ihaiker/vik8s/reduce"
 	"github.com/spf13/cobra"
-	"strconv"
+	"path/filepath"
 	"strings"
 )
 
@@ -88,7 +88,7 @@ func (f *calico) Apply(master *ssh.Node) {
 	data := paths.Json{
 		"Version": "v" + f.version, "Repo": f.repo,
 		"IPIP": f.ipip, "MTU": f.mtu,
-		"CIDR": k8s.Config.Kubernetes.PodCIDR, "Interface": k8s.Config.Kubernetes.Interface,
+		"CIDR": config.K8S().PodCIDR, "Interface": config.K8S().Interface,
 		"Typha": f.typha,
 	}
 
@@ -97,16 +97,17 @@ func (f *calico) Apply(master *ssh.Node) {
 		if len(f.etcd.Endpoints) == 0 {
 			f.etcd.TLS = true
 			//第一步, 使用 vik8s etcd init 安装了etcd集群
-			if k8s.Config.ETCD.External {
-				f.etcd.Endpoints = k8s.Config.ETCD.Nodes
-				f.etcd.Ca = k8s.Config.ETCD.CAFile
-				f.etcd.Key = k8s.Config.ETCD.ApiServerKeyFile
-				f.etcd.Cert = k8s.Config.ETCD.ApiServerCertFile
+			if config.ExternalETCD() {
+				f.etcd.Endpoints = config.Etcd().Nodes
+				dir := etcd.CertsDir()
+				f.etcd.Ca = filepath.Join(dir, "ca.crt")
+				f.etcd.Key = filepath.Join(dir, "apiserver-etcd-client.crt")
+				f.etcd.Cert = filepath.Join(dir, "apiserver-etcd-client.key")
 			} else {
-				vip := tools.GetVip(k8s.Config.Kubernetes.SvcCIDR, tools.Vik8sCalicoETCD)
+				vip := tools.GetVip(config.K8S().SvcCIDR, tools.Vik8sCalicoETCD)
 				f.applyVik8sETCDServer(master, vip)
 				certsDir := paths.Join("kube/pki/etcd")
-				certPath, keyPath := etcdcerts.CreateCalicoETCDPKIAssert(certsDir, k8s.Config.CertsValidity)
+				certPath, keyPath := etcdcerts.CreateCalicoETCDPKIAssert(certsDir, config.K8S().CertsValidity)
 				f.etcd.Endpoints = []string{vip + ":2379"}
 				f.etcd.Ca = paths.Join("kube/pki/etcd/ca.crt")
 				f.etcd.Key = keyPath
@@ -141,7 +142,7 @@ func (f *calico) Apply(master *ssh.Node) {
 
 	reduce.MustApplyAssert(master, local, data)
 
-	bs, _ := json.Marshal(f.etcd)
+	/*bs, _ := json.Marshal(f.etcd)
 	k8s.Config.CNI.Params = map[string]string{
 		"Version": f.version, "Repo": f.repo,
 		"IPIP": strconv.FormatBool(f.ipip), "MTU": strconv.Itoa(f.mtu),
@@ -149,7 +150,7 @@ func (f *calico) Apply(master *ssh.Node) {
 		"TyphaPrometheus": strconv.FormatBool(f.typha.Prometheus),
 		"TyphaReplicas":   strconv.Itoa(f.typha.Replicas),
 		"Etcd":            string(bs),
-	}
+	}*/
 }
 
 func (f *calico) Clean(node *ssh.Node) {

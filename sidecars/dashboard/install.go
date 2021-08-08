@@ -5,7 +5,8 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/ihaiker/vik8s/certs"
-	"github.com/ihaiker/vik8s/install/k8s"
+	"github.com/ihaiker/vik8s/config"
+	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/libs/flags"
 	"github.com/ihaiker/vik8s/libs/utils"
@@ -52,7 +53,7 @@ func (d *Dashboard) Apply() {
 	certPath := d.TlsCert
 	keyPath := d.TlsKey
 
-	master := k8s.Config.Master()
+	master := hosts.Get(config.K8S().Masters[0])
 
 	certBase64, keyBase64 := makeDashboardCertAndKey(ingress, certPath, keyPath)
 	//dashboard
@@ -128,8 +129,9 @@ Accessing Dashboard:
 }
 
 func (d *Dashboard) Delete(data bool) {
-	master := k8s.Config.Master()
-	fmt.Println(master.MustCmd2String("kubectl delete namespaces kubernetes-dashboard"))
+	master := hosts.Get(config.K8S().Masters[0])
+	err := master.SudoCmdPrefixStdout("kubectl delete namespaces kubernetes-dashboard")
+	utils.Panic(err, "remove kubernests cluster namespace kubernetes-dashboard")
 }
 
 func makeDashboardCertAndKey(commonName, tlsCertPath, tlsKeyPath string) (tlsCertBase64, tlsKeyBase64 string) {
