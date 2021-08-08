@@ -8,7 +8,6 @@ import (
 	"github.com/ihaiker/vik8s/install/etcd"
 	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/paths"
-	"github.com/ihaiker/vik8s/install/tools"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"net"
@@ -53,10 +52,10 @@ func makeEtcdCerts(node *ssh.Node) {
 
 	sans := []string{"127.0.0.1", "localhost", node.Hostname, node.Host, net.IPv6loopback.String()}
 	sans = append(sans, utils.ParseIPS(config.K8S().Masters)...)
-
-	if config.K8S().CNI == "calico" {
-		sans = append(sans, tools.GetVip(config.K8S().SvcCIDR, tools.Vik8sCalicoETCD), "vik8s-calico-etcd")
+	if node.Hostname != node.Facts.Hostname {
+		sans = append(sans, node.Facts.Hostname)
 	}
+	//fixme sans = append(sans, tools.GetVip(config.K8S().SvcCIDR, tools.Vik8sCalicoETCD), "vik8s-calico-etcd")
 
 	vt := config.K8S().CertsValidity
 	etcdcerts.CreatePKIAssets(name, dir, sans, vt)
@@ -97,7 +96,11 @@ func makeKubeCerts(node *ssh.Node) {
 	for _, masterIp := range config.K8S().Masters {
 		masterNode := hosts.Get(masterIp)
 		certNode.SANS = append(certNode.SANS, masterNode.Hostname, masterNode.Host)
+		if masterNode.Hostname != masterNode.Facts.Hostname {
+			certNode.SANS = append(certNode.SANS, masterNode.Facts.Hostname)
+		}
 	}
+	certNode.SANS = append(certNode.SANS, config.K8S().ApiServer, config.K8S().ApiServerVIP)
 
 	node.Logger("make kube certs files")
 

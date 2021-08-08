@@ -22,7 +22,7 @@ func (f *customer) Flags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&f.file, flags(f, "file"), "", "User-defined network plugin file location, if used for kubectl apply -f <file>")
 }
 
-func (f *customer) Apply(node *ssh.Node) {
+func (f *customer) Apply(cmd *cobra.Command, node *ssh.Node) {
 	utils.Assert(f.url != "" || f.file != "", "No custom network plugin found，see: --customer-url or --customer-file ")
 
 	remote := node.Vik8s("yaml/cni/customer.yaml")

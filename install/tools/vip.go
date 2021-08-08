@@ -10,8 +10,6 @@ type VipFor int
 const (
 	Vik8sApiServer = iota + 1
 	Vik8sCalicoETCD
-	GlusterGSHeketiService
-	GlusterGSEndpointService
 )
 
 func GetVip(cidr string, vipFor VipFor) string {

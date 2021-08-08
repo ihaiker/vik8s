@@ -37,7 +37,7 @@ type createAction func(dir string, node Node)
 func CreatePKIAssets(dir string, node Node) {
 	line(node.Name, "creating PKI assets %s", dir)
 	actions := []createAction{
-		createServiceAccountKeyPaire,
+		createServiceAccountKeyPair,
 		createCACertAndKeyFiles,
 		createFrontProxyFiles,
 
@@ -52,7 +52,7 @@ func CreatePKIAssets(dir string, node Node) {
 	line(node.Name, "valid certificates and keys now exist in %q", dir)
 }
 
-func createServiceAccountKeyPaire(dir string, node Node) {
+func createServiceAccountKeyPair(dir string, node Node) {
 	if utils.Exists(filepath.Join(dir, "sa.key")) {
 		line(node.Name, "sa.key sa.pub already exist")
 		return
@@ -97,14 +97,13 @@ func createApiServerFiles(dir string, node Node) {
 	line(node.Name, "creating apiserver %s", node.Name)
 
 	apiServerVip := tools.GetVip(node.SvcCIDR, tools.Vik8sApiServer)
-	mix, _ := tools.AddressRange(node.SvcCIDR)
 
 	cfg := certs.NewConfig("kube-apiserver")
 	cfg.CertificateValidity = node.CertificateValidity
 	sans := []string{
 		"cluster.local", "localhost", node.Name, node.ApiServer,
 		"kubernetes", "kubernetes.default", "kubernetes.default.svc", "kubernetes.default.svc.cluster.local",
-		"127.0.0.1", node.Host, utils.NextIP(mix).String(), apiServerVip,
+		"127.0.0.1", node.Host, apiServerVip,
 	}
 	sans = append(sans, node.SANS...)
 	cfg.AltNames = *certs.GetAltNames(sans, "apiserver")

@@ -21,13 +21,13 @@ func (f *flannel) Name() string {
 }
 
 func (f *flannel) Flags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&f.version, flags(f, "version"), "0.12.0", "the flannel version")
+	cmd.Flags().StringVar(&f.version, flags(f, "version"), "0.14.0", "the flannel version")
 	cmd.Flags().StringVar(&f.limitCPU, flags(f, "limits-cpu"), "100m", "Container Cup Limit")
 	cmd.Flags().StringVar(&f.limitMemory, flags(f, "limits-memory"), "50Mi", "Container Memory Limit")
 	cmd.Flags().StringVar(&f.repo, flags(f, "repo"), "", "")
 }
 
-func (f *flannel) Apply(node *ssh.Node) {
+func (f *flannel) Apply(cmd *cobra.Command, node *ssh.Node) {
 
 	data := paths.Json{
 		"Version": f.version, "Repo": repo.QuayIO(f.repo),

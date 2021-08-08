@@ -55,10 +55,10 @@ pod test [label=value ...] {
     
     hostNetwork true;
 
-    hosts 172.16.100.12 api.vik8s.io; 
+    hosts 172.16.100.12 api-vik8s-io; 
     hosts {
-        172.16.100.12 api.vik8s.io;
-        172.16.100.13 api.vik8s.io api2.vik8s.io;
+        172.16.100.12 api-vik8s-io;
+        172.16.100.13 api-vik8s-io api2.vik8s.io;
     }
 
     affinity pod {

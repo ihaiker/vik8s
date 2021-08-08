@@ -25,7 +25,7 @@ func JoinControl(node *ssh.Node) {
 	node.Logger("join control-plane")
 
 	setNodeHosts(node)
-	bases.InstallTimeServices(node, config.K8S().Timezone, master.Host)
+	bases.InstallTimeServices(node, config.K8S().Timezone, config.Config.K8S.Masters...)
 	setApiServerHosts(node)
 	setIpvsadmApiServer(master, node)
 	makeKubernetesCerts(node)
@@ -52,7 +52,7 @@ func JoinWorker(node *ssh.Node) {
 	node.Logger("join worker")
 
 	setNodeHosts(node)
-	bases.InstallTimeServices(node, config.K8S().Timezone, master.Host)
+	bases.InstallTimeServices(node, config.K8S().Timezone, config.Config.K8S.Masters...)
 	setApiServerHosts(node)
 	setIpvsadmApiServer(master, node)
 	makeWorkerConfigFiles(node)

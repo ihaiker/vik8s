@@ -9,6 +9,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var criCmd = &cobra.Command{
+	Use: "cri", Short: "defined kubernetes container runtime interface",
+}
+
 var dockerFlag = config.DefaultDockerConfiguration()
 var dockerCmd = &cobra.Command{
 	Use: "docker", Short: "defined kubernetes cni configuration for docker",
@@ -31,5 +35,7 @@ func init() {
 	err := cobrax.FlagsWith(dockerCmd, cobrax.GetFlags, dockerFlag, "", "VIK8S_DOCKER")
 	utils.Panic(err, "setting flag error")
 	dockerCmd.Flags().SortFlags = false
-	rootCmd.AddCommand(dockerCmd)
+
+	criCmd.AddCommand(dockerCmd)
+	rootCmd.AddCommand(criCmd)
 }

@@ -81,7 +81,7 @@ func (f *calico) applyVik8sETCDServer(node *ssh.Node, vip string) {
 	})
 }
 
-func (f *calico) Apply(master *ssh.Node) {
+func (f *calico) Apply(cmd *cobra.Command, master *ssh.Node) {
 	if f.repo != "" && strings.HasSuffix(f.repo, "/") {
 		f.repo = f.repo + "/"
 	}

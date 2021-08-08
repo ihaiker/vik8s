@@ -5,7 +5,7 @@ import "time"
 type K8SConfiguration struct {
 	Masters       []string `ngx:"masters" flag:"-"`
 	Nodes         []string `ngx:"nodes" flag:"-"`
-	Version       string   `ngFx:"version" help:"Specify k8s version"`
+	Version       string   `ngx:"version" help:"Specify k8s version"`
 	KubeadmConfig string   `ngx:"kubeadm-config" help:"Path to a kubeadm configuration file. see kubeadm --config"`
 
 	ApiServer              string   `ngx:"api-server" def:"api-vik8s-io" help:"Specify a stable IP address or DNS name for the control plane. see kubeadm --control-plane-endpoint"`
@@ -21,8 +21,6 @@ type K8SConfiguration struct {
 	CertsValidity time.Duration `ngx:"certs-validity" def:"876000h" help:"Certificate validity time"`
 	Timezone      string        `ngx:"timezone" def:"Asia/Shanghai"`
 	NTPServices   []string      `ngx:"ntp-services" flag:"ntp-services" def:"ntp1.aliyun.com,ntp2.aliyun.com,ntp3.aliyun.com" help:"time server\n"`
-
-	CNI string `ngx:"cni" flag:"cni" def:"flannel" help:"the kubernates cni plugins. support: ignore,flannel,calico,customer"`
 }
 
 func DefaultK8SConfiguration() *K8SConfiguration {

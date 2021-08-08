@@ -56,15 +56,15 @@ func (node *Node) easyssh() *easySSHConfig {
 func (node *Node) GatheringFacts() error {
 	node.Logger("gathering facts")
 
-	if hostname, err := node.SudoCmdString("hostname -s"); err != nil {
+	if hostname, err := node.SudoCmdString("hostname -f"); err != nil {
 		return err
 	} else {
-		node.Hostname = hostname
-	}
-
-	if hostname, err := node.SudoCmdString("hostname"); err != nil {
-		return err
-	} else {
+		idx := strings.Index(hostname, ".")
+		if idx == -1 {
+			node.Hostname = hostname
+		} else {
+			node.Hostname = hostname[0:idx]
+		}
 		node.Facts.Hostname = hostname
 	}
 

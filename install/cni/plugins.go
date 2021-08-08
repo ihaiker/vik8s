@@ -13,17 +13,26 @@ type Plugin interface {
 	Flags(cmd *cobra.Command)
 
 	//生成插件
-	Apply(node *ssh.Node)
+	Apply(cmd *cobra.Command, node *ssh.Node)
 
 	//清楚插件内容
 	Clean(node *ssh.Node)
 }
 
-const DefaultPlugin = "flannel"
+type plugins []Plugin
 
 var Plugins = plugins{
 	new(flannel), new(calico),
 	new(customer),
+}
+
+func (p *plugins) Clean(node *ssh.Node) {
+	_ = node.SudoCmd("ifconfig | grep cni0 > /dev/null && ifconfig cni0 down")
+	_ = node.SudoCmd("ip link show | grep kube-ipvs0 && ip link delete kube-ipvs0 ")
+	_ = node.SudoCmd("ip link show | grep dummy0 && ip link delete dummy0 ")
+	for _, plugin := range *p {
+		plugin.Clean(node)
+	}
 }
 
 func flags(f Plugin, name string) string {

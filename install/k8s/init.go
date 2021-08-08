@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/install/bases"
+	"github.com/ihaiker/vik8s/install/cri"
 	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/install/repo"
@@ -14,6 +15,7 @@ import (
 	yamls "github.com/ihaiker/vik8s/yaml"
 	"io/ioutil"
 	"os"
+	"regexp"
 	"strings"
 )
 
@@ -23,7 +25,10 @@ func InitCluster(node *ssh.Node) *ssh.Node {
 	config.Config.K8S.Repo = repo.KubeletImage(config.K8S().Repo)
 	config.Config.K8S.ApiServerVIP = tools.GetVip(config.K8S().SvcCIDR, tools.Vik8sApiServer)
 
+	bases.Check(node)
 	bases.InstallTimeServices(node, config.K8S().Timezone, config.K8S().NTPServices...)
+	cri.Install(node)
+
 	installKubernetes(node)
 
 	node.Logger("init cluster")
@@ -36,17 +41,54 @@ func InitCluster(node *ssh.Node) *ssh.Node {
 		makeKubernetesCerts(node)
 		makeJoinControlPlaneConfigFiles(node)
 		initKubernetes(node)
+		copyKubeletConfig(node)
 		applyApiServerEndpoint(node)
 	}
+	config.K8S().JoinNode(true, node.Host)
 	return node
 }
 
 func setHosts(node *ssh.Node, ip, domain string) {
-	err := node.SudoCmd(fmt.Sprintf("sed -i /%s/d /etc/hosts", domain))
-	utils.Panic(err, "set /etc/hosts")
+	node.Logger("set host %s => %s", ip, domain)
+	hostsContent, err := node.SudoCmdString("cat /etc/hosts")
+	utils.Panic(err, "fetch hosts list")
 
-	err = node.SudoCmd(fmt.Sprintf("sed -i '$ a %s %s' /etc/hosts", ip, domain))
-	utils.Panic(err, "set /etc/hosts")
+	hosts := strings.Split(hostsContent, "\n")
+	findLine := -1
+	editFn := 0 //0: append, 1: edit
+	pattern := regexp.MustCompile("\\s+")
+	for line, ipAndDomainsStr := range hosts {
+		//trim all space
+		ipAndDomainsStr = strings.TrimRight(ipAndDomainsStr, "")
+		if pattern.ReplaceAllString(ipAndDomainsStr, " ") == "" ||
+			strings.HasPrefix(ipAndDomainsStr, "#") {
+			continue
+		}
+
+		ipAndDomains := pattern.Split(ipAndDomainsStr, -1)
+		if idx := utils.Search(ipAndDomains[1:], domain); idx != -1 {
+			if ip == ipAndDomains[0] { // no need to modify it
+				return
+			}
+			if len(ipAndDomains) == 2 {
+				findLine = line + 1
+				editFn = 1
+			} else {
+				ipAndDomains[idx+1] = ""
+				err = node.SudoCmd(fmt.Sprintf("sed -i '%dc%s' /etc/hosts", line+1, strings.Join(ipAndDomains, " ")))
+				utils.Panic(err, "set /etc/hosts")
+			}
+			break
+		}
+	}
+
+	if editFn == 0 { //0: append, 1: edit
+		err = node.SudoCmd(fmt.Sprintf("sed -i '$ a%s %s' /etc/hosts", ip, domain))
+		utils.Panic(err, "set /etc/hosts")
+	} else {
+		err = node.SudoCmd(fmt.Sprintf("sed -i '%dc%s %s' /etc/hosts", findLine, ip, domain))
+		utils.Panic(err, "set /etc/hosts")
+	}
 }
 
 func bugfixImages(node *ssh.Node, remote string) {
@@ -74,7 +116,6 @@ func initKubernetes(node *ssh.Node) {
 	bugfixImages(node, remote)
 	err := node.SudoCmdOutput(fmt.Sprintf("kubeadm init --config=%s --upload-certs", remote), os.Stdout)
 	utils.Panic(err, "kubeadm init")
-	copyKubeletConfig(node)
 }
 
 func scpKubeConfig(node *ssh.Node) string {
@@ -98,6 +139,9 @@ func scpKubeConfig(node *ssh.Node) string {
 
 func copyKubeletConfig(node *ssh.Node) {
 	err := node.Cmd2("mkdir -p $HOME/.kube")
+	utils.Panic(err, "remove old $HOME/.kube")
+
+	err = node.Cmd2("mkdir -p $HOME/.kube")
 	utils.Panic(err, "copy kubectl config")
 
 	err = node.SudoCmd("cp -i /etc/kubernetes/admin.conf $HOME/.kube/config")
