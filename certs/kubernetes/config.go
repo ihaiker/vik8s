@@ -39,17 +39,18 @@ const (
 	ControllerManagerKubeConfigFileName = "controller-manager"
 	KubeletKubeConfigFileName           = "kubelet"
 	SchedulerKubeConfigFileName         = "scheduler"
+	ClusterName                         = "kubernetes"
 )
 
 func CreateJoinControlPlaneKubeConfigFiles(dir, nodeName, controlPlaneEndpoint string, certificateValidity time.Duration) map[string]string {
 	return createKubeConfigFiles(
-		dir, "kubernetes", nodeName, controlPlaneEndpoint, certificateValidity,
+		dir, ClusterName, nodeName, controlPlaneEndpoint, certificateValidity,
 		AdminKubeConfigFileName, ControllerManagerKubeConfigFileName, KubeletKubeConfigFileName, SchedulerKubeConfigFileName,
 	)
 }
 
 func CreateWorkerKubeConfigFile(dir, nodeName, controlPlaneEndpoint string, certificateValidity time.Duration) map[string]string {
-	return createKubeConfigFiles(dir, "kubernetes", nodeName, controlPlaneEndpoint, certificateValidity, KubeletKubeConfigFileName)
+	return createKubeConfigFiles(dir, ClusterName, nodeName, controlPlaneEndpoint, certificateValidity, KubeletKubeConfigFileName)
 }
 
 func createKubeConfigFiles(dir, clusterName, nodeName, controlPlaneEndpoint string, certificateValidity time.Duration, kubeConfigFileNames ...string) map[string]string {
@@ -153,7 +154,7 @@ func getKubeConfigSpecs(dir, nodeName, controlPlaneEndpoint string) map[string]*
 			},
 		},
 
-		"controller-manager": {
+		ControllerManagerKubeConfigFileName: {
 			CACert:     caCert,
 			APIServer:  controlPlaneEndpoint,
 			ClientName: "system:kube-controller-manager",
@@ -162,7 +163,7 @@ func getKubeConfigSpecs(dir, nodeName, controlPlaneEndpoint string) map[string]*
 			},
 		},
 
-		"scheduler": {
+		SchedulerKubeConfigFileName: {
 			CACert:     caCert,
 			APIServer:  controlPlaneEndpoint,
 			ClientName: "system:kube-scheduler",
@@ -171,7 +172,7 @@ func getKubeConfigSpecs(dir, nodeName, controlPlaneEndpoint string) map[string]*
 			},
 		},
 
-		"kubelet": {
+		KubeletKubeConfigFileName: {
 			CACert:     caCert,
 			APIServer:  controlPlaneEndpoint,
 			ClientName: fmt.Sprintf("system:node:%s", nodeName),

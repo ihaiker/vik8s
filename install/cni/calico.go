@@ -50,7 +50,7 @@ func (f *calico) Flags(cmd *cobra.Command) {
 	cmd.Flags().IntVar(&f.mtu, flags(f, "mtu"), 1440, `Configure the MTU to use for workload interfaces and the tunnels.  
 For IPIP, set to your network MTU - 20; for VXLAN set to your network MTU - 50.`)
 
-	cmd.Flags().StringVar(&f.repo, flags(f, "repo"), "", fmt.Sprintf("Choose a container registry to pull control plane images from"))
+	cmd.Flags().StringVar(&f.repo, flags(f, "Repo"), "", fmt.Sprintf("Choose a container registry to pull control plane images from"))
 
 	cmd.Flags().BoolVar(&f.typha.Enable, flags(f, "typha"), false, "Enable Typha, When install Calico with Kubernetes API datastore, more than 50 nodes")
 	cmd.Flags().BoolVar(&f.typha.Prometheus, flags(f, "typha-prometheus"), false,
@@ -144,7 +144,7 @@ func (f *calico) Apply(cmd *cobra.Command, master *ssh.Node) {
 
 	/*bs, _ := json.Marshal(f.etcd)
 	k8s.Config.CNI.Params = map[string]string{
-		"Version": f.version, "Repo": f.repo,
+		"Version": f.version, "Repo": f.Repo,
 		"IPIP": strconv.FormatBool(f.ipip), "MTU": strconv.Itoa(f.mtu),
 		"TyphaEnable":     strconv.FormatBool(f.typha.Enable),
 		"TyphaPrometheus": strconv.FormatBool(f.typha.Prometheus),

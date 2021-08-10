@@ -69,7 +69,7 @@ func createCACertAndKeyFiles(dir string, node Node) {
 		return
 	}
 	line(node.Name, "creating a self signed CA certificate and key files")
-	cfg := certs.NewConfig("kubernetes")
+	cfg := certs.NewConfig(ClusterName)
 	cfg.CertificateValidity = node.CertificateValidity
 	caCert, caKey := certs.NewCertificateAuthority(cfg)
 	certs.WriteCertAndKey(dir, "ca", caCert, caKey)
@@ -97,13 +97,14 @@ func createApiServerFiles(dir string, node Node) {
 	line(node.Name, "creating apiserver %s", node.Name)
 
 	apiServerVip := tools.GetVip(node.SvcCIDR, tools.Vik8sApiServer)
+	mix, _ := tools.AddressRange(node.SvcCIDR)
 
 	cfg := certs.NewConfig("kube-apiserver")
 	cfg.CertificateValidity = node.CertificateValidity
 	sans := []string{
 		"cluster.local", "localhost", node.Name, node.ApiServer,
 		"kubernetes", "kubernetes.default", "kubernetes.default.svc", "kubernetes.default.svc.cluster.local",
-		"127.0.0.1", node.Host, apiServerVip,
+		"127.0.0.1", node.Host, utils.NextIP(mix).String() /*服务cidr第一个地址为内部通讯使用*/, apiServerVip,
 	}
 	sans = append(sans, node.SANS...)
 	cfg.AltNames = *certs.GetAltNames(sans, "apiserver")

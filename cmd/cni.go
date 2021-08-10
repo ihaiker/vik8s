@@ -9,7 +9,6 @@ import (
 
 var cniCmd = &cobra.Command{
 	Use: "cni", Short: "define kubernetes network interface",
-	PersistentPreRunE: configLoad(hostsLoad(none)), PersistentPostRunE: configDown(none),
 }
 
 func init() {
@@ -17,9 +16,11 @@ func init() {
 		name := plugin.Name()
 		cmd := &cobra.Command{Use: name}
 		plugin.Flags(cmd)
+		cmd.PersistentPreRunE = configLoad(hostsLoad(none))
+		cmd.PersistentPostRunE = configDown(none)
 		cmd.Run = func(cmd *cobra.Command, args []string) {
 			master := hosts.Get(config.K8S().Masters[0])
-			plugin.Apply(cmd, master)
+			cni.Plugins.Apply(cmd, master)
 		}
 		cniCmd.AddCommand(cmd)
 	}

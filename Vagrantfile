@@ -31,7 +31,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define "master01" do |node|
-    node.vm.hostname = "master01.vik8s.io"
+    node.vm.hostname = "master01" ##TODO 这里还有问题
     node.vm.network "private_network", ip: "10.24.0.10"
     node.vm.provider "virtualbox" do |v|
       v.cpus = "2"
@@ -40,7 +40,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define "slave20" do |node|
-    node.vm.hostname = "slave20.vik8s.io"
+    node.vm.hostname = "slave20"
     node.vm.network "private_network", ip: "10.24.0.20"
     node.vm.provider "virtualbox" do |v|
       v.cpus = "1"
@@ -49,7 +49,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define "slave21" do |node|
-    node.vm.hostname = "slave21.vik8s.io"
+    node.vm.hostname = "slave21"
     node.vm.network "private_network", ip: "10.24.0.21"
     node.vm.provider "virtualbox" do |v|
       v.cpus = "1"

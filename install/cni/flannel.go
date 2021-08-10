@@ -1,48 +1,47 @@
 package cni
 
 import (
+	"github.com/ihaiker/cobrax"
 	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/install/repo"
 	"github.com/ihaiker/vik8s/libs/ssh"
+	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/ihaiker/vik8s/reduce"
 	"github.com/spf13/cobra"
 )
 
 type flannel struct {
-	version     string
-	repo        string
-	limitCPU    string
-	limitMemory string
+	Version     string `flag:"version" help:"the flannel version"`
+	Repo        string `flag:"repo" help:"docker image pull from."`
+	LimitCPU    string `flag:"limits-cpu" help:"Container Cup Limit"`
+	LimitMemory string `flag:"limits-memory" help:"Container Memory Limit"`
 }
 
+func NewFlannelCni() *flannel {
+	return &flannel{
+		Version:     "v0.14.0",
+		LimitCPU:    "100m",
+		LimitMemory: "50Mi",
+	}
+}
 func (f *flannel) Name() string {
 	return "flannel"
 }
 
 func (f *flannel) Flags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&f.version, flags(f, "version"), "0.14.0", "the flannel version")
-	cmd.Flags().StringVar(&f.limitCPU, flags(f, "limits-cpu"), "100m", "Container Cup Limit")
-	cmd.Flags().StringVar(&f.limitMemory, flags(f, "limits-memory"), "50Mi", "Container Memory Limit")
-	cmd.Flags().StringVar(&f.repo, flags(f, "repo"), "", "")
+	err := cobrax.Flags(cmd, f, "", "")
+	utils.Panic(err, "set flannel flag error")
 }
 
 func (f *flannel) Apply(cmd *cobra.Command, node *ssh.Node) {
-
 	data := paths.Json{
-		"Version": f.version, "Repo": repo.QuayIO(f.repo),
+		"Version": f.Version, "Repo": repo.QuayIO(f.Repo),
 		"CIDR": config.K8S().PodCIDR, "Interface": config.K8S().Interface,
-		"LimitCPU": f.limitCPU, "LimitMemory": f.limitMemory,
+		"LimitCPU": f.LimitCPU, "LimitMemory": f.LimitMemory,
 	}
-
 	name := "yaml/cni/flannel.conf"
 	reduce.MustApplyAssert(node, name, data)
-
-	//TODO
-	/*k8s.Config.CNI.Params = map[string]string{
-		"Version": f.version, "Repo": repo.QuayIO(f.repo),
-		"LimitCPU": f.limitCPU, "LimitMemory": f.limitMemory,
-	}*/
 }
 
 func (f *flannel) Clean(node *ssh.Node) {

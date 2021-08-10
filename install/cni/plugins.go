@@ -22,8 +22,16 @@ type Plugin interface {
 type plugins []Plugin
 
 var Plugins = plugins{
-	new(flannel), new(calico),
+	NewFlannelCni(), new(calico),
 	new(customer),
+}
+
+func (p *plugins) Apply(cmd *cobra.Command, node *ssh.Node) {
+	for _, plugin := range *p {
+		if plugin.Name() == cmd.Use {
+			plugin.Apply(cmd, node)
+		}
+	}
 }
 
 func (p *plugins) Clean(node *ssh.Node) {

@@ -27,18 +27,22 @@ docker: build ## 生成docker证书
 	$(bin) docker --tls.enable --hosts "tcp://{IP}:2375"
 
 .PHONY: etcd
-etcd: addhosts
+etcd: addhosts ## ETCD 初始化
 	$(bin) etcd init 10.24.0.10
 	$(bin) etcd join 10.24.0.20
 	$(bin) etcd join 10.24.0.21
 
 .PHONY: etcd-clean
-etcd-clean:
+etcd-clean: ## ETCD 清理
 	$(bin) etcd reset
 
 .PHONY: init
-init: addhosts
-	$(bin) init 10.24.0.10
+init: addhosts  ## 集群初始化
+	$(bin) init 10.24.0.10 --interface=eth1
+
+.PHONY: cni-flannel
+cni-flannel: addhosts
+	$(bin) cni flannel
 
 .PHONY: mkdocs
 mkdocs: ## 构建文档

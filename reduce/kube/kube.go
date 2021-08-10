@@ -94,7 +94,7 @@ func (k *Kubernetes) Bytes() []byte {
 	w := config.Writer(0).
 		Line("# -------------------------------------- #").
 		Line("#          Generate by vik8s             #").
-		Format("#       Kubernetes version %-8s      #", k.Kubernetes).
+		Format("#       Kubernetes version %-8s      #\n", k.Kubernetes).
 		Line("#    https://github.com/ihaiker/vik8s    #").
 		Line("# -------------------------------------- #")
 

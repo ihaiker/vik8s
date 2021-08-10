@@ -139,9 +139,6 @@ func scpKubeConfig(node *ssh.Node) string {
 
 func copyKubeletConfig(node *ssh.Node) {
 	err := node.Cmd2("mkdir -p $HOME/.kube")
-	utils.Panic(err, "remove old $HOME/.kube")
-
-	err = node.Cmd2("mkdir -p $HOME/.kube")
 	utils.Panic(err, "copy kubectl config")
 
 	err = node.SudoCmd("cp -i /etc/kubernetes/admin.conf $HOME/.kube/config")

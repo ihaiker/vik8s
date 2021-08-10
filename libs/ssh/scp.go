@@ -63,6 +63,7 @@ func (node *Node) Scp(localPath, remotePath string) error {
 }
 
 func (node *Node) ScpContent(content []byte, remotePath string) error {
+	node.Logger("push %s", remotePath)
 	return node.easyssh().ScpContent(content, remotePath)
 }
 
