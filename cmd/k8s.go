@@ -6,9 +6,7 @@ import (
 	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/k8s"
-	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
-	yamls "github.com/ihaiker/vik8s/yaml"
 	"github.com/spf13/cobra"
 )
 
@@ -41,44 +39,31 @@ func init() {
 
 var joinCmd = &cobra.Command{
 	Use: "join", Short: "join to k8s",
-	Example: `vik8s join --master 172.10.0.2-172.10.0.4 --node 172.10.0.7
-vik8s join -m 172.10.0.2 -m 172.10.0.3 -m 172.10.0.4 -n 172.10.0.5`,
+	Example: `vik8s join --master 172.10.0.2-172.10.0.4
+vik8s join 172.10.0.2 172.10.0.3 172.10.0.4 172.10.0.5`,
 	PreRunE: configLoad(hostsLoad(none)), PostRunE: configDown(none),
+	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		masters := getFlagsIps(cmd, "master")
-		nodes := getFlagsIps(cmd, "node")
-		isAsync, _ := cmd.Flags().GetBool("async")
-
-		if len(masters) == 0 && len(nodes) == 0 {
+		nodes := hosts.Gets(args)
+		if len(nodes) == 0 {
 			fmt.Println(cmd.UseLine())
 			return
 		}
-
-		async := utils.Async()
-		for _, ctl := range masters {
-			if isAsync {
-				async.Add(k8s.JoinControl, ctl)
-			} else {
-				k8s.JoinControl(ctl)
-			}
-		}
-
+		hosts.MustGatheringFacts(nodes...)
+		master, _ := cmd.Flags().GetBool("master")
 		for _, node := range nodes {
-			if isAsync {
-				async.Add(k8s.JoinWorker, node)
+			if master {
+				k8s.JoinControl(node)
 			} else {
 				k8s.JoinWorker(node)
 			}
 		}
-		async.Wait()
 		fmt.Println("-=-=-=- SUCCESS -=-=-=-")
 	},
 }
 
 func init() {
-	joinCmd.Flags().StringSliceP("master", "m", []string{}, "")
-	joinCmd.Flags().StringSliceP("node", "n", []string{}, "")
-	joinCmd.Flags().Bool("async", false, "Whether to execute asynchronously")
+	joinCmd.Flags().BoolP("master", "m", false, "Whether it is a control plane")
 }
 
 var resetCmd = &cobra.Command{
@@ -105,31 +90,4 @@ var resetCmd = &cobra.Command{
 
 func init() {
 	resetCmd.Flags().Bool("force", false, "")
-}
-
-var configCmd = &cobra.Command{
-	Use: "config", Short: "Show yaml file used by vik8s deployment cluster",
-	Args: cobra.ExactValidArgs(1), ValidArgs: yamls.AssetNames(),
-	Example: "vik8s config all",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(string(yamls.MustAsset(args[0])))
-	},
-}
-var configNamesCmd = &cobra.Command{
-	Use: "names", Short: "show file names",
-	Run: func(cmd *cobra.Command, args []string) {
-		for _, name := range yamls.AssetNames() {
-			fmt.Println(name)
-		}
-	},
-}
-
-func init() {
-	configCmd.AddCommand(configNamesCmd)
-}
-
-func getFlagsIps(cmd *cobra.Command, name string) ssh.Nodes {
-	values, err := cmd.Flags().GetStringSlice(name)
-	utils.Panic(err, "get flags %s", name)
-	return hosts.Add(values...)
 }

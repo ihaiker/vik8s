@@ -16,3 +16,12 @@
             dest: "/root/.ssh/authorized_keys"
             mode: 0600
       when: ansible_distribution == "CentOS"
+    - name: yum install jq/vim/net-tools
+      yum:
+        name: "{{packages}}"
+        state: present
+      vars:
+        packages:
+          - jq
+          - vim
+          - net-tools

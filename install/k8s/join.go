@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/install/bases"
+	"github.com/ihaiker/vik8s/install/cri"
 	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/tools"
 	"github.com/ihaiker/vik8s/libs/ssh"
@@ -21,19 +22,22 @@ func JoinControl(node *ssh.Node) {
 		return
 	}
 	master := hosts.Get(config.K8S().Masters[0])
+	bases.Check(node)
+	bases.InstallTimeServices(node, config.K8S().Timezone, config.Config.K8S.NTPServices...)
+	cri.Install(node)
+
 	installKubernetes(node)
-	node.Logger("join control-plane")
 
 	setNodeHosts(node)
-	bases.InstallTimeServices(node, config.K8S().Timezone, config.Config.K8S.Masters...)
 	setApiServerHosts(node)
 	setIpvsadmApiServer(master, node)
+
 	makeKubernetesCerts(node)
 	makeJoinControlPlaneConfigFiles(node)
 
 	joinCmd := getJoinCmd(master)
-	control := fmt.Sprintf("%s --control-plane --apiserver-advertise-address=%s --ignore-preflight-errors=FileAvailable--etc-kubernetes-kubelet.conf", joinCmd, node.Host)
-	utils.Panic(node.CmdStd(control, os.Stdout), "control plane join %s", node.Host)
+	control := fmt.Sprintf("%s --control-plane --apiserver-advertise-address=%s --ignore-preflight-errors=FileAvailable--etc-kubernetes-kubelet.conf --v=5", joinCmd, node.Host)
+	utils.Panic(node.SudoCmdOutput(control, os.Stdout), "control plane join %s", node.Host)
 	copyKubeletConfig(node)
 
 	fix(master, node)
@@ -48,18 +52,23 @@ func JoinWorker(node *ssh.Node) {
 		return
 	}
 	master := hosts.Get(config.K8S().Masters[0])
+	hosts.MustGatheringFacts(master)
+
+	bases.Check(node)
+	bases.InstallTimeServices(node, config.K8S().Timezone, config.Config.K8S.NTPServices...)
+	cri.Install(node)
+
 	installKubernetes(node)
-	node.Logger("join worker")
 
 	setNodeHosts(node)
-	bases.InstallTimeServices(node, config.K8S().Timezone, config.Config.K8S.Masters...)
 	setApiServerHosts(node)
 	setIpvsadmApiServer(master, node)
+
 	makeWorkerConfigFiles(node)
 
 	joinCmd := getJoinCmd(master)
-	cmd := fmt.Sprintf("%s --apiserver-advertise-address=%s --ignore-preflight-errors=FileAvailable--etc-kubernetes-kubelet.conf", joinCmd, node.Host)
-	utils.Panic(node.CmdStd(cmd, os.Stdout), "join %s", node.Host)
+	cmd := fmt.Sprintf("%s --apiserver-advertise-address=%s --ignore-preflight-errors=FileAvailable--etc-kubernetes-kubelet.conf --v=5", joinCmd, node.Host)
+	utils.Panic(node.SudoCmdOutput(cmd, os.Stdout), "join %s", node.Host)
 
 	fix(master, node)
 	config.K8S().JoinNode(false, node.Host)
@@ -81,14 +90,21 @@ func setApiServerHosts(node *ssh.Node) {
 
 func setIpvsadmApiServer(master, node *ssh.Node) {
 	apiServerVip := tools.GetVip(config.K8S().SvcCIDR, tools.Vik8sApiServer)
-	_, _ = node.Cmd(fmt.Sprintf("ipvsadm -D -t %s:6443", apiServerVip))
-	node.MustCmd(fmt.Sprintf("ipvsadm -A -t %s:6443 -s rr", apiServerVip))
-	node.MustCmd(fmt.Sprintf("ipvsadm -a -t %s:6443 -r %s:6443 -m -w 1", apiServerVip, master.Host))
+	_ = node.SudoCmd(fmt.Sprintf("ipvsadm -D -t %s:6443", apiServerVip))
+
+	err := node.SudoCmd(fmt.Sprintf("ipvsadm -A -t %s:6443 -s rr", apiServerVip))
+	utils.Panic(err, "add virtual-service")
+
+	err = node.SudoCmd(fmt.Sprintf("ipvsadm -a -t %s:6443 -r %s:6443 -m -w 1", apiServerVip, master.Host))
+	utils.Panic(err, "add server-address to virtual-service")
 
 	//fix 这个需要加入到开机启动项里面，不然会导致开机后ipvsadm丢失,
-	node.MustCmd(`sed -i s/'IPVS_SAVE_ON_STOP="no"'/'IPVS_SAVE_ON_STOP="yes"'/g /etc/sysconfig/ipvsadm-config`)
-	node.MustCmd(`sed -i s/'IPVS_SAVE_ON_RESTART="no"'/'IPVS_SAVE_ON_RESTART="yes"'/g /etc/sysconfig/ipvsadm-config`)
-	node.MustCmd(`ipvsadm-save -n > /etc/sysconfig/ipvsadm`)
+	err = node.SudoCmd(`sed -i s/'IPVS_SAVE_ON_STOP="no"'/'IPVS_SAVE_ON_STOP="yes"'/g /etc/sysconfig/ipvsadm-config`)
+	utils.Panic(err, "change ipvsadm-config")
+	err = node.SudoCmd(`sed -i s/'IPVS_SAVE_ON_RESTART="no"'/'IPVS_SAVE_ON_RESTART="yes"'/g /etc/sysconfig/ipvsadm-config`)
+	utils.Panic(err, "change ipvsadm-config")
+	err = node.SudoCmd(`sh -c 'ipvsadm-save -n | sudo tee /etc/sysconfig/ipvsadm'`)
+	utils.Panic(err, "change ipvsadm-config")
 }
 
 func fix(master, node *ssh.Node) {

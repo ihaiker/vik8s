@@ -1,54 +1,25 @@
-bin=./bin/vik8s -f ./bin/
+.PHONY: help chmod build vagrant esxi cicd mkdocs clean
 
-.PHONY: help
 help: ## 帮助信息
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_-]+:.*?## / {sub("\\\\n",sprintf("\n%22c"," "), $$2);printf "\033[36m%s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-.PHONY: chmod
-chmod:
+chmod: ## 脚本赋权
 	chmod +x ./scripts/*.sh
 
-.PHONY: addhosts
-addhosts: build
-	$(bin) hosts -u vagrant -i .vagrant/machines/master01/virtualbox/private_key 10.24.0.10
-	$(bin) hosts -u vagrant -i .vagrant/machines/master01/virtualbox/private_key 10.24.0.10
-	$(bin) hosts -u vagrant -i .vagrant/machines/master01/virtualbox/private_key 10.24.0.10
-
-.PHONY: build
-build: chmod ## 编译程序
+build: clean chmod ## 编译程序
 	./scripts/build.sh
 
-.PHONY: cicd
-cicd: build ## 运行CI/CD测试
+vagrant: build ## 启动虚拟机
+	vagrant up
+	vagrant ssh-config | tee ~/.ssh/vagrant_config
+	./scripts/hosts.sh
+
+cicd: vagrant ## 运行CI/CD测试
 	./scripts/cicd.sh
 
-.PHONY: docker
-docker: build ## 生成docker证书
-	$(bin) docker --tls.enable --hosts "tcp://{IP}:2375"
-
-.PHONY: etcd
-etcd: addhosts ## ETCD 初始化
-	$(bin) etcd init 10.24.0.10
-	$(bin) etcd join 10.24.0.20
-	$(bin) etcd join 10.24.0.21
-
-.PHONY: etcd-clean
-etcd-clean: ## ETCD 清理
-	$(bin) etcd reset
-
-.PHONY: init
-init: addhosts  ## 集群初始化
-	$(bin) init 10.24.0.10 --interface=eth1
-
-.PHONY: cni-flannel
-cni-flannel: addhosts
-	$(bin) cni flannel
-
-.PHONY: mkdocs
 mkdocs: ## 构建文档
 	docker-compose -f ./scripts/docker-compose.yml run --rm mkdocs build -c
 
-.PHONY: clean
 clean: ## 清理
 	vagrant destroy -f
 	rm -rf ./bin .vagrant

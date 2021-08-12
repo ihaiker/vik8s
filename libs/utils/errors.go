@@ -52,8 +52,10 @@ func (w WrapError) Error() string {
 }
 
 func Wrap(err error, format string, param ...interface{}) error {
-	if _, match := err.(*WrapError); match {
-		return err
+	if we, match := err.(*WrapError); match {
+		return &WrapError{
+			Err: we.Err, Message: fmt.Sprintf(format, param...) + "\n" + we.Message,
+		}
 	} else {
 		return &WrapError{
 			Err: err, Message: fmt.Sprintf(format, param...),
