@@ -12,7 +12,7 @@ func EnableAndStartService(name string, mustRestart bool, node *ssh.Node) {
 	}
 	if status == "active" && mustRestart {
 		err := node.SudoCmd("systemctl stop " + name)
-		utils.Panic(err, "stop service %s", node)
+		utils.Panic(err, "stop service %s", name)
 	}
 	err := node.SudoCmd("systemctl start " + name)
 	utils.Panic(err, "start service %s at node(%s)", name, node.Hostname)

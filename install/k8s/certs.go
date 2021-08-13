@@ -19,6 +19,7 @@ func makeKubernetesCerts(node *ssh.Node) {
 		scpExternalEtcdCa(node)
 	} else {
 		makeEtcdCerts(node)
+		makeEtcdctlCommand(node)
 	}
 	makeKubeCerts(node)
 }
@@ -133,4 +134,21 @@ func scpCerts(certsFiles map[string]string, node *ssh.Node, localDir string) {
 			utils.Panic(node.SudoScp(local, remote), "scp %s %s", local, remote)
 		}
 	}
+}
+
+// make etcdctl command, user friendly.
+func makeEtcdctlCommand(node *ssh.Node) {
+	node.Logger("create etcdctl command")
+	cmdCtx := []byte("#!/bin/bash\n" +
+		"kubectl -n kube-system exec etcd-$(hostname -s)" +
+		" -- etcdctl" +
+		" --cacert=/etc/kubernetes/pki/etcd/ca.crt" +
+		" --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt" +
+		"  --key=/etc/kubernetes/pki/etcd/healthcheck-client.key $@")
+
+	err := node.SudoScpContent(cmdCtx, "/usr/local/bin/etcdctl")
+	utils.Panic(err, "create etcdctl command")
+
+	err = node.SudoCmd("chmod +x /usr/local/bin/etcdctl")
+	utils.Panic(err, "change etcdctl model")
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/ihaiker/vik8s/certs"
 	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/install/tools"
+	"github.com/ihaiker/vik8s/libs/logs"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"path/filepath"
 	"time"
@@ -30,7 +31,7 @@ type Node struct {
 }
 
 func line(name, format string, params ...interface{}) {
-	fmt.Printf("[cert][k8s][%s] %s \n", name, fmt.Sprintf(format, params...))
+	logs.Infof("[cert][k8s][%s] %s", name, fmt.Sprintf(format, params...))
 }
 
 type createAction func(dir string, node Node)

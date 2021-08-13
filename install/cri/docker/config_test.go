@@ -48,12 +48,12 @@ func (t *TestDockerSuite) TestEnableCustomTLS() {
 }
 
 func (t *TestDockerSuite) TestDaemonJson() {
-	path := paths.Join("daemon-test.json")
+	path := paths.Join(DockerConfigPath, "daemon.json")
 	err := os.MkdirAll(filepath.Dir(path), os.ModePerm)
 	t.Nil(err, "mkdir dir error ", err)
 
 	err = ioutil.WriteFile(path, []byte(`{}`), 0655)
-	t.Nil(err, "write test deamon-test.json")
+	t.Nil(err, "write test deamon.json")
 
 	cfg := config.DefaultDockerConfiguration()
 	cfg.DaemonJson = path
