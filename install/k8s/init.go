@@ -23,7 +23,9 @@ func InitCluster(node *ssh.Node) *ssh.Node {
 	node.Logger("init kubernetes cluster %s", node.Host)
 
 	config.Config.K8S.Repo = repo.KubeletImage(config.K8S().Repo)
-	config.Config.K8S.ApiServerVIP = tools.GetVip(config.K8S().SvcCIDR, tools.Vik8sApiServer)
+	if config.Config.K8S.ApiServerVIP == "" {
+		config.Config.K8S.ApiServerVIP = tools.GetVip(config.K8S().SvcCIDR, tools.Vik8sApiServer)
+	}
 
 	bases.Check(node)
 	bases.InstallTimeServices(node, config.K8S().Timezone, config.K8S().NTPServices...)
@@ -91,10 +93,11 @@ func setHosts(node *ssh.Node, ip, domain string) {
 	}
 }
 
-func bugfixImages(node *ssh.Node, remote string) {
-	images, err := node.SudoCmdString(fmt.Sprintf("kubeadm config images list --config=%s", remote))
+func bugfixImages(master, node *ssh.Node, remote string) {
+	images, err := master.SudoCmdString(fmt.Sprintf("kubeadm config images list --config=%s", remote))
 	utils.Panic(err, "list kubernetes images")
 
+	//fix: alicloud image repo. since kubeadm@v1.21.+
 	tags := map[string]string{
 		"registry.aliyuncs.com/google_containers/coredns:1.8.0": "registry.aliyuncs.com/google_containers/coredns:v1.8.0",
 	}
@@ -113,7 +116,7 @@ func bugfixImages(node *ssh.Node, remote string) {
 
 func initKubernetes(node *ssh.Node) {
 	remote := scpKubeConfig(node)
-	bugfixImages(node, remote)
+	bugfixImages(node, node, remote)
 	err := node.SudoCmdOutput(fmt.Sprintf("kubeadm init --config=%s --upload-certs", remote), os.Stdout)
 	utils.Panic(err, "kubeadm init")
 }

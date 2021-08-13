@@ -5,19 +5,24 @@ import (
 	"github.com/ihaiker/vik8s/install/etcd"
 	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/paths"
+	"github.com/ihaiker/vik8s/libs/logs"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"os"
 )
 
 func ResetNode(node *ssh.Node) {
-	err := node.SudoCmdPrefixStdout("kubeadm reset -f")
+	err := node.SudoCmdStdout("kubeadm reset -f")
 	utils.Panic(err, "kubernetes cluster reset")
 
 	config.K8S().RemoveNode(node.Host)
+
 	if len(config.K8S().Masters) == 0 && len(config.K8S().Nodes) == 0 {
-		_ = os.RemoveAll(paths.Join("kube"))
+		dataDir := paths.Join("kube")
+		logs.Infof("remove data folder %s", dataDir)
+		_ = os.RemoveAll(dataDir)
 		if config.Config.ETCD != nil && len(config.Config.ETCD.Nodes) > 0 {
+			logs.Infof("remove all cluster data in etcd")
 			etcdNode := hosts.Get(config.Etcd().Nodes[0])
 			err = etcdNode.SudoCmdPrefixStdout(etcd.Etcdctl("del /registry --prefix"))
 			utils.Panic(err, "delete etcd cluster data /registry")
@@ -25,4 +30,11 @@ func ResetNode(node *ssh.Node) {
 			utils.Panic(err, "delete etcd cluster data /calico")
 		}
 	}
+
+	logs.Infof("ipvsadm clear")
+	err = node.SudoCmd("ipvsadm --clear")
+	utils.Panic(err, "remove ipvsadm all role")
+
+	logs.Infof("clean CNI configuration")
+	_ = node.SudoCmd("rm -rf /etc/cni/net.d")
 }

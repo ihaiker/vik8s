@@ -84,8 +84,8 @@ func init() {
 	rootCmd.AddCommand(hostsCmd, etcdCmd)
 	rootCmd.AddCommand(initCmd, joinCmd, resetCmd, cleanCmd)
 	//rootCmd.AddCommand(ingressRootCmd, sidecarsCmd)
-	//rootCmd.AddCommand(completionCmd)
-	//rootCmd.AddCommand(bashCmd)
+	rootCmd.AddCommand(completionCmd)
+	rootCmd.AddCommand(bashCmd)
 	rootCmd.Flags().SortFlags = false
 }
 

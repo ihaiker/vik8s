@@ -24,5 +24,6 @@ fabric.properties
 
 bin
 .vagrant
-./site
+site
 .env
+scripts/.vagrant.env

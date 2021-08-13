@@ -6,6 +6,7 @@ import (
 	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/k8s"
+	"github.com/ihaiker/vik8s/libs/logs"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/spf13/cobra"
 )
@@ -77,9 +78,10 @@ var resetCmd = &cobra.Command{
 		master := hosts.Get(config.K8S().Masters[0])
 		for _, nodeName := range nodes {
 			node := hosts.Get(nodeName)
-			utils.Assert(node == nil, "not found kubernetes %s", node.Host)
+			utils.Assert(node != nil, "not found kubernetes %s", node.Host)
+			logs.Infof("remove cluster node %s", node.Prefix())
 
-			err := master.SudoCmd(fmt.Sprintf("kubectl delete nodes %s", node.Hostname))
+			err := master.Cmd2(fmt.Sprintf("kubectl delete nodes %s", node.Hostname))
 			utils.Panic(err, "reset kubernetes node")
 
 			k8s.ResetNode(node)

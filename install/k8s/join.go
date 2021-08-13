@@ -6,7 +6,6 @@ import (
 	"github.com/ihaiker/vik8s/install/bases"
 	"github.com/ihaiker/vik8s/install/cri"
 	"github.com/ihaiker/vik8s/install/hosts"
-	"github.com/ihaiker/vik8s/install/tools"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"gopkg.in/fatih/color.v1"
@@ -34,6 +33,9 @@ func JoinControl(node *ssh.Node) {
 
 	makeKubernetesCerts(node)
 	makeJoinControlPlaneConfigFiles(node)
+
+	remote := node.Vik8s("apply/kubeadm.yaml")
+	bugfixImages(master, node, remote)
 
 	joinCmd := getJoinCmd(master)
 	control := fmt.Sprintf("%s --control-plane --apiserver-advertise-address=%s --ignore-preflight-errors=FileAvailable--etc-kubernetes-kubelet.conf --v=5", joinCmd, node.Host)
@@ -84,12 +86,12 @@ func setNodeHosts(node *ssh.Node) {
 }
 
 func setApiServerHosts(node *ssh.Node) {
-	apiServerVip := tools.GetVip(config.K8S().SvcCIDR, tools.Vik8sApiServer)
+	apiServerVip := config.K8S().ApiServerVIP
 	setHosts(node, apiServerVip, config.K8S().ApiServer)
 }
 
 func setIpvsadmApiServer(master, node *ssh.Node) {
-	apiServerVip := tools.GetVip(config.K8S().SvcCIDR, tools.Vik8sApiServer)
+	apiServerVip := config.K8S().ApiServerVIP
 	_ = node.SudoCmd(fmt.Sprintf("ipvsadm -D -t %s:6443", apiServerVip))
 
 	err := node.SudoCmd(fmt.Sprintf("ipvsadm -A -t %s:6443 -s rr", apiServerVip))
@@ -111,7 +113,7 @@ func fix(master, node *ssh.Node) {
 	// for flannel
 	//kubectl get nodes -o jsonpath='{.items[*].spec.podCIDR}'
 	//kubectl get nodes -o template --template={{.spec.podCIDR}}
-	err := master.SudoCmdPrefixStdout(fmt.Sprintf("kubectl patch node %s -p '{\"spec\":{\"podCIDR\":\"%s\"}}'",
+	err := master.Cmd2(fmt.Sprintf("kubectl patch node %s -p '{\"spec\":{\"podCIDR\":\"%s\"}}'",
 		node.Hostname, config.K8S().PodCIDR))
 	utils.Panic(err, "patch node %s %s", node.Hostname, config.K8S().PodCIDR)
 }

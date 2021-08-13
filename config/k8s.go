@@ -9,8 +9,8 @@ type K8SConfiguration struct {
 	KubeadmConfig string   `ngx:"kubeadm-config" help:"Path to a kubeadm configuration file. see kubeadm --config"`
 
 	ApiServer              string   `ngx:"api-server" def:"api-vik8s-io" help:"Specify a stable IP address or DNS name for the control plane. see kubeadm --control-plane-endpoint"`
-	ApiServerCertExtraSans []string `ngx:"api-server-cert-extra-sans" help:"see kubeadm init --apiserver-cert-extra-sans"`
 	ApiServerVIP           string   `flag:"-" ngx:"api-server-vip"`
+	ApiServerCertExtraSans []string `ngx:"api-server-cert-extra-sans" help:"see kubeadm init --apiserver-cert-extra-sans"`
 
 	Repo string `ngx:"repo" help:"Choose a container registry to pull control plane images from. \n(default: Best choice from k8s.gcr.io and registry.aliyuncs.com/google_containers.)"`
 

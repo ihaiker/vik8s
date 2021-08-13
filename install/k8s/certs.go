@@ -50,12 +50,13 @@ func makeEtcdCerts(node *ssh.Node) {
 	name := node.Hostname
 	dir := paths.Join("kube", "pki", "etcd")
 
+	// local + master + apiserversans + apiserver-vip
 	sans := []string{"127.0.0.1", "localhost", node.Hostname, node.Host, net.IPv6loopback.String()}
 	sans = append(sans, utils.ParseIPS(config.K8S().Masters)...)
 	if node.Hostname != node.Facts.Hostname {
 		sans = append(sans, node.Facts.Hostname)
 	}
-	//fixme sans = append(sans, tools.GetVip(config.K8S().SvcCIDR, tools.Vik8sCalicoETCD), "vik8s-calico-etcd")
+	sans = append(sans, config.K8S().ApiServer, config.K8S().ApiServerVIP)
 
 	vt := config.K8S().CertsValidity
 	etcdcerts.CreatePKIAssets(name, dir, sans, vt)

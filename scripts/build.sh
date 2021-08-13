@@ -1,5 +1,8 @@
 #!/bin/bash
 
+export BASE_PATH="$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )"
+cd $BASE_PATH/..
+
 Version=$(git describe --tags `git rev-list --tags --max-count=1`)
 BuildDate=$(date +"%F %T")
 GitCommit=$(git rev-parse HEAD)

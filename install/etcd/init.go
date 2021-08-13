@@ -209,7 +209,7 @@ func showClusterStatus(node *ssh.Node) {
 }
 
 func Etcdctl(cmd string) string {
-	return "docker exec vik8s-etcd /usr/local/bin/Etcdctl " + cmd
+	return "docker exec vik8s-etcd /usr/local/bin/etcdctl " + cmd
 }
 
 func CertsDir() string {

@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"github.com/ihaiker/vik8s/certs"
+	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/install/tools"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"path/filepath"
@@ -96,7 +97,7 @@ func createApiServerFiles(dir string, node Node) {
 	}
 	line(node.Name, "creating apiserver %s", node.Name)
 
-	apiServerVip := tools.GetVip(node.SvcCIDR, tools.Vik8sApiServer)
+	apiServerVip := config.K8S().ApiServerVIP
 	mix, _ := tools.AddressRange(node.SvcCIDR)
 
 	cfg := certs.NewConfig("kube-apiserver")

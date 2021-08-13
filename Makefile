@@ -6,12 +6,11 @@ help: ## 帮助信息
 chmod: ## 脚本赋权
 	chmod +x ./scripts/*.sh
 
-build: clean chmod ## 编译程序
+build: chmod ## 编译程序
 	./scripts/build.sh
 
 vagrant: build ## 启动虚拟机
-	vagrant up
-	vagrant ssh-config | tee ~/.ssh/vagrant_config
+	./scripts/vagrant.sh up
 	./scripts/hosts.sh
 
 cicd: vagrant ## 运行CI/CD测试
@@ -21,5 +20,5 @@ mkdocs: ## 构建文档
 	docker-compose -f ./scripts/docker-compose.yml run --rm mkdocs build -c
 
 clean: ## 清理
-	vagrant destroy -f
+	./scripts/vagrant.sh destroy -f
 	rm -rf ./bin .vagrant
