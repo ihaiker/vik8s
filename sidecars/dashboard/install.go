@@ -60,18 +60,22 @@ func (d *Dashboard) Apply() {
 	{
 		data := paths.Json{"ExposePort": exposePort}
 		if enableInsecureLogin {
-			reduce.MustApplyAssert(master, "yaml/sidecars/dashboard/alternative.conf", data)
+			err := reduce.ApplyAssert(master, "yaml/sidecars/dashboard/alternative.conf", data)
+			utils.Panic(err, "apply alternative kubernetes dashboard ")
 		} else {
 			data["TLSCert"], data["TLSKey"] = certBase64, keyBase64
-			reduce.MustApplyAssert(master, "yaml/sidecars/dashboard/recommended.conf", data)
+			err := reduce.ApplyAssert(master, "yaml/sidecars/dashboard/recommended.conf", data)
+			utils.Panic(err, "apply recommended kubernetes dashboard ")
 		}
 	}
 
 	//dashboard access control
 	token := ""
 	{
-		reduce.MustApplyAssert(master, "yaml/sidecars/dashboard/user.conf", paths.Json{})
-		token = master.MustCmd2String(tokenPrintCmd.Long)
+		err := reduce.ApplyAssert(master, "yaml/sidecars/dashboard/user.conf", paths.Json{})
+		utils.Panic(err, "apply kubernetes dashboard user")
+		token, err = master.Sudo().CmdString(tokenPrintCmd.Long)
+		utils.Panic(err, "apply kubernetes dashboard user")
 	}
 
 	if ingress != "" {
@@ -80,12 +84,14 @@ func (d *Dashboard) Apply() {
 			"EnableInsecureLogin": enableInsecureLogin, "InsecureHeader": insecureHeader,
 			"TLSCert": certBase64, "TLSKey": keyBase64,
 		}
-		reduce.MustApplyAssert(master, "yaml/sidecars/dashboard/ingress.conf", data)
+		err := reduce.ApplyAssert(master, "yaml/sidecars/dashboard/ingress.conf", data)
+		utils.Panic(err, "apply kubernetes dashboard ingress")
 	}
 
 	//show access function
 	if exposePort == 0 {
-		allocExposePort := master.MustCmd2String(`kubectl get -n kubernetes-dashboard service kubernetes-dashboard -o jsonpath={.spec.ports[0].nodePort}`)
+		allocExposePort, err := master.Sudo().CmdString(`kubectl get -n kubernetes-dashboard service kubernetes-dashboard -o jsonpath={.spec.ports[0].nodePort}`)
+		utils.Panic(err, "get dashboard nodePort")
 		exposePort, _ = strconv.Atoi(allocExposePort)
 	}
 
@@ -130,7 +136,7 @@ Accessing Dashboard:
 
 func (d *Dashboard) Delete(data bool) {
 	master := hosts.Get(config.K8S().Masters[0])
-	err := master.SudoCmdPrefixStdout("kubectl delete namespaces kubernetes-dashboard")
+	err := master.Sudo().CmdPrefixStdout("kubectl delete namespaces kubernetes-dashboard")
 	utils.Panic(err, "remove kubernests cluster namespace kubernetes-dashboard")
 }
 

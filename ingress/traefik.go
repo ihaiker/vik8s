@@ -57,10 +57,11 @@ func (t *traefik) Apply(master *ssh.Node) {
 	//name := "yaml/ingress/traefik.yaml"
 	//tools.MustScpAndApplyAssert(master, name, t)
 	name := "yaml/ingress/traefik.conf"
-	reduce.MustApplyAssert(master, name, t)
+	err := reduce.ApplyAssert(master, name, t)
+	utils.Panic(err, "apply traefik ingress")
 }
 
 func (n *traefik) Delete(master *ssh.Node) {
-	err := master.CmdStd("kubectl delete namespaces ingress-traefik ", os.Stdout)
+	err := master.CmdOutput("kubectl delete namespaces ingress-traefik ", os.Stdout)
 	utils.Panic(err, "delete traefik ingress")
 }

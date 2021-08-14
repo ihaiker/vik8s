@@ -5,7 +5,6 @@ import (
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 type customer struct {
@@ -32,7 +31,7 @@ func (f *customer) Apply(cmd *cobra.Command, node *ssh.Node) {
 		err := node.Scp(f.file, remote)
 		utils.Panic(err, "apply customer network")
 	}
-	err := node.CmdStd(fmt.Sprintf("kubectl apply -f %s", remote), os.Stdout)
+	err := node.CmdStdout(fmt.Sprintf("kubectl apply -f %s", remote))
 	utils.Panic(err, "apply customer network")
 }
 

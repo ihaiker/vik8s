@@ -1,6 +1,7 @@
 package ssh
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -23,4 +24,26 @@ func TestNode_GatheringFacts(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(node.Facts)
+}
+
+func TestFlag(t *testing.T) {
+	fnode := new(Node)
+	assert.False(t, fnode.isSudo())
+	assert.True(t, fnode.isShowLogger())
+
+	fnode.Sudo()
+	assert.True(t, fnode.isSudo())
+	assert.True(t, fnode.isShowLogger())
+
+	fnode.reset()
+	assert.False(t, fnode.isSudo())
+	assert.True(t, fnode.isShowLogger())
+
+	fnode.HideLog()
+	assert.False(t, fnode.isSudo())
+	assert.False(t, fnode.isShowLogger())
+
+	fnode.Sudo().HideLog()
+	assert.True(t, fnode.isSudo())
+	assert.False(t, fnode.isShowLogger())
 }

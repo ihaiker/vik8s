@@ -6,7 +6,7 @@ import (
 
 func disableSELinuxAndSwap(node *ssh.Node) {
 	node.Logger("disable SELinux and swap")
-	_ = node.SudoCmd("setenforce 0")
-	_ = node.SudoCmd("swapoff -a")
-	_ = node.SudoCmd(`sed -i 's/.*swap.*//' /etc/fstab`)
+	_ = node.Sudo().Cmd("setenforce 0")
+	_ = node.Sudo().Cmd("swapoff -a")
+	_ = node.Sudo().Cmd(`sed -i 's/.*swap.*//' /etc/fstab`)
 }

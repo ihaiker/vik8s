@@ -3,8 +3,8 @@ package bases
 import "github.com/ihaiker/vik8s/libs/ssh"
 
 func disableFirewalld(node *ssh.Node) {
-	_ = node.SudoCmd("systemctl stop firewalld")
-	_ = node.SudoCmd("systemctl disable firewalld")
-	_ = node.SudoCmdStdout("systemctl stop iptables")
-	_ = node.SudoCmdStdout("systemctl disable iptables")
+	_ = node.Sudo().Cmd("systemctl stop firewalld")
+	_ = node.Sudo().Cmd("systemctl disable firewalld")
+	_ = node.Sudo().CmdStdout("systemctl stop iptables")
+	_ = node.Sudo().CmdStdout("systemctl disable iptables")
 }

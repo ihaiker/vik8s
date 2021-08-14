@@ -6,6 +6,7 @@ import (
 	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/install/etcd"
 	"github.com/ihaiker/vik8s/install/hosts"
+	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/spf13/cobra"
 )
@@ -16,7 +17,7 @@ var etcdCmd = &cobra.Command{
 This program uses etcdadm for installation, for details https://github.com/kubernetes-sigs/etcdadm`,
 }
 
-var etcdConfig = new(config.ETCD)
+var etcdConfig = config.DefaultETCDConfiguration()
 var etcdInitCmd = &cobra.Command{
 	Use: "init", Short: "Initialize a new etcd cluster", Args: cobra.MinimumNArgs(1),
 	PreRunE: configLoad(hostsLoad(none)), PostRunE: configDown(none),
@@ -64,18 +65,22 @@ var etcdResetCmd = &cobra.Command{
 	Use: "reset", Short: "reset etcd cluster",
 	Example: `reset all: vik8s etcd reset
 reset one node: vik8s etcd reset 172.16.100.10`,
-	PreRunE: configLoad(hostsLoad(none)), PostRunE: configDown(none),
+	Args: cobra.MinimumNArgs(1), PreRunE: configLoad(hostsLoad(none)), PostRunE: configDown(none),
 	Run: func(cmd *cobra.Command, args []string) {
-		utils.Assert(config.Config.ETCD != nil && len(config.Config.ETCD.Nodes) > 0,
-			"not found etcd cluster")
+		if config.Config.ETCD == nil {
+			config.Config.ETCD = config.DefaultETCDConfiguration()
+		}
 
-		nodes := hosts.Add(args...)
-		if len(nodes) == 0 {
-			nodes = hosts.Gets(config.Config.ETCD.Nodes)
+		var nodes []*ssh.Node
+		if len(args) == 1 && args[0] == "all" {
+			nodes = hosts.Gets(config.Etcd().Nodes)
+		} else {
+			nodes = hosts.Gets(args)
 		}
 		for _, node := range nodes {
 			etcd.ResetCluster(node)
 		}
+
 		if len(config.Config.ETCD.Nodes) == 0 {
 			config.Config.ETCD = nil
 		}

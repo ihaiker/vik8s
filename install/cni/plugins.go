@@ -35,9 +35,9 @@ func (p *plugins) Apply(cmd *cobra.Command, node *ssh.Node) {
 }
 
 func (p *plugins) Clean(node *ssh.Node) {
-	_ = node.SudoCmd("ifconfig | grep cni0 > /dev/null && ifconfig cni0 down")
-	_ = node.SudoCmd("ip link show | grep kube-ipvs0 && ip link delete kube-ipvs0 ")
-	_ = node.SudoCmd("ip link show | grep dummy0 && ip link delete dummy0 ")
+	_ = node.Sudo().Cmd("ifconfig | grep cni0 > /dev/null && ifconfig cni0 down")
+	_ = node.Sudo().Cmd("ip link show | grep kube-ipvs0 && ip link delete kube-ipvs0 ")
+	_ = node.Sudo().Cmd("ip link show | grep dummy0 && ip link delete dummy0 ")
 	for _, plugin := range *p {
 		plugin.Clean(node)
 	}

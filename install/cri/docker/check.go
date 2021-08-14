@@ -61,24 +61,24 @@ func daemonJson(node *ssh.Node, cfg *config.DockerConfiguration) []byte {
 	}
 
 	if cfg.TLS != nil && cfg.TLS.Enable {
-		err := node.SudoScp(cfg.TLS.CaCertPath, "/etc/docker/certs.d/ca.pem")
+		err := node.Sudo().Scp(cfg.TLS.CaCertPath, "/etc/docker/certs.d/ca.pem")
 		utils.Panic(err, "upload cert file error: %s", cfg.TLS.CaCertPath)
 
 		if cfg.TLS.ServerKeyPath != "" {
-			err = node.SudoScp(cfg.TLS.ServerKeyPath, "/etc/docker/certs.d/key.pem")
+			err = node.Sudo().Scp(cfg.TLS.ServerKeyPath, "/etc/docker/certs.d/key.pem")
 			utils.Panic(err, "upload cert file error: %s", cfg.TLS.ServerKeyPath)
 
-			err = node.SudoScp(cfg.TLS.ServerCertPath, "/etc/docker/certs.d/cert.pem")
+			err = node.Sudo().Scp(cfg.TLS.ServerCertPath, "/etc/docker/certs.d/cert.pem")
 			utils.Panic(err, "upload cert file error: %s", cfg.TLS.ServerCertPath)
 
 		} else {
 			serverCertPath, serverKeyPath, err := dockercerts.GenerateServerCertificates(node, cfg.TLS)
 			utils.Panic(err, "generate server certificates")
 
-			err = node.SudoScp(serverKeyPath, "/etc/docker/certs.d/key.pem")
+			err = node.Sudo().Scp(serverKeyPath, "/etc/docker/certs.d/key.pem")
 			utils.Panic(err, "upload cert file error: %s", serverKeyPath)
 
-			err = node.SudoScp(serverCertPath, "/etc/docker/certs.d/cert.pem")
+			err = node.Sudo().Scp(serverCertPath, "/etc/docker/certs.d/cert.pem")
 			utils.Panic(err, "upload cert file error: %s", serverCertPath)
 		}
 
@@ -102,7 +102,7 @@ func installCentOS(cfg *config.DockerConfiguration, node *ssh.Node, china bool) 
 	} else {
 		//BUGFIX: 当 centos 小于 7.3.1611 systemd 必须更新
 		if node.Facts.MajorVersion == "7" {
-			err = node.SudoCmdWatcher("yum update -y systemd", utils.Stdout(node.Prefix()))
+			err = node.Sudo().CmdWatcher("yum update -y systemd", utils.Stdout(node.Prefix()))
 			utils.Panic(err, "update systemd")
 		}
 		node.Logger("install docker-ce %s", cfg.Version)
@@ -112,20 +112,20 @@ func installCentOS(cfg *config.DockerConfiguration, node *ssh.Node, china bool) 
 		bases.Install("docker-ce-cli", cfg.Version[1:], node)
 	}
 
-	err = node.SudoCmd("mkdir -p /etc/docker")
+	err = node.Sudo().Cmd("mkdir -p /etc/docker")
 	utils.Panic(err, "make docker configuration folder")
 
 	daemonJsonPath := "/etc/docker/daemon.json"
 	daemonChange, serviceChange := false, false
 	if cfg.DaemonJson != "" {
 		if daemonChange = !node.Equal(cfg.DaemonJson, daemonJsonPath); daemonChange {
-			err = node.SudoScp(cfg.DaemonJson, daemonJsonPath)
+			err = node.Sudo().Scp(cfg.DaemonJson, daemonJsonPath)
 			utils.Panic(err, "scp daemon.json")
 		}
 	} else {
 		bs := daemonJson(node, cfg)
 		if daemonChange = !node.Equal(bs, daemonJsonPath); daemonChange {
-			err = node.SudoScpContent(bs, daemonJsonPath)
+			err = node.Sudo().ScpContent(bs, daemonJsonPath)
 			utils.Panic(err, "scp daemon.json")
 		}
 	}
@@ -159,21 +159,21 @@ WantedBy=multi-user.target
 `
 	dockerServicePath := "/usr/lib/systemd/system/docker.service"
 	if serviceChange = !node.Equal([]byte(serviceConfig), dockerServicePath); serviceChange {
-		err = node.SudoScpContent([]byte(serviceConfig), dockerServicePath)
+		err = node.Sudo().ScpContent([]byte(serviceConfig), dockerServicePath)
 		utils.Panic(err, "scp systemctl append file ")
 
-		err = node.SudoCmd("systemctl daemon-reload")
+		err = node.Sudo().Cmd("systemctl daemon-reload")
 		utils.Panic(err, "reload daemon")
 	}
 
 	bases.EnableAndStartService("docker", daemonChange || serviceChange, node)
 
-	err = node.SudoCmd("chmod o+r+w /var/run/docker.sock")
+	err = node.Sudo().Cmd("chmod o+r+w /var/run/docker.sock")
 	utils.Panic(err, "change docker socket file mode.")
 
 	//BUGFIX 如果 Node 上安装的 Docker 版本大于 1.12，那么 Docker 会把默认的 iptables FORWARD 策略改为 DROP。
 	//转发丢弃, 这会引发 Pod 网络访问的问题
-	utils.Panic(node.SudoCmd("iptables -P FORWARD ACCEPT"), "open iptables role")
+	utils.Panic(node.Sudo().Cmd("iptables -P FORWARD ACCEPT"), "open iptables role")
 
 }
 

@@ -39,8 +39,8 @@ func JoinControl(node *ssh.Node) {
 
 	joinCmd := getJoinCmd(master)
 	control := fmt.Sprintf("%s --control-plane --apiserver-advertise-address=%s --ignore-preflight-errors=FileAvailable--etc-kubernetes-kubelet.conf --v=5", joinCmd, node.Host)
-	utils.Panic(node.SudoCmdOutput(control, os.Stdout), "control plane join %s", node.Host)
-	copyKubeletConfig(node)
+	utils.Panic(node.Sudo().CmdOutput(control, os.Stdout), "control plane join %s", node.Host)
+	copyKubeletAdminConfig(node)
 
 	fix(master, node)
 
@@ -70,7 +70,7 @@ func JoinWorker(node *ssh.Node) {
 
 	joinCmd := getJoinCmd(master)
 	cmd := fmt.Sprintf("%s --apiserver-advertise-address=%s --ignore-preflight-errors=FileAvailable--etc-kubernetes-kubelet.conf --v=5", joinCmd, node.Host)
-	utils.Panic(node.SudoCmdOutput(cmd, os.Stdout), "join %s", node.Host)
+	utils.Panic(node.Sudo().CmdOutput(cmd, os.Stdout), "join %s", node.Host)
 
 	fix(master, node)
 	config.K8S().JoinNode(false, node.Host)
@@ -92,20 +92,20 @@ func setApiServerHosts(node *ssh.Node) {
 
 func setIpvsadmApiServer(master, node *ssh.Node) {
 	apiServerVip := config.K8S().ApiServerVIP
-	_ = node.SudoCmd(fmt.Sprintf("ipvsadm -D -t %s:6443", apiServerVip))
+	_ = node.Sudo().Cmd(fmt.Sprintf("ipvsadm -D -t %s:6443", apiServerVip))
 
-	err := node.SudoCmd(fmt.Sprintf("ipvsadm -A -t %s:6443 -s rr", apiServerVip))
+	err := node.Sudo().Cmd(fmt.Sprintf("ipvsadm -A -t %s:6443 -s rr", apiServerVip))
 	utils.Panic(err, "add virtual-service")
 
-	err = node.SudoCmd(fmt.Sprintf("ipvsadm -a -t %s:6443 -r %s:6443 -m -w 1", apiServerVip, master.Host))
+	err = node.Sudo().Cmd(fmt.Sprintf("ipvsadm -a -t %s:6443 -r %s:6443 -m -w 1", apiServerVip, master.Host))
 	utils.Panic(err, "add server-address to virtual-service")
 
 	//fix 这个需要加入到开机启动项里面，不然会导致开机后ipvsadm丢失,
-	err = node.SudoCmd(`sed -i s/'IPVS_SAVE_ON_STOP="no"'/'IPVS_SAVE_ON_STOP="yes"'/g /etc/sysconfig/ipvsadm-config`)
+	err = node.Sudo().Cmd(`sed -i s/'IPVS_SAVE_ON_STOP="no"'/'IPVS_SAVE_ON_STOP="yes"'/g /etc/sysconfig/ipvsadm-config`)
 	utils.Panic(err, "change ipvsadm-config")
-	err = node.SudoCmd(`sed -i s/'IPVS_SAVE_ON_RESTART="no"'/'IPVS_SAVE_ON_RESTART="yes"'/g /etc/sysconfig/ipvsadm-config`)
+	err = node.Sudo().Cmd(`sed -i s/'IPVS_SAVE_ON_RESTART="no"'/'IPVS_SAVE_ON_RESTART="yes"'/g /etc/sysconfig/ipvsadm-config`)
 	utils.Panic(err, "change ipvsadm-config")
-	err = node.SudoCmd(`sh -c 'ipvsadm-save -n | sudo tee /etc/sysconfig/ipvsadm'`)
+	err = node.Sudo().Cmd(`sh -c 'ipvsadm-save -n | sudo tee /etc/sysconfig/ipvsadm'`)
 	utils.Panic(err, "change ipvsadm-config")
 }
 
@@ -113,13 +113,13 @@ func fix(master, node *ssh.Node) {
 	// for flannel
 	//kubectl get nodes -o jsonpath='{.items[*].spec.podCIDR}'
 	//kubectl get nodes -o template --template={{.spec.podCIDR}}
-	err := master.Cmd2(fmt.Sprintf("kubectl patch node %s -p '{\"spec\":{\"podCIDR\":\"%s\"}}'",
+	err := master.Cmd(fmt.Sprintf("kubectl patch node %s -p '{\"spec\":{\"podCIDR\":\"%s\"}}'",
 		node.Hostname, config.K8S().PodCIDR))
 	utils.Panic(err, "patch node %s %s", node.Hostname, config.K8S().PodCIDR)
 }
 
 func getJoinCmd(node *ssh.Node) string {
-	out, err := node.SudoCmdString("kubeadm token create --print-join-command")
+	out, err := node.Sudo().CmdString("kubeadm token create --print-join-command")
 	utils.Panic(err, "create cluster join token")
 	return lastLine(out)
 }

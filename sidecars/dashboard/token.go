@@ -13,7 +13,7 @@ var tokenPrintCmd = &cobra.Command{
 	Long: `kubectl -n kubernetes-dashboard get  secret $(kubectl -n kubernetes-dashboard get secret | grep admin-user | awk '{print $1}')  -o jsonpath={.data.token} | base64 --decode`,
 	Run: func(cmd *cobra.Command, args []string) {
 		master := hosts.Get(config.K8S().Masters[0])
-		token, err := master.SudoCmdString(cmd.Long)
+		token, err := master.Sudo().CmdString(cmd.Long)
 		utils.Panic(err, "Get dashboard")
 		fmt.Println(token)
 	},

@@ -43,10 +43,10 @@ func pullContainerImage(node *ssh.Node) (image string) {
 	if config.Config.IsDockerCri() {
 		repoUrl := config.Config.ETCD.Repo
 		image = fmt.Sprintf("%s/%s:%s", repo.QuayIO(repoUrl), "coreos/etcd", config.Config.ETCD.Version)
-		num, err := node.SudoCmdString(fmt.Sprintf("docker images --format '{{.Repository}}:{{.Tag}}' | grep %s | wc -l", image))
+		num, err := node.Sudo().CmdString(fmt.Sprintf("docker images --format '{{.Repository}}:{{.Tag}}' | grep %s | wc -l", image))
 		utils.Panic(err, "check docker image tag")
 		if num == "0" {
-			err = node.SudoCmdOutput("docker pull "+image, os.Stdout)
+			err = node.Sudo().CmdOutput("docker pull "+image, os.Stdout)
 			utils.Panic(err, "pull docker image")
 		}
 	}
@@ -60,6 +60,7 @@ func makeAndPushCerts(node *ssh.Node) {
 	dir := CertsDir()
 	sans := []string{"127.0.0.1", "localhost", node.Hostname, node.Host}
 	sans = append(sans, config.Config.ETCD.ServerCertExtraSans...)
+	sans = append(sans, config.Config.ETCD.Nodes...)
 	vt := config.Config.ETCD.CertsValidity
 	etcdcerts.CreatePKIAssets(name, dir, sans, vt)
 
@@ -67,7 +68,7 @@ func makeAndPushCerts(node *ssh.Node) {
 		"ca":                    "ca",
 		"server-" + name:        "server",
 		"peer-" + name:          "peer",
-		"Etcdctl-etcd-client":   "Etcdctl-etcd-client",
+		"etcdctl-etcd-client":   "etcdctl-etcd-client",
 		"apiserver-etcd-client": "apiserver-etcd-client",
 		"healthcheck-client":    "healthcheck-client",
 	}
@@ -76,7 +77,7 @@ func makeAndPushCerts(node *ssh.Node) {
 		for _, exp := range []string{".key", ".crt"} {
 			local := filepath.Join(dir, localFile+exp)
 			remote := filepath.Join(config.Config.ETCD.CertsDir, remoteFile+exp)
-			utils.Panic(node.SudoScp(local, remote), "scp %s %s", local, remote)
+			utils.Panic(node.Sudo().Scp(local, remote), "scp %s %s", local, remote)
 		}
 	}
 }
@@ -110,8 +111,8 @@ func initEtcdDocker(node *ssh.Node, image string, state string) {
 	ctlEnvs := map[string]string{
 		"endpoints": "https://127.0.0.1:2379",
 		"cacert":    "/etc/etcd/pki/ca.crt",
-		"cert":      "/etc/etcd/pki/Etcdctl-etcd-client.crt",
-		"key":       "/etc/etcd/pki/Etcdctl-etcd-client.key ",
+		"cert":      "/etc/etcd/pki/etcdctl-etcd-client.crt",
+		"key":       "/etc/etcd/pki/etcdctl-etcd-client.key ",
 	}
 	cmd := "docker run -d --name vik8s-etcd --workdir /var/lib/etcd  --restart always --network host --hostname " + node.Hostname +
 		" -v " + config.Config.ETCD.CertsDir + ":/etc/etcd/pki" +
@@ -124,15 +125,15 @@ func initEtcdDocker(node *ssh.Node, image string, state string) {
 	}
 	cmd += fmt.Sprintf(" %s etcd --name %s --data-dir /var/lib/etcd", image, node.Hostname)
 
-	err := node.SudoCmd(cmd)
+	err := node.Sudo().Cmd(cmd)
 	utils.Panic(err, "start etcd in docker")
 
-	etcdPath := "/usr/local/bin/Etcdctl"
-	err = node.SudoScpContent([]byte("#!/bin/bash\nset -e\n"+
-		"docker exec -it vik8s-etcd /usr/local/bin/Etcdctl $@"), etcdPath)
-	utils.Panic(err, "make Etcdctl command")
+	etcdPath := "/usr/local/bin/etcdctl"
+	err = node.Sudo().ScpContent([]byte("#!/bin/bash\nset -e\n"+
+		"docker exec -it vik8s-etcd /usr/local/bin/etcdctl $@"), etcdPath)
+	utils.Panic(err, "make etcdctl command")
 
-	err = node.SudoCmd("chmod +x " + etcdPath)
+	err = node.Sudo().Cmd("chmod +x " + etcdPath)
 	utils.Panic(err, "chmod Etcdctl command")
 }
 
@@ -171,8 +172,8 @@ func restoreSnapshot(node *ssh.Node, image string) {
 			" -v " + remotePath + ":/snapshot.db " +
 			" -v " + filepath.Dir(config.Etcd().Data) + ":/snapshot" +
 			" " + image +
-			" Etcdctl snapshot restore /snapshot.db --data-dir /snapshot/etcd"
-		err = node.SudoCmd(restoreCmd)
+			" etcdctl snapshot restore /snapshot.db --data-dir /snapshot/etcd"
+		err = node.Sudo().Cmd(restoreCmd)
 		utils.Panic(err, "etcd load snapshot error")
 	}
 }
@@ -187,7 +188,7 @@ func initialCluster(node *ssh.Node) string {
 
 func waitEtcdReady(node *ssh.Node) {
 	for i := 0; i < 5; i++ {
-		status, _ := node.SudoCmdString("docker inspect vik8s-etcd -f '{{.State.Status}}'")
+		status, _ := node.Sudo().CmdString("docker inspect vik8s-etcd -f '{{.State.Status}}'")
 		if status == "running" {
 			node.Logger("etcd node %s is ready", node.Host)
 			return
@@ -195,16 +196,16 @@ func waitEtcdReady(node *ssh.Node) {
 		node.Logger("etcd node %s status: %s", node.Host, status)
 		time.Sleep(time.Second)
 	}
-	logs, err := node.SudoCmdString("docker logs --tail 10 vik8s-etcd")
+	logs, err := node.Sudo().CmdString("docker logs --tail 10 vik8s-etcd")
 	utils.Panic(utils.Wrap(err, logs), "")
 }
 
 func showClusterStatus(node *ssh.Node) {
 	node.Logger("show etcd cluster")
-	err := node.SudoCmdStdout(Etcdctl("endpoint status -w table"))
+	err := node.Sudo().CmdStdout(Etcdctl("endpoint status -w table"))
 	utils.Panic(err, "show etcd cluster")
 
-	err = node.SudoCmdStdout(Etcdctl("member list -w table"))
+	err = node.Sudo().CmdStdout(Etcdctl("member list -w table"))
 	utils.Panic(err, "show etcd cluster")
 }
 

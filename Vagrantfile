@@ -32,7 +32,7 @@ Vagrant.configure("2") do |config|
   end
 
   nodes.each do |(name, cfg)|
-    numvcpus, memory, storage = cfg
+    numvcpus, memory, storage, ip = cfg
 
     config.vm.define name do |machine|
       machine.vm.hostname = name
@@ -42,7 +42,7 @@ Vagrant.configure("2") do |config|
         machine.vm.box_url = box_url
         machine.vbguest.iso_path = guest_iso_path
         machine.vbguest.auto_update = false
-        config.vm.network "private_network", type: "dhcp"
+        machine.vm.network "private_network", type: "dhcp"
         machine.vm.provider "virtualbox" do |v|
           v.cpus = numvcpus
           v.memory = memory

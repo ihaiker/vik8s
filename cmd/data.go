@@ -7,6 +7,8 @@ import (
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
+	"io"
+	"os"
 	"path/filepath"
 )
 
@@ -84,9 +86,10 @@ var dataCmd = &cobra.Command{
 		for _, node := range hosts.Nodes() {
 			for _, dir := range dirs {
 				fmt.Printf("%s %s -> %s\n", node.Hostname, dir[2], filepath.Join(data, dir[0]))
-				out, err := node.Shell(fmt.Sprintf(mvShell, dir[2], filepath.Join(data, dir[0])))
+				err := node.Shell(fmt.Sprintf(mvShell, dir[2], filepath.Join(data, dir[0])), func(stdout io.Reader) {
+					_, _ = io.Copy(os.Stdout, stdout)
+				})
 				utils.Panic(err, "error: %s,%s", node.Host, dir[2])
-				fmt.Println(string(out))
 			}
 		}
 	},

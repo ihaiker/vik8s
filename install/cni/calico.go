@@ -76,9 +76,10 @@ the system will look for the etcd cluster from the following two points.
 
 func (f *calico) applyVik8sETCDServer(node *ssh.Node, vip string) {
 	name := "yaml/cni/calico-vik8s-etcd.conf"
-	reduce.MustApplyAssert(node, name, paths.Json{
+	err := reduce.ApplyAssert(node, name, paths.Json{
 		"VIP": vip,
 	})
+	utils.Panic(err, "apply calico with etcd")
 }
 
 func (f *calico) Apply(cmd *cobra.Command, master *ssh.Node) {
@@ -140,23 +141,14 @@ func (f *calico) Apply(cmd *cobra.Command, master *ssh.Node) {
 		local = "yaml/cni/calico-typha.conf"
 	}
 
-	reduce.MustApplyAssert(master, local, data)
-
-	/*bs, _ := json.Marshal(f.etcd)
-	k8s.Config.CNI.Params = map[string]string{
-		"Version": f.version, "Repo": f.Repo,
-		"IPIP": strconv.FormatBool(f.ipip), "MTU": strconv.Itoa(f.mtu),
-		"TyphaEnable":     strconv.FormatBool(f.typha.Enable),
-		"TyphaPrometheus": strconv.FormatBool(f.typha.Prometheus),
-		"TyphaReplicas":   strconv.Itoa(f.typha.Replicas),
-		"Etcd":            string(bs),
-	}*/
+	err := reduce.ApplyAssert(master, local, data)
+	utils.Panic(err, "apply calico")
 }
 
 func (f *calico) Clean(node *ssh.Node) {
-	_, _ = node.Cmd("rm -rf /var/lib/calico")
-	_, _ = node.Cmd("rm -f /etc/NetworkManager/conf.d/calico.conf")
-	_, _ = node.Cmd("modprobe -r ipip")
-	_, _ = node.Cmd("ip link delete tunl0@NONE")
-	_, _ = node.Cmd("ifconfig tunl0 down")
+	_ = node.Sudo().CmdStdout("rm -rf /var/lib/calico")
+	_ = node.Sudo().CmdStdout("rm -f /etc/NetworkManager/conf.d/calico.conf")
+	_ = node.Sudo().CmdStdout("modprobe -r ipip")
+	_ = node.Sudo().CmdStdout("ip link delete tunl0@NONE")
+	_ = node.Sudo().CmdStdout("ifconfig tunl0 down")
 }

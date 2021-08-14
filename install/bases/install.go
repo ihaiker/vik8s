@@ -28,9 +28,9 @@ func installUbuntu(mod, version string, node *ssh.Node) {
 	}
 
 	if version == "" {
-		err = node.SudoCmdWatcher(fmt.Sprintf("apt-get install %s", mod), utils.Stdout(node.Prefix()))
+		err = node.Sudo().CmdWatcher(fmt.Sprintf("apt-get install %s", mod), utils.Stdout(node.Prefix()))
 	} else {
-		err = node.SudoCmdWatcher(fmt.Sprintf("apt-get install %s %s", mod, version), utils.Stdout(node.Prefix()))
+		err = node.Sudo().CmdWatcher(fmt.Sprintf("apt-get install %s %s", mod, version), utils.Stdout(node.Prefix()))
 	}
 	utils.Panic(err, "install %s %s", mod, version)
 }
@@ -40,25 +40,25 @@ func installCentOS(mod, version string, node *ssh.Node) {
 	utils.Panic(err, "search rpm version")
 
 	if installVersion != "" {
-		node.Logger("%s installed %s", mod, installVersion)
+		node.Logger("%s installed version: %s", mod, installVersion)
 	}
 	if (version != "" && installVersion == version) || (version == "" && installVersion != "") {
 		return
 	}
 
 	if version == "" {
-		err = node.SudoCmdWatcher(fmt.Sprintf("yum install -y %s", mod), utils.Stdout(node.Prefix()))
+		err = node.Sudo().CmdWatcher(fmt.Sprintf("yum install -y %s", mod), utils.Stdout(node.Prefix()))
 	} else {
-		err = node.SudoCmdWatcher(fmt.Sprintf("yum install -y %s-%s", mod, version), utils.Stdout(node.Prefix()))
+		err = node.Sudo().CmdWatcher(fmt.Sprintf("yum install -y %s-%s", mod, version), utils.Stdout(node.Prefix()))
 	}
 	utils.Panic(err, "install package %s %s", mod, version)
 }
 
 func GetPackageVersion(node *ssh.Node, mod string) (version string, err error) {
 	if node.IsCentOS() {
-		version, err = node.SudoCmdString(fmt.Sprintf("rpm -qi %s | grep Version | awk '{printf $3}'", mod))
+		version, err = node.Sudo().CmdString(fmt.Sprintf("rpm -qi %s | grep Version | awk '{printf $3}'", mod))
 	} else {
-		version, err = node.SudoCmdString(fmt.Sprintf("dpkg-query -s %s | grep Version | awk '{print $2}'", mod))
+		version, err = node.Sudo().CmdString(fmt.Sprintf("dpkg-query -s %s | grep Version | awk '{print $2}'", mod))
 	}
 	if err != nil && !strings.Contains(err.Error(), "not installed") {
 		return

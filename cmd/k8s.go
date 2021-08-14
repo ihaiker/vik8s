@@ -55,8 +55,8 @@ vik8s join 172.10.0.2 172.10.0.3 172.10.0.4 172.10.0.5`,
 		hosts.MustGatheringFacts(nodes...)
 		master, _ := cmd.Flags().GetBool("master")
 		for _, node := range nodes {
-			utils.Assert(utils.Search(config.K8S().Masters, node.Host) != -1 ||
-				utils.Search(config.K8S().Nodes, node.Host) != -1,
+			utils.Assert(utils.Search(config.K8S().Masters, node.Host) == -1 &&
+				utils.Search(config.K8S().Nodes, node.Host) == -1,
 				"the host is cluster node yet. %s", node.Hostname)
 
 			if master {
@@ -91,7 +91,7 @@ var resetCmd = &cobra.Command{
 			logs.Infof("remove cluster node %s", node.Prefix())
 
 			if master != nil {
-				err := master.Cmd2(fmt.Sprintf("kubectl delete nodes %s", node.Hostname))
+				err := master.Cmd(fmt.Sprintf("kubectl delete nodes %s", node.Hostname))
 				utils.Assert(err == nil || strings.Contains(err.Error(), "not found"),
 					"reset kubernetes node: %v", err)
 			}

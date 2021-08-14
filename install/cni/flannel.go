@@ -41,11 +41,12 @@ func (f *flannel) Apply(cmd *cobra.Command, node *ssh.Node) {
 		"LimitCPU": f.LimitCPU, "LimitMemory": f.LimitMemory,
 	}
 	name := "yaml/cni/flannel.conf"
-	reduce.MustApplyAssert(node, name, data)
+	err := reduce.ApplyAssert(node, name, data)
+	utils.Panic(err, "apply flannel network")
 }
 
 func (f *flannel) Clean(node *ssh.Node) {
-	_, _ = node.Cmd("ifconfig flannel.1 down")
-	_, _ = node.Cmd("ip link delete flannel.1")
-	_, _ = node.Cmd("rm -rf /var/lib/cni/ /etc/cni/net.d/*")
+	_ = node.Sudo().CmdStdout("ifconfig flannel.1 down")
+	_ = node.Sudo().CmdStdout("ip link delete flannel.1")
+	_ = node.Sudo().CmdStdout("rm -rf /var/lib/cni/ /etc/cni/net.d/*")
 }

@@ -25,6 +25,8 @@ type (
 		ProxyNode *Node  `ngx:"-"`
 
 		Facts Facts `ngx:"-"`
+
+		flag int `ngx:"-"`
 	}
 	Facts struct {
 		Hostname      string `ngx:"hostname"`
@@ -56,7 +58,7 @@ func (node *Node) easyssh() *easySSHConfig {
 func (node *Node) GatheringFacts() error {
 	node.Logger("gathering facts")
 
-	if hostname, err := node.SudoCmdString("hostname -f"); err != nil {
+	if hostname, err := node.Sudo().HideLog().CmdString("hostname -f"); err != nil {
 		return err
 	} else {
 		idx := strings.Index(hostname, ".")
@@ -69,7 +71,7 @@ func (node *Node) GatheringFacts() error {
 	}
 
 	envMaps := make(map[string]string)
-	if envs, err := node.SudoCmdString("cat /etc/os-release"); err != nil {
+	if envs, err := node.Sudo().HideLog().CmdString("cat /etc/os-release"); err != nil {
 		return err
 	} else {
 		envLines := strings.Split(envs, "\n")
@@ -84,7 +86,7 @@ func (node *Node) GatheringFacts() error {
 	}
 	node.Facts.ReleaseName = envMaps["ID"]
 	node.Facts.MajorVersion = envMaps["VERSION_ID"]
-	distribution, err := node.SudoCmdBytes("uname -r")
+	distribution, err := node.Sudo().HideLog().CmdBytes("uname -r")
 	if err != nil {
 		return err
 	}

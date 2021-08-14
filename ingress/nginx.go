@@ -40,10 +40,11 @@ func (n *nginx) Apply(master *ssh.Node) {
 	//name := "yaml/ingress/nginx.yaml"
 	//tools.MustScpAndApplyAssert(master, name, n)
 	name := "yaml/ingress/nginx.conf"
-	reduce.MustApplyAssert(master, name, n)
+	err := reduce.ApplyAssert(master, name, n)
+	utils.Panic(err, "apply nginx ingress")
 }
 
 func (n *nginx) Delete(master *ssh.Node) {
-	err := master.CmdStd("kubectl delete namespaces ingress-nginx ", os.Stdout)
+	err := master.CmdOutput("kubectl delete namespaces ingress-nginx ", os.Stdout)
 	utils.Panic(err, "delete nginx ingress")
 }

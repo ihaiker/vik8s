@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"github.com/ihaiker/vik8s/install/paths"
-	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
 	yamls "github.com/ihaiker/vik8s/yaml"
 	"io"
@@ -37,7 +36,7 @@ var systemFuncs = template.FuncMap{
 	},
 }
 
-func Template(content string, data interface{}, funcs ...template.FuncMap) *bytes.Buffer {
+func Template(content string, data interface{}, funcs ...template.FuncMap) ([]byte, error) {
 	tempFuns := template.FuncMap{}
 	for k, f := range systemFuncs {
 		tempFuns[k] = f
@@ -50,30 +49,44 @@ func Template(content string, data interface{}, funcs ...template.FuncMap) *byte
 
 	out := bytes.NewBufferString("")
 	t, err := template.New("").Funcs(tempFuns).Parse(content)
-	utils.Panic(err, "template error")
-	err = t.Execute(out, data)
-	utils.Panic(err, "template error")
-	return out
-}
-
-func MustAssert(name string, data interface{}, funcs ...template.FuncMap) []byte {
-	localFile := paths.Join(name)
-
-	var templateFile []byte
-	if utils.Exists(localFile) {
-		templateFile = utils.FileBytes(localFile)
-	} else {
-		templateFile = yamls.MustAsset(name)
+	if err != nil {
+		return nil, utils.Wrap(err, "template error")
 	}
 
-	out := Template(string(templateFile), data, funcs...)
+	if err = t.Execute(out, data); err != nil {
+		return nil, err
+	}
+	return out.Bytes(), nil
+}
+
+//Assert Search assert file. First, it will search user local home path $HOME/.vik8s/$cloud/$name.
+//if not found, then the default name file will return
+func Assert(name string, data interface{}, funcs ...template.FuncMap) ([]byte, error) {
+	var tmpCtx []byte
+	var err error
+
+	localFile := paths.Join(name)
+	if utils.Exists(localFile) {
+		tmpCtx = utils.FileBytes(localFile)
+	} else if tmpCtx, err = yamls.Asset(name); err != nil {
+		return nil, err
+	}
+
+	var outs []byte
+	if outs, err = Template(string(tmpCtx), data, funcs...); err != nil {
+		return nil, err
+	}
 
 	//去除空行，使得的文件好看一下吧
 	pretty := bytes.NewBuffer([]byte{})
-	reader := bufio.NewReader(out)
+	reader := bufio.NewReader(bytes.NewReader(outs))
+
+	var line []byte
+	var isPrefix bool
 	for {
-		line, isPrefix, err := reader.ReadLine()
+		line, isPrefix, err = reader.ReadLine()
 		if err == io.EOF {
+			err = nil
 			break
 		}
 		if !isPrefix && strings.TrimSpace(string(line)) == "" {
@@ -84,16 +97,5 @@ func MustAssert(name string, data interface{}, funcs ...template.FuncMap) []byte
 			pretty.WriteRune('\n')
 		}
 	}
-	return pretty.Bytes()
-}
-
-func MustScpAndApplyAssert(node *ssh.Node, name string, data interface{}, funcs ...template.FuncMap) {
-	pods := MustAssert(name, data, funcs...)
-	remote := node.Vik8s("apply", strings.TrimPrefix(name, "yaml/"))
-
-	err := node.ScpContent(pods, remote)
-	utils.Panic(err, "scp %s", name)
-
-	err = node.CmdStd("kubectl apply -f "+remote, os.Stdout)
-	utils.Panic(err, "kubectl apply -f %s", remote)
+	return pretty.Bytes(), err
 }

@@ -12,7 +12,7 @@ import (
 )
 
 func ResetNode(node *ssh.Node) {
-	err := node.SudoCmdStdout("kubeadm reset -f")
+	err := node.Sudo().CmdStdout("kubeadm reset -f")
 	utils.Panic(err, "kubernetes cluster reset")
 
 	if config.K8S() != nil {
@@ -26,17 +26,17 @@ func ResetNode(node *ssh.Node) {
 		if config.Config.ETCD != nil && len(config.Config.ETCD.Nodes) > 0 {
 			logs.Infof("remove all cluster data in etcd")
 			etcdNode := hosts.Get(config.Etcd().Nodes[0])
-			err = etcdNode.SudoCmdPrefixStdout(etcd.Etcdctl("del /registry --prefix"))
+			err = etcdNode.Sudo().CmdPrefixStdout(etcd.Etcdctl("del /registry --prefix"))
 			utils.Panic(err, "delete etcd cluster data /registry")
-			err = etcdNode.SudoCmdPrefixStdout(etcd.Etcdctl("del /calico --prefix"))
+			err = etcdNode.Sudo().CmdPrefixStdout(etcd.Etcdctl("del /calico --prefix"))
 			utils.Panic(err, "delete etcd cluster data /calico")
 		}
 	}
 
 	logs.Infof("ipvsadm clear")
-	err = node.SudoCmd("ipvsadm --clear")
+	err = node.Sudo().Cmd("ipvsadm --clear")
 	utils.Panic(err, "remove ipvsadm all role")
 
 	logs.Infof("clean CNI configuration")
-	_ = node.SudoCmd("rm -rf /etc/cni/net.d")
+	_ = node.Sudo().Cmd("rm -rf /etc/cni/net.d")
 }

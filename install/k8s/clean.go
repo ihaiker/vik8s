@@ -10,18 +10,18 @@ import (
 func Clean(nodes []*ssh.Node, expFn ...func(node *ssh.Node)) {
 	ssh.Sync(nodes, func(i int, node *ssh.Node) {
 
-		_, _ = node.Cmd("kubeadm reset -f")
-		_, _ = node.Cmd("ipvsadm -C")
-		_, _ = node.Cmd("ifconfig cni0 down")
-		_, _ = node.Cmd("ip link delete cni0")
-		_, _ = node.Cmd("ip link delete kube-ipvs0")
-		_, _ = node.Cmd("ip link delete dummy0")
+		_ = node.Sudo().CmdStdout("kubeadm reset -f")
+		_ = node.Sudo().CmdStdout("ipvsadm -C")
+		_ = node.Sudo().CmdStdout("ifconfig cni0 down")
+		_ = node.Sudo().CmdStdout("ip link delete cni0")
+		_ = node.Sudo().CmdStdout("ip link delete kube-ipvs0")
+		_ = node.Sudo().CmdStdout("ip link delete dummy0")
 
-		_, _ = node.Cmd("rm -rf /etc/cni/net.d/* ~/.kube /etc/kubernetes/*")
-		_, _ = node.Cmd("rm -rf /var/lib/etcd")
-		_, _ = node.Cmd("rm -rf /var/lib/ceph")
+		_ = node.Sudo().CmdStdout("rm -rf /etc/cni/net.d/* ~/.kube /etc/kubernetes/*")
+		_ = node.Sudo().CmdStdout("rm -rf /var/lib/etcd")
+		_ = node.Sudo().CmdStdout("rm -rf /var/lib/ceph")
 
-		_, _ = node.Shell(`
+		_ = node.Shell(`
 			iptables -P INPUT ACCEPT
 			iptables -P FORWARD ACCEPT
 			iptables -P OUTPUT ACCEPT
@@ -37,13 +37,13 @@ func Clean(nodes []*ssh.Node, expFn ...func(node *ssh.Node)) {
 			ip6tables -t mangle -F
 			ip6tables -F
 			ip6tables -X
-		`)
+		`, utils.Stdout(""))
 
 		for _, fn := range expFn {
 			fn(node)
 		}
 	})
-	config := paths.Join("config.json")
+	config := paths.Join("vik8s.conf")
 	utils.Panic(os.RemoveAll(config), "remove %s", config)
 
 	kube := paths.Join("kube")

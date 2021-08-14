@@ -29,45 +29,52 @@ func (node *Node) Equal(local interface{}, remote string) bool {
 	}
 
 	//remote
-	remoteMd5Code, _ := node.SudoCmdString(fmt.Sprintf("md5sum %s | awk '{printf $1}'", strconv.Quote(remote)))
+	remoteMd5Code, _ := node.Sudo().HideLog().CmdString(fmt.Sprintf("sh -c \"md5sum %s | awk '{printf $1}'\"", strconv.Quote(remote)))
 	return strings.EqualFold(localMd5code, remoteMd5Code)
 }
 
-func (node *Node) SudoScp(localPath, remotePath string) error {
-	path := fmt.Sprintf("/tmp/vik8s/%s", filepath.Base(localPath))
-	if err := node.scp(localPath, path, true); err != nil {
-		return err
-	}
-	dir := filepath.Dir(remotePath)
-	if err := node.SudoCmd("mkdir -p " + dir); err != nil {
-		return err
-	}
-	return node.SudoCmd(fmt.Sprintf("mv -f %s %s", strconv.Quote(path), strconv.Quote(remotePath)))
-}
-
-func (node *Node) SudoScpContent(content []byte, remotePath string) error {
-	node.Logger("scp content to %s", remotePath)
-	path := fmt.Sprintf("/tmp/vik8s/%s", filepath.Base(remotePath))
-	if err := node.easyssh().ScpContent(content, path); err != nil {
-		return err
-	}
-	dir := filepath.Dir(remotePath)
-	if err := node.SudoCmd("mkdir -p " + dir); err != nil {
-		return err
-	}
-	return node.SudoCmd(fmt.Sprintf("mv -f %s %s", strconv.Quote(path), strconv.Quote(remotePath)))
-}
-
 func (node *Node) Scp(localPath, remotePath string) error {
-	return node.scp(localPath, remotePath, true)
+	if node.IsRoot() || !node.isSudo() {
+		return node.scp(localPath, remotePath, remotePath, node.isShowLogger())
+	} else {
+		path := fmt.Sprintf("/tmp/vik8s/%s", filepath.Base(localPath))
+		if err := node.scp(localPath, path, remotePath, node.isShowLogger()); err != nil {
+			return err
+		}
+		dir := filepath.Dir(remotePath)
+		if err := node.Sudo().HideLog().Cmd("mkdir -p " + dir); err != nil {
+			return err
+		}
+		return node.Sudo().HideLog().Cmd(fmt.Sprintf("mv -f %s %s", strconv.Quote(path), strconv.Quote(remotePath)))
+	}
 }
 
 func (node *Node) ScpContent(content []byte, remotePath string) error {
-	node.Logger("push %s", remotePath)
-	return node.easyssh().ScpContent(content, remotePath)
+	if node.isShowLogger() {
+		line := strings.Repeat("-", 30)
+		node.Logger("push bytes to %s\n%s\n%s\n%s", remotePath, line, string(content), line)
+	}
+	node.reset()
+
+	if node.IsRoot() || !node.isSudo() {
+		return node.easyssh().ScpContent(content, remotePath)
+	} else {
+		path := fmt.Sprintf("/tmp/vik8s/%s", filepath.Base(remotePath))
+		if err := node.easyssh().ScpContent(content, path); err != nil {
+			return err
+		}
+		dir := filepath.Dir(remotePath)
+		if err := node.Sudo().HideLog().Cmd("mkdir -p " + dir); err != nil {
+			return err
+		}
+		return node.Sudo().HideLog().
+			Cmd(fmt.Sprintf("mv -f %s %s", strconv.Quote(path), strconv.Quote(remotePath)))
+	}
 }
 
-func (node *Node) scp(localPath, remotePath string, showProgressBar bool) error {
+func (node *Node) scp(localPath, temporaryRemotePath, remotePath string, showProgressBar bool) error {
+	defer node.reset()
+
 	var bar *pb.ProgressBar
 	if showProgressBar {
 		bar = pb.New64(100)
@@ -79,7 +86,7 @@ func (node *Node) scp(localPath, remotePath string, showProgressBar bool) error 
 		bar.Start()
 	}
 
-	return node.easyssh().Scp(localPath, remotePath, func(step, all int64) {
+	return node.easyssh().Scp(localPath, temporaryRemotePath, func(step, all int64) {
 		if showProgressBar {
 			bar.SetTotal(all)
 			bar.SetCurrent(step)

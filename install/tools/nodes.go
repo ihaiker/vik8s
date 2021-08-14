@@ -12,7 +12,11 @@ import (
 func SearchLabelNode(master *ssh.Node, labels map[string]string) []string {
 	utils.Assert(len(labels) > 0, "label is empty")
 	str := utils.Join(labels, ",", "=")
-	hasname := strings.TrimSpace(master.MustCmd2String(fmt.Sprintf(`kubectl get nodes -l '%s' -o=jsonpath="{.items[*].status.addresses[1].address}"`, str)))
+
+	out, err := master.CmdString(fmt.Sprintf(`kubectl get nodes -l '%s' -o=jsonpath="{.items[*].status.addresses[1].address}"`, str))
+	utils.Panic(err, "get nodes error")
+
+	hasname := strings.TrimSpace(out)
 	if hasname == "" {
 		return []string{}
 	}
@@ -22,14 +26,16 @@ func SearchLabelNode(master *ssh.Node, labels map[string]string) []string {
 func AddNodeLabel(master *ssh.Node, labels map[string]string, nodes ...string) {
 	for _, node := range nodes {
 		for label, value := range labels {
-			fmt.Println(master.MustCmd2String(fmt.Sprintf("kubectl label nodes %s %s=%s", node, label, value)))
+			err := master.CmdStdout(fmt.Sprintf("kubectl label nodes %s %s=%s", node, label, value))
+			utils.Panic(err, "add node %s label %s=%s", node, label, value)
 		}
 	}
 }
 
 func RemoveNodeLabel(master *ssh.Node, label string, nodes ...string) {
 	for _, node := range nodes {
-		fmt.Println(master.MustCmd2String(fmt.Sprintf("kubectl label nodes %s %s-", node, label)))
+		err := master.CmdStdout(fmt.Sprintf("kubectl label nodes %s %s-", node, label))
+		utils.Panic(err, "remove node %s label %s", node, label)
 	}
 }
 

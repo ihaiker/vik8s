@@ -8,10 +8,10 @@ import (
 )
 
 func InstallTimeServices(node *ssh.Node, timezone string, timeServices ...string) {
-	err := node.SudoCmd("rm -f /etc/localtime")
+	err := node.Sudo().Cmd("rm -f /etc/localtime")
 	utils.Panic(err, "set timezone")
 
-	err = node.SudoCmd(fmt.Sprintf("cp -f %s /etc/localtime",
+	err = node.Sudo().Cmd(fmt.Sprintf("cp -f %s /etc/localtime",
 		filepath.Join("/usr/share/zoneinfo", timezone)))
 	utils.Panic(err, "set timezone")
 
@@ -28,16 +28,16 @@ func InstallTimeServices(node *ssh.Node, timezone string, timeServices ...string
 	}
 	config += "\nlocal stratum 10\n"
 
-	err = node.SudoScpContent([]byte(config), "/etc/chrony.conf")
+	err = node.Sudo().ScpContent([]byte(config), "/etc/chrony.conf")
 	utils.Panic(err, "send ntp config")
 
-	err = node.SudoCmd(fmt.Sprintf("timedatectl set-timezone %s", timezone))
+	err = node.Sudo().Cmd(fmt.Sprintf("timedatectl set-timezone %s", timezone))
 	utils.Panic(err, "set timezone")
 
-	err = node.SudoCmd("timedatectl set-ntp true")
+	err = node.Sudo().Cmd("timedatectl set-ntp true")
 	utils.Panic(err, "set timezone")
 
-	err = node.SudoCmd("chronyc -a makestep")
+	err = node.Sudo().Cmd("chronyc -a makestep")
 	utils.Panic(err, "set timezone")
 
 	EnableAndStartService("chronyd", true, node)

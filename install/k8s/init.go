@@ -12,7 +12,6 @@ import (
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/ihaiker/vik8s/reduce"
-	yamls "github.com/ihaiker/vik8s/yaml"
 	"io/ioutil"
 	"os"
 	"regexp"
@@ -43,7 +42,7 @@ func InitCluster(node *ssh.Node) *ssh.Node {
 		makeKubernetesCerts(node)
 		makeJoinControlPlaneConfigFiles(node)
 		initKubernetes(node)
-		copyKubeletConfig(node)
+		copyKubeletAdminConfig(node)
 		applyApiServerEndpoint(node)
 	}
 	config.K8S().JoinNode(true, node.Host)
@@ -52,7 +51,7 @@ func InitCluster(node *ssh.Node) *ssh.Node {
 
 func setHosts(node *ssh.Node, ip, domain string) {
 	node.Logger("set host %s => %s", ip, domain)
-	hostsContent, err := node.SudoCmdString("cat /etc/hosts")
+	hostsContent, err := node.Sudo().CmdString("cat /etc/hosts")
 	utils.Panic(err, "fetch hosts list")
 
 	hosts := strings.Split(hostsContent, "\n")
@@ -77,7 +76,7 @@ func setHosts(node *ssh.Node, ip, domain string) {
 				editFn = 1
 			} else {
 				ipAndDomains[idx+1] = ""
-				err = node.SudoCmd(fmt.Sprintf("sed -i '%dc%s' /etc/hosts", line+1, strings.Join(ipAndDomains, " ")))
+				err = node.Sudo().Cmd(fmt.Sprintf("sed -i '%dc%s' /etc/hosts", line+1, strings.Join(ipAndDomains, " ")))
 				utils.Panic(err, "set /etc/hosts")
 			}
 			break
@@ -85,16 +84,16 @@ func setHosts(node *ssh.Node, ip, domain string) {
 	}
 
 	if editFn == 0 { //0: append, 1: edit
-		err = node.SudoCmd(fmt.Sprintf("sed -i '$ a%s %s' /etc/hosts", ip, domain))
+		err = node.Sudo().Cmd(fmt.Sprintf("sed -i '$ a%s %s' /etc/hosts", ip, domain))
 		utils.Panic(err, "set /etc/hosts")
 	} else {
-		err = node.SudoCmd(fmt.Sprintf("sed -i '%dc%s %s' /etc/hosts", findLine, ip, domain))
+		err = node.Sudo().Cmd(fmt.Sprintf("sed -i '%dc%s %s' /etc/hosts", findLine, ip, domain))
 		utils.Panic(err, "set /etc/hosts")
 	}
 }
 
 func bugfixImages(master, node *ssh.Node, remote string) {
-	images, err := master.SudoCmdString(fmt.Sprintf("kubeadm config images list --config=%s", remote))
+	images, err := master.Sudo().CmdString(fmt.Sprintf("kubeadm config images list --config=%s", remote))
 	utils.Panic(err, "list kubernetes images")
 
 	//fix: alicloud image repo. since kubeadm@v1.21.+
@@ -105,10 +104,10 @@ func bugfixImages(master, node *ssh.Node, remote string) {
 		if strings.Contains(images, imageDest) {
 			node.Logger("bugfix: image %s not found", imageDest)
 
-			err = node.SudoCmdOutput("docker pull "+imageSource, os.Stdout)
+			err = node.Sudo().CmdOutput("docker pull "+imageSource, os.Stdout)
 			utils.Panic(err, "pull docker images")
 
-			err = node.SudoCmdOutput("docker tag "+imageSource+" "+imageDest, os.Stdout)
+			err = node.Sudo().CmdOutput("docker tag "+imageSource+" "+imageDest, os.Stdout)
 			utils.Panic(err, "tag docker images")
 		}
 	}
@@ -117,37 +116,40 @@ func bugfixImages(master, node *ssh.Node, remote string) {
 func initKubernetes(node *ssh.Node) {
 	remote := scpKubeConfig(node)
 	bugfixImages(node, node, remote)
-	err := node.SudoCmdOutput(fmt.Sprintf("kubeadm init --config=%s --upload-certs", remote), os.Stdout)
+	err := node.Sudo().CmdOutput(fmt.Sprintf("kubeadm init --config=%s --upload-certs", remote), os.Stdout)
 	utils.Panic(err, "kubeadm init")
 }
 
 func scpKubeConfig(node *ssh.Node) string {
-	kubeadmConfigPath := string(yamls.MustAsset("yaml/kubeadm-config.yaml"))
+	var kubeadmConfigBytes []byte
+	var err error
+
+	tmpData := templateDate(node)
 
 	if config.K8S().KubeadmConfig != "" {
 		configBytes, err := ioutil.ReadFile(config.K8S().KubeadmConfig)
 		utils.Panic(err, "read kubeadm-config file %s", config.K8S().KubeadmConfig)
-		kubeadmConfigPath = string(configBytes)
+		kubeadmConfigBytes, err = tools.Template(string(configBytes), tmpData)
+		utils.Panic(err, "parse user kubeadm config error: %s", config.K8S().KubeadmConfig)
+	} else {
+		kubeadmConfigBytes, err = tools.Assert("yaml/kubeadm-config.yaml", tmpData)
+		utils.Panic(err, "parse kubeadm config error")
 	}
 
 	remote := node.Vik8s("apply/kubeadm.yaml")
-	node.Logger("scp kubeadm.yaml %s", remote)
-
-	data := templateDate(node)
-	kubeadmConfig := tools.Template(kubeadmConfigPath, data)
-	err := node.ScpContent(kubeadmConfig.Bytes(), remote)
+	err = node.Sudo().ScpContent(kubeadmConfigBytes, remote)
 	utils.Panic(err, "scp kubeadm-config file")
 	return remote
 }
 
-func copyKubeletConfig(node *ssh.Node) {
-	err := node.Cmd2("mkdir -p $HOME/.kube")
+func copyKubeletAdminConfig(node *ssh.Node) {
+	err := node.Cmd("mkdir -p $HOME/.kube")
 	utils.Panic(err, "copy kubectl config")
 
-	err = node.SudoCmd("cp -n /etc/kubernetes/admin.conf $HOME/.kube/config")
+	err = node.Sudo().Cmd("cp -f /etc/kubernetes/admin.conf $HOME/.kube/config")
 	utils.Panic(err, "copy kubectl config")
 
-	err = node.SudoCmd("chown $(id -u):$(id -g) $HOME/.kube/config")
+	err = node.Sudo().Cmd("chown $(id -u):$(id -g) $HOME/.kube/config")
 	utils.Panic(err, "change kubectl config owner")
 }
 
@@ -155,7 +157,8 @@ func applyApiServerEndpoint(node *ssh.Node) {
 	name := "yaml/vik8s-api-server.conf"
 	data := templateDate(node)
 	//tools.MustScpAndApplyAssert(node, name, data)
-	reduce.MustApplyAssert(node, name, data)
+	err := reduce.ApplyAssert(node, name, data)
+	utils.Panic(err, "apply vik8s-api-server")
 }
 
 func templateDate(node *ssh.Node) paths.Json {

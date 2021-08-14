@@ -30,7 +30,7 @@ func makeJoinControlPlaneConfigFiles(node *ssh.Node) {
 	files := kubecerts.CreateJoinControlPlaneKubeConfigFiles(dir, node.Hostname, endpoint, config.K8S().CertsValidity)
 	for key, path := range files {
 		remote := filepath.Join("/etc/kubernetes", fmt.Sprintf("%s.conf", key))
-		err := node.SudoScp(path, remote)
+		err := node.Sudo().Scp(path, remote)
 		utils.Panic(err, "scp %s %s", path, remote)
 	}
 }
@@ -41,7 +41,7 @@ func makeWorkerConfigFiles(node *ssh.Node) {
 	files := kubecerts.CreateWorkerKubeConfigFile(dir, node.Hostname, endpoint, config.K8S().CertsValidity)
 	for key, path := range files {
 		remote := filepath.Join("/etc/kubernetes", fmt.Sprintf("%s.conf", key))
-		utils.Panic(node.SudoScp(path, remote), "scp %s %s", path, remote)
+		utils.Panic(node.Sudo().Scp(path, remote), "scp %s %s", path, remote)
 	}
 }
 
@@ -80,7 +80,7 @@ func scpExternalEtcdCa(node *ssh.Node) {
 		filepath.Join(dir, "apiserver-etcd-client.crt"): "/etc/kubernetes/pki/etcd/apiserver-etcd-client.crt",
 	}
 	for local, remote := range files {
-		err := node.SudoScp(local, remote)
+		err := node.Sudo().Scp(local, remote)
 		utils.Panic(err, "scp %s %s", local, remote)
 	}
 }
@@ -111,8 +111,8 @@ func makeKubeCerts(node *ssh.Node) {
 
 	//sa
 	{
-		utils.Panic(node.SudoScp(filepath.Join(dir, "sa.key"), "/etc/kubernetes/pki/sa.key"), "scp sa.key")
-		utils.Panic(node.SudoScp(filepath.Join(dir, "sa.pub"), "/etc/kubernetes/pki/sa.pub"), "scp sa")
+		utils.Panic(node.Sudo().Scp(filepath.Join(dir, "sa.key"), "/etc/kubernetes/pki/sa.key"), "scp sa.key")
+		utils.Panic(node.Sudo().Scp(filepath.Join(dir, "sa.pub"), "/etc/kubernetes/pki/sa.pub"), "scp sa")
 	}
 	certsFiles := map[string]string{
 		//public
@@ -131,7 +131,7 @@ func scpCerts(certsFiles map[string]string, node *ssh.Node, localDir string) {
 		for _, exp := range []string{".key", ".crt"} {
 			local := filepath.Join(localDir, lf+exp)
 			remote := filepath.Join(remoteDir, rf+exp)
-			utils.Panic(node.SudoScp(local, remote), "scp %s %s", local, remote)
+			utils.Panic(node.Sudo().Scp(local, remote), "scp %s %s", local, remote)
 		}
 	}
 }
@@ -146,9 +146,9 @@ func makeEtcdctlCommand(node *ssh.Node) {
 		" --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt" +
 		"  --key=/etc/kubernetes/pki/etcd/healthcheck-client.key $@")
 
-	err := node.SudoScpContent(cmdCtx, "/usr/local/bin/etcdctl")
+	err := node.Sudo().ScpContent(cmdCtx, "/usr/local/bin/etcdctl")
 	utils.Panic(err, "create etcdctl command")
 
-	err = node.SudoCmd("chmod +x /usr/local/bin/etcdctl")
+	err = node.Sudo().Cmd("chmod +x /usr/local/bin/etcdctl")
 	utils.Panic(err, "change etcdctl model")
 }
