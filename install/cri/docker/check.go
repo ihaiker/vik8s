@@ -168,6 +168,9 @@ WantedBy=multi-user.target
 
 	bases.EnableAndStartService("docker", daemonChange || serviceChange, node)
 
+	err = node.SudoCmd("chmod o+r+w /var/run/docker.sock")
+	utils.Panic(err, "change docker socket file mode.")
+
 	//BUGFIX 如果 Node 上安装的 Docker 版本大于 1.12，那么 Docker 会把默认的 iptables FORWARD 策略改为 DROP。
 	//转发丢弃, 这会引发 Pod 网络访问的问题
 	utils.Panic(node.SudoCmd("iptables -P FORWARD ACCEPT"), "open iptables role")
