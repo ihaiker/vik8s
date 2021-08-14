@@ -7,8 +7,10 @@ import (
 	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/k8s"
 	"github.com/ihaiker/vik8s/libs/logs"
+	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 var k8sConfig = config.DefaultK8SConfiguration()
@@ -53,6 +55,10 @@ vik8s join 172.10.0.2 172.10.0.3 172.10.0.4 172.10.0.5`,
 		hosts.MustGatheringFacts(nodes...)
 		master, _ := cmd.Flags().GetBool("master")
 		for _, node := range nodes {
+			utils.Assert(utils.Search(config.K8S().Masters, node.Host) != -1 ||
+				utils.Search(config.K8S().Nodes, node.Host) != -1,
+				"the host is cluster node yet. %s", node.Hostname)
+
 			if master {
 				k8s.JoinControl(node)
 			} else {
@@ -72,18 +78,23 @@ var resetCmd = &cobra.Command{
 	PreRunE: configLoad(hostsLoad(none)), PostRunE: configDown(none),
 	Run: func(cmd *cobra.Command, args []string) {
 		nodes := args
-		if args[0] == "all" {
+		if args[0] == "all" && config.Config.K8S != nil {
 			nodes = append(config.K8S().Nodes, utils.Reverse(config.K8S().Masters)...)
 		}
-		master := hosts.Get(config.K8S().Masters[0])
+		var master *ssh.Node
+		if config.K8S() != nil && len(config.K8S().Masters) > 0 {
+			master = hosts.Get(config.K8S().Masters[0])
+		}
 		for _, nodeName := range nodes {
 			node := hosts.Get(nodeName)
 			utils.Assert(node != nil, "not found kubernetes %s", node.Host)
 			logs.Infof("remove cluster node %s", node.Prefix())
 
-			err := master.Cmd2(fmt.Sprintf("kubectl delete nodes %s", node.Hostname))
-			utils.Panic(err, "reset kubernetes node")
-
+			if master != nil {
+				err := master.Cmd2(fmt.Sprintf("kubectl delete nodes %s", node.Hostname))
+				utils.Assert(err == nil || strings.Contains(err.Error(), "not found"),
+					"reset kubernetes node: %v", err)
+			}
 			k8s.ResetNode(node)
 		}
 		fmt.Println("-=-=-=- SUCCESS -=-=-=-")

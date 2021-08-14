@@ -15,9 +15,11 @@ func ResetNode(node *ssh.Node) {
 	err := node.SudoCmdStdout("kubeadm reset -f")
 	utils.Panic(err, "kubernetes cluster reset")
 
-	config.K8S().RemoveNode(node.Host)
+	if config.K8S() != nil {
+		config.K8S().RemoveNode(node.Host)
+	}
 
-	if len(config.K8S().Masters) == 0 && len(config.K8S().Nodes) == 0 {
+	if config.K8S() != nil && len(config.K8S().Masters) == 0 && len(config.K8S().Nodes) == 0 {
 		dataDir := paths.Join("kube")
 		logs.Infof("remove data folder %s", dataDir)
 		_ = os.RemoveAll(dataDir)

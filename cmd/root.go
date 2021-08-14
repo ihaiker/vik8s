@@ -102,6 +102,7 @@ func Execute(version, buildTime, gitTag string) {
 			color.Red(err.Error())
 			color.Red(utils.Stack())
 		}
+		os.Exit(1)
 	})
 
 	if runCommand, args, err := rootCmd.Find(os.Args[1:]); err == nil {

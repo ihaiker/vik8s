@@ -144,7 +144,7 @@ func copyKubeletConfig(node *ssh.Node) {
 	err := node.Cmd2("mkdir -p $HOME/.kube")
 	utils.Panic(err, "copy kubectl config")
 
-	err = node.SudoCmd("cp -i /etc/kubernetes/admin.conf $HOME/.kube/config")
+	err = node.SudoCmd("cp -n /etc/kubernetes/admin.conf $HOME/.kube/config")
 	utils.Panic(err, "copy kubectl config")
 
 	err = node.SudoCmd("chown $(id -u):$(id -g) $HOME/.kube/config")
