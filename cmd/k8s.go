@@ -78,11 +78,14 @@ var resetCmd = &cobra.Command{
 	PreRunE: configLoad(hostsLoad(none)), PostRunE: configDown(none),
 	Run: func(cmd *cobra.Command, args []string) {
 		nodes := args
-		if args[0] == "all" && config.Config.K8S != nil {
+		if config.Config.K8S == nil {
+			config.Config.K8S = config.DefaultK8SConfiguration()
+		}
+		if args[0] == "all" {
 			nodes = append(config.K8S().Nodes, utils.Reverse(config.K8S().Masters)...)
 		}
 		var master *ssh.Node
-		if config.K8S() != nil && len(config.K8S().Masters) > 0 {
+		if len(config.K8S().Masters) > 0 {
 			master = hosts.Get(config.K8S().Masters[0])
 		}
 		for _, nodeName := range nodes {

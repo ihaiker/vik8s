@@ -6,6 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"math/rand"
+	"os"
 	"strconv"
 	"testing"
 	"time"
@@ -34,12 +35,13 @@ func (t *testLogsSuite) TestRoot() {
 	t.Contains(out.String(), rs)
 	out.Reset()
 
-	logs.SetLevel(logrus.DebugLevel)
+	logs.SetLevel(logrus.InfoLevel)
 	rs = randomString()
 	logs.Debug(rs)
 	t.NotContains(out.String(), rs)
 	out.Reset()
 
+	logs.SetOutput(os.Stdout)
 	logs.Info("test")
 	logs.Warn("test")
 	logs.Error("test")
@@ -52,4 +54,17 @@ func (t *testLogsSuite) TestNew() {
 	logger.Info("test")
 	logger.Warn("test")
 	logger.Error("test")
+}
+
+func TestOut(t *testing.T) {
+	out := bytes.NewBuffer([]byte{})
+	logs.SetOutput(out)
+	logs.SetLevel(logrus.DebugLevel)
+
+	logs.Debug("test")
+	logs.Info("test")
+	logs.Warn("test")
+	logs.Error("test")
+
+	t.Log(out.String())
 }

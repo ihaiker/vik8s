@@ -29,7 +29,7 @@ func (node *Node) Equal(local interface{}, remote string) bool {
 	}
 
 	//remote
-	remoteMd5Code, _ := node.Sudo().HideLog().CmdString(fmt.Sprintf("sh -c \"md5sum %s | awk '{printf $1}'\"", strconv.Quote(remote)))
+	remoteMd5Code, _ := node.Sudo().HideLog().CmdString(fmt.Sprintf("md5sum %s | awk '{printf $1}'", remote))
 	return strings.EqualFold(localMd5code, remoteMd5Code)
 }
 
@@ -54,7 +54,7 @@ func (node *Node) ScpContent(content []byte, remotePath string) error {
 		line := strings.Repeat("-", 30)
 		node.Logger("push bytes to %s\n%s\n%s\n%s", remotePath, line, string(content), line)
 	}
-	node.reset()
+	defer node.reset()
 
 	if node.IsRoot() || !node.isSudo() {
 		return node.easyssh().ScpContent(content, remotePath)

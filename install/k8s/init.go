@@ -151,6 +151,9 @@ func copyKubeletAdminConfig(node *ssh.Node) {
 
 	err = node.Sudo().Cmd("chown $(id -u):$(id -g) $HOME/.kube/config")
 	utils.Panic(err, "change kubectl config owner")
+
+	err = node.Sudo().Cmd("chown -R $(id -u):$(id -g) $HOME/.vik8s")
+	utils.Panic(err, "change vik8s config dir")
 }
 
 func applyApiServerEndpoint(node *ssh.Node) {

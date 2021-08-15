@@ -69,17 +69,8 @@ func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	}
 
 	if !f.HideCaller && entry.HasCaller() {
-		idx := strings.Index(entry.Caller.Function, ".(")
-		if idx == -1 {
-			fnPageName := filepath.Base(entry.Caller.Function)
-			idx = strings.Index(fnPageName, ".")
-			file := filepath.Dir(entry.Caller.Function) + "/" + fnPageName[0:idx] + "/" + filepath.Base(entry.Caller.File)
-			fmt.Fprintf(b, "%s:%d ", file, entry.Caller.Line)
-		} else {
-			fn := entry.Caller.Function[idx+1:]
-			file := entry.Caller.Function[0:idx] + "/" + filepath.Base(entry.Caller.File)
-			fmt.Fprintf(b, "%s:%d %s() ", file, entry.Caller.Line, fn)
-		}
+		fmt.Fprintf(b, "%s:%d %s() ", entry.Caller.File, entry.Caller.Line,
+			filepath.Base(entry.Caller.Function))
 	}
 
 	// write fields
