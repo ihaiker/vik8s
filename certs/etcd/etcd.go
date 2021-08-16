@@ -14,7 +14,7 @@ import (
 var log = logs.NewLogger("cert", func(hook *logs.FieldsHook, logger *logrus.Logger) {
 	logger.WithField("module", "etcd")
 	logger.SetFormatter(&logs.Formatter{
-		TimestampFormat: "[2006-01-02 15:04:05.000]",
+		TimestampFormat: "2006-01-02 15:04:05.000",
 		HideCaller:      true, HideKeys: true, HideLevel: false,
 	})
 })

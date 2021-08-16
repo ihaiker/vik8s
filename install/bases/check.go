@@ -20,3 +20,17 @@ func checkDistribution(node *ssh.Node) {
 	utils.Assert(v1.LessThanOrEqual(v2), "%s The kernel version is too low, please upgrade the kernel first, "+
 		"your current version is: %s, the minimum requirement is %s", node.Prefix(), v2.String(), v1.String())
 }
+
+func InstallJQYQTools(node *ssh.Node) {
+	Install("jq", "", node)
+
+	downloadUrl, err := node.CmdString("curl https://api.github.com/repos/mikefarah/yq/releases/latest |" +
+		" jq  -r '.assets[] | select(.name == \"yq_linux_amd64\") | .browser_download_url'")
+	utils.Panic(err, "get yq download url error")
+
+	err = node.Sudo().CmdStdout("curl -o /usr/local/bin/yq " + downloadUrl)
+	utils.Panic(err, "download yq")
+
+	err = node.Sudo().Cmd("chmod +x /usr/local/bin/yq")
+	utils.Panic(err, "change yq mode")
+}

@@ -3,12 +3,12 @@ package kubecerts
 import (
 	"crypto/rsa"
 	"crypto/x509"
-	"fmt"
 	"github.com/ihaiker/vik8s/certs"
 	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/install/tools"
 	"github.com/ihaiker/vik8s/libs/logs"
 	"github.com/ihaiker/vik8s/libs/utils"
+	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"time"
 )
@@ -30,9 +30,14 @@ type Node struct {
 	SANS []string
 }
 
-func line(name, format string, params ...interface{}) {
-	logs.Infof("[cert][k8s][%s] %s", name, fmt.Sprintf(format, params...))
-}
+var log = logs.NewLogger("cert", func(hook *logs.FieldsHook, logger *logrus.Logger) {
+	logger.WithField("module", "kubernetes")
+	logger.SetFormatter(&logs.Formatter{
+		TimestampFormat: "[2006-01-02 15:04:05.000]",
+		HideCaller:      true, HideKeys: true, HideLevel: false,
+	})
+})
+var line = log.Infof
 
 type createAction func(dir string, node Node)
 
