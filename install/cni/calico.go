@@ -2,41 +2,29 @@ package cni
 
 import (
 	"fmt"
-	etcdcerts "github.com/ihaiker/vik8s/certs/etcd"
+	"github.com/ihaiker/cobrax"
 	"github.com/ihaiker/vik8s/config"
-	"github.com/ihaiker/vik8s/install/etcd"
-	"github.com/ihaiker/vik8s/install/paths"
-	"github.com/ihaiker/vik8s/install/tools"
+	"github.com/ihaiker/vik8s/install/repo"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
-	"github.com/ihaiker/vik8s/reduce"
 	"github.com/spf13/cobra"
 	"path/filepath"
-	"strings"
+)
+
+const (
+	tigera_operator  = "apply/cni/calico/tigera-operator.yaml"
+	custom_resources = "apply/cni/calico/custom-resources.yaml"
 )
 
 type calico struct {
-	ipip    bool
-	mtu     int
-	version string
-	repo    string
-	typha   struct {
-		Enable     bool
-		Prometheus bool
-		Replicas   int
-	}
+	OperatorVersion string `flag:"operator-version" help:"calico operator server version"`
+	Repo            string `flag:"repo" help:"tigera/operator image repository. default: from quay.io or quay.mirrors.ustc.edu.cn in china"`
+	Version         string `flag:"version" help:"calico server"`
+}
 
-	etcd struct {
-		Enable       bool
-		TLS          bool
-		Endpoints    []string
-		Ca           string
-		CaBase64     string `json:"-"`
-		Key          string
-		KeyBase64    string `json:"-"`
-		Cert         string
-		CertBase64   string `json:"-"`
-		EndpointsUrl string
+func NewCalico() Plugin {
+	return &calico{
+		OperatorVersion: "v1.20.0",
 	}
 }
 
@@ -45,110 +33,47 @@ func (f *calico) Name() string {
 }
 
 func (f *calico) Flags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&f.version, flags(f, "version"), "3.14.0", "")
-	cmd.Flags().BoolVar(&f.ipip, flags(f, "ipip"), true, "Enable IPIP")
-	cmd.Flags().IntVar(&f.mtu, flags(f, "mtu"), 1440, `Configure the MTU to use for workload interfaces and the tunnels.  
-For IPIP, set to your network MTU - 20; for VXLAN set to your network MTU - 50.`)
-
-	cmd.Flags().StringVar(&f.repo, flags(f, "Repo"), "", fmt.Sprintf("Choose a container registry to pull control plane images from"))
-
-	cmd.Flags().BoolVar(&f.typha.Enable, flags(f, "typha"), false, "Enable Typha, When install Calico with Kubernetes API datastore, more than 50 nodes")
-	cmd.Flags().BoolVar(&f.typha.Prometheus, flags(f, "typha-prometheus"), false,
-		"enable prometheus metrics.  Since Typha is host-networked, this opens a port on the host, which may need to be secured.")
-	cmd.Flags().IntVar(&f.typha.Replicas, flags(f, "typha-replicas"), 1,
-		"replicas number, see Deployment 'calico-typha' at https://docs.projectcalico.org/manifests/calico-typha.yaml")
-
-	cmd.Flags().BoolVar(&f.etcd.Enable, flags(f, "etcd"), false,
-		fmt.Sprintf(`install calico with etcd datastore. 
-If you enable etcd to store data and not specify the -%s parameter, 
-the system will look for the etcd cluster from the following two points.
-  1. Get the etcd cluster provided by '--etcd'
-  2. Obtain the etcd cluster that comes with kubernates.`,
-			flags(f, "etcd-endpoints")))
-
-	cmd.Flags().BoolVar(&f.etcd.TLS, flags(f, "etcd-tls"), true, "TLS enabled etcd")
-	cmd.Flags().StringSliceVar(&f.etcd.Endpoints, flags(f, "etcd-endpoints"), []string{}, "the location of your etcd cluster. for example: 172.16.100.10:2379")
-	cmd.Flags().StringVar(&f.etcd.Ca, flags(f, "etcd-ca"), "", "the etcd ca file path")
-	cmd.Flags().StringVar(&f.etcd.Key, flags(f, "etcd-key"), "", "the etcd key file path")
-	cmd.Flags().StringVar(&f.etcd.Cert, flags(f, "etcd-cert"), "", "the etcd cert file path\n")
-
+	_ = cobrax.Flags(cmd, f, "", "")
 }
 
-func (f *calico) applyVik8sETCDServer(node *ssh.Node, vip string) {
-	name := "yaml/cni/calico-vik8s-etcd.conf"
-	err := reduce.ApplyAssert(node, name, paths.Json{
-		"VIP": vip,
-	})
-	utils.Panic(err, "apply calico with etcd")
-}
+func (f *calico) Apply(cmd *cobra.Command, node *ssh.Node) {
+	remote := node.Vik8s(tigera_operator)
+	operatorUrl := "https://docs.projectcalico.org/manifests/tigera-operator.yaml"
 
-func (f *calico) Apply(cmd *cobra.Command, master *ssh.Node) {
-	if f.repo != "" && strings.HasSuffix(f.repo, "/") {
-		f.repo = f.repo + "/"
-	}
-	data := paths.Json{
-		"Version": "v" + f.version, "Repo": f.repo,
-		"IPIP": f.ipip, "MTU": f.mtu,
-		"CIDR": config.K8S().PodCIDR, "Interface": config.K8S().Interface,
-		"Typha": f.typha,
-	}
+	node.Logger("download calico tigera operator config yaml %s", operatorUrl)
+	err := node.Cmd(fmt.Sprintf("mkdir -p %s | curl -o %s %s", filepath.Dir(remote), remote, operatorUrl))
+	utils.Panic(err, "get operator config error")
 
-	local := "yaml/cni/calico.conf"
-	if f.etcd.Enable {
-		if len(f.etcd.Endpoints) == 0 {
-			f.etcd.TLS = true
-			//第一步, 使用 vik8s etcd init 安装了etcd集群
-			if config.ExternalETCD() {
-				f.etcd.Endpoints = config.Etcd().Nodes
-				dir := etcd.CertsDir()
-				f.etcd.Ca = filepath.Join(dir, "ca.crt")
-				f.etcd.Key = filepath.Join(dir, "apiserver-etcd-client.crt")
-				f.etcd.Cert = filepath.Join(dir, "apiserver-etcd-client.key")
-			} else {
-				vip := tools.GetVip(config.K8S().SvcCIDR, tools.Vik8sCalicoETCD)
-				f.applyVik8sETCDServer(master, vip)
-				certsDir := paths.Join("kube/pki/etcd")
-				certPath, keyPath := etcdcerts.CreateCalicoETCDPKIAssert(certsDir, config.K8S().CertsValidity)
-				f.etcd.Endpoints = []string{vip + ":2379"}
-				f.etcd.Ca = paths.Join("kube/pki/etcd/ca.crt")
-				f.etcd.Key = keyPath
-				f.etcd.Cert = certPath
-			}
-		}
+	image := fmt.Sprintf("%s/tigera/operator:%s", repo.QuayIO(f.Repo), f.OperatorVersion)
+	node.Logger("modify config image version: %s", image)
+	selectPattern := `(select(.kind == "Deployment" and .metadata.name == "tigera-operator") | .spec.template.spec.containers[0].image)`
+	err = node.Cmd(fmt.Sprintf(`yq e -i '%s = "%s"' %s`, selectPattern, image, remote))
+	utils.Panic(err, "modify %s", operatorUrl)
 
-		//base64 cert files
-		if f.etcd.TLS {
-			f.etcd.CaBase64 = utils.Base64File(f.etcd.Ca)
-			f.etcd.KeyBase64 = utils.Base64File(f.etcd.Key)
-			f.etcd.CertBase64 = utils.Base64File(f.etcd.Cert)
-		}
+	node.Logger("apply calico network interface # tigera operator ")
+	err = node.CmdStdout("kubectl apply -f " + remote)
+	utils.Panic(err, "kubectl apply error")
 
-		f.etcd.EndpointsUrl = ""
-		for i, endpoint := range f.etcd.Endpoints {
-			if i != 0 {
-				f.etcd.EndpointsUrl += ","
-			}
-			if f.etcd.TLS {
-				f.etcd.EndpointsUrl += "https://" + endpoint
-			} else {
-				f.etcd.EndpointsUrl += "http://" + endpoint
-			}
-		}
+	//---
+	remote = node.Vik8s(custom_resources)
+	operatorUrl = "https://docs.projectcalico.org/manifests/custom-resources.yaml"
+	node.Logger("download calico custom resources config yaml %s", operatorUrl)
+	err = node.Cmd(fmt.Sprintf("mkdir -p %s | curl -o %s %s", filepath.Dir(remote), remote, operatorUrl))
+	utils.Panic(err, "download calico custom resource config error")
 
-		data["Etcd"] = f.etcd
-		local = "yaml/cni/calico-etcd.conf"
-	} else if f.typha.Enable {
-		local = "yaml/cni/calico-typha.conf"
-	}
+	err = node.Cmd(fmt.Sprintf(`yq e -i '(select(.kind == "Installation") | .spec.calicoNetwork.ipPools[0].cidr) = "%s"' %s`,
+		config.K8S().PodCIDR, remote))
+	utils.Panic(err, "modify custom resource error")
 
-	err := reduce.ApplyAssert(master, local, data)
-	utils.Panic(err, "apply calico")
+	node.Logger("apply calico network interface # resource ")
+	err = node.CmdStdout("kubectl apply -f " + remote)
+	utils.Panic(err, "kubectl apply error")
 }
 
 func (f *calico) Clean(node *ssh.Node) {
-	_ = node.Sudo().CmdStdout("rm -rf /var/lib/calico")
-	_ = node.Sudo().CmdStdout("rm -f /etc/NetworkManager/conf.d/calico.conf")
-	_ = node.Sudo().CmdStdout("modprobe -r ipip")
-	_ = node.Sudo().CmdStdout("ip link delete tunl0@NONE")
-	_ = node.Sudo().CmdStdout("ifconfig tunl0 down")
+	remote := node.Vik8s(tigera_operator)
+	_ = node.CmdStdout("kubectl delete -f " + remote)
+
+	remote = node.Vik8s(custom_resources)
+	_ = node.CmdStdout("kubectl delete -f " + remote)
 }

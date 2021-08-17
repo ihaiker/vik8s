@@ -37,7 +37,10 @@ var log = logs.NewLogger("cert", func(hook *logs.FieldsHook, logger *logrus.Logg
 		HideCaller:      true, HideKeys: true, HideLevel: false,
 	})
 })
-var line = log.Infof
+
+func line(node, format string, args ...interface{}) {
+	log.Infof("node=%s "+format, append(args, node)...)
+}
 
 type createAction func(dir string, node Node)
 

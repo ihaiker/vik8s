@@ -22,7 +22,7 @@ type Plugin interface {
 type plugins []Plugin
 
 var Plugins = plugins{
-	NewFlannelCni(), new(calico),
+	NewFlannelCni(), NewCalico(),
 	new(customer),
 }
 
