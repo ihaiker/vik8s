@@ -28,6 +28,7 @@ func InitCluster(node *ssh.Node) *ssh.Node {
 
 	bases.Check(node)
 	bases.InstallTimeServices(node, config.K8S().Timezone, config.K8S().NTPServices...)
+	bases.InstallJQYQTools(node)
 	cri.Install(node)
 
 	installKubernetes(node)

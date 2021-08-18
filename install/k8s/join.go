@@ -68,6 +68,9 @@ func JoinWorker(node *ssh.Node) {
 
 	makeWorkerConfigFiles(node)
 
+	remote := node.Vik8s("apply/kubeadm.yaml")
+	bugfixImages(master, node, remote)
+
 	joinCmd := getJoinCmd(master)
 	cmd := fmt.Sprintf("%s --apiserver-advertise-address=%s --ignore-preflight-errors=FileAvailable--etc-kubernetes-kubelet.conf --v=5", joinCmd, node.Host)
 	utils.Panic(node.Sudo().CmdOutput(cmd, os.Stdout), "join %s", node.Host)
