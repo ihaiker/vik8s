@@ -41,7 +41,7 @@ func runCmd(sync bool, cmd string, nodes []*ssh.Node, filters ...string) {
 		}
 		prefix := color.New(colors[i%colorsSize]).Sprintf("[%s] ", node.Hostname)
 		out := logstreamer.NewLogstreamerForStdout(prefix)
-		if err := node.CmdOutput(cmd, out); err != nil {
+		if err := node.HideLog().CmdOutput(cmd, out); err != nil {
 			fmt.Println(err)
 			_, _ = out.Write([]byte(fmt.Sprint(err)))
 		}

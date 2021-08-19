@@ -74,7 +74,9 @@ func init() {
 }
 
 var resetCmd = &cobra.Command{
-	Use: "reset", Short: "reset", Args: cobra.MinimumNArgs(1),
+	Use: "reset", Short: "reset kubernetes cluster node",
+	Example: "vik8s reset <nodeIP|nodeHostName|all>",
+	Args:    cobra.MinimumNArgs(1),
 	PreRunE: configLoad(hostsLoad(none)), PostRunE: configDown(none),
 	Run: func(cmd *cobra.Command, args []string) {
 		nodes := args

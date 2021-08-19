@@ -2,8 +2,8 @@ package ingress
 
 import (
 	"fmt"
+	"github.com/ihaiker/cobrax"
 	"github.com/ihaiker/vik8s/install/repo"
-	"github.com/ihaiker/vik8s/libs/flags"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/ihaiker/vik8s/reduce"
@@ -13,7 +13,7 @@ import (
 
 type nginx struct {
 	Repo    repo.Repo
-	Version string `help:"" def:"0.30.0"`
+	Version string `help:""`
 
 	HostNetwork   bool `flag:"host-network" help:"deploy pod use hostNetwork"`
 	NodePortHttp  int  `flag:"nodeport" help:"the ingress-nginx http 80 service nodeport, 0: automatic allocation, -1: disable" def:"-1"`
@@ -23,16 +23,25 @@ type nginx struct {
 	NodeSelectors map[string]string `flag:"node.selector" help:"Deployment.nodeSelector"`
 }
 
+func Nginx() Ingress {
+	return &nginx{
+		Version:      "0.30.0",
+		HostNetwork:  false,
+		NodePortHttp: -1, NodePortHttps: -1, Replicas: 1,
+	}
+}
+
 func (n *nginx) Name() string {
 	return "nginx"
 }
 
 func (n *nginx) Description() string {
-	return fmt.Sprintf("install kubernetes/ingress-nginx ( v0.30.0 ), more info see https://github.com/kubernetes/ingress-nginx")
+	return fmt.Sprintf("install kubernetes/ingress-nginx ( 0.33.0 ), more info see https://github.com/kubernetes/ingress-nginx")
 }
 
 func (n *nginx) Flags(cmd *cobra.Command) {
-	flags.Flags(cmd.Flags(), n, "")
+	err := cobrax.Flags(cmd, n, "", "")
+	utils.Panic(err, "set nginx ingress flags")
 }
 
 func (n *nginx) Apply(master *ssh.Node) {

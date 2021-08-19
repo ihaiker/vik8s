@@ -4,11 +4,11 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"fmt"
+	"github.com/ihaiker/cobrax"
 	"github.com/ihaiker/vik8s/certs"
 	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/paths"
-	"github.com/ihaiker/vik8s/libs/flags"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/ihaiker/vik8s/reduce"
 	"github.com/spf13/cobra"
@@ -40,7 +40,8 @@ more info : https://github.com/kubernetes/dashboard/blob/master/docs/user/README
 }
 
 func (d *Dashboard) Flags(cmd *cobra.Command) {
-	flags.Flags(cmd.Flags(), d, "")
+	err := cobrax.Flags(cmd, d, "", "")
+	utils.Panic(err, "set dashboard flags")
 	cmd.AddCommand(tokenPrintCmd)
 }
 

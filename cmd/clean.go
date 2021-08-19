@@ -5,17 +5,20 @@ import (
 	"github.com/ihaiker/vik8s/install/cni"
 	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/k8s"
+	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/peterh/liner"
 	"github.com/spf13/cobra"
+	"gopkg.in/fatih/color.v1"
 	"io"
 	"math/rand"
 	"strings"
 )
 
 var cleanCmd = &cobra.Command{
-	Use: "clean", Hidden: true,
-	Short:   "This command is used to deeply clean up the environment, Use very carefully。Use very carefully。Use very carefully。",
-	Example: `vik8s clean or vik8s clean 172.16.100.10`,
+	Use: "clean", Hidden: true, Args: cobra.MinimumNArgs(1),
+	Short:   color.New(color.FgHiRed).Sprintf("This command is used to deeply clean up the environment. %s", strings.Repeat("Use very carefully", 3)),
+	Example: `vik8s clean or vik8s clean 10.24.0.1`,
+
 	Run: func(cmd *cobra.Command, args []string) {
 		force, _ := cmd.Flags().GetBool("force")
 		if !force {
@@ -24,7 +27,13 @@ var cleanCmd = &cobra.Command{
 				return
 			}
 		}
-		k8s.Clean(hosts.Nodes(), cni.Plugins.Clean)
+		var nodes []*ssh.Node
+		if len(args) == 1 && args[0] == "all" {
+			nodes = hosts.Nodes()
+		} else {
+			nodes = hosts.Gets(args)
+		}
+		k8s.Clean(nodes, cni.Plugins.Clean)
 	},
 }
 

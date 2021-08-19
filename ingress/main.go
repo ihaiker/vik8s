@@ -16,7 +16,7 @@ type Ingress interface {
 type manager []Ingress
 
 var Manager = manager{
-	new(traefik), new(nginx),
+	Treafik(), Nginx(),
 }
 
 func (p *manager) Apply(name string, master *ssh.Node) {
