@@ -27,7 +27,8 @@ type DockerDNSConfiguration struct {
 
 type DockerConfiguration struct {
 	Version       string   `ngx:"version" help:"docker version"`
-	StraitVersion bool     `ngx:"strait-version" help:"Strict check DOCKER version if inconsistent will upgrade" def:"false"`
+	StraitVersion bool     `ngx:"strait-version" help:"Strict check DOCKER version if inconsistent will upgrade"`
+	SkipIfExist   bool     `ngx:"skip-if-exists" help:"skip install and change anything if exists docker."`
 	DataRoot      string   `ngx:"data-root" help:"docker data root"`
 	Hosts         []string `ngx:"hosts" help:"Daemon socket(s) to connect to" def:"fd://"`
 	DaemonJson    string   `ngx:"daemon-json" help:"docker cfg file, if set this option, other option will ignore."`

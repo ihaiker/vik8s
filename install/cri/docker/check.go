@@ -98,7 +98,9 @@ func installCentOS(cfg *config.DockerConfiguration, node *ssh.Node, china bool) 
 	utils.Panic(err, "get docker version")
 	if dockerVersion != "" && (dockerVersion == cfg.Version[1:] || !cfg.StraitVersion) {
 		node.Logger("docker has installed version %s", dockerVersion)
-		//todo 添加存在就立即退出，不做docker控制
+		if cfg.SkipIfExist {
+			return
+		}
 	} else {
 		//BUGFIX: 当 centos 小于 7.3.1611 systemd 必须更新
 		if node.Facts.MajorVersion == "7" {
