@@ -25,8 +25,8 @@ func InstallJQYQTools(node *ssh.Node) {
 	Install("jq", "", node)
 	Install("wget", "", node)
 
-	bin, err := node.CmdString("command -v yq")
-	utils.Panic(err, "fetch yq command version")
+	bin, _ := node.CmdString("command -v yq")
+
 	if bin == "" {
 		downloadUrl, err := node.CmdString("curl https://api.github.com/repos/mikefarah/yq/releases/latest |" +
 			" jq  -r '.assets[] | select(.name == \"yq_linux_amd64\") | .browser_download_url'")

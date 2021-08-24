@@ -65,7 +65,7 @@ func (node *Node) HideLog() *Node {
 	return node
 }
 func (node *Node) isSudo() bool {
-	return node.flag&Sudo == Sudo
+	return node.flag&Sudo == Sudo && node.User != "root"
 }
 
 func (node *Node) isShowLogger() bool {
