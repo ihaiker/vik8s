@@ -8,12 +8,12 @@ import (
 
 var sidecarsCmd = &cobra.Command{
 	Use: "sidecars", Aliases: []string{"ss"},
-	PreRunE: configLoad(hostsLoad(none)),
 }
 
 func uninstallSidecarsCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "uninstall", Run: func(cmd *cobra.Command, args []string) {
+		PreRunE: configLoad(hostsLoad(none)),
+		Use:     "uninstall", Run: func(cmd *cobra.Command, args []string) {
 			name := cmd.Parent().Name()
 			data, _ := cmd.Flags().GetBool("data")
 			sidecars.Manager.Delete(name, data)
@@ -27,7 +27,8 @@ func init() {
 	for _, plugin := range sidecars.Manager {
 		cmd := &cobra.Command{
 			Use: plugin.Name(), Long: plugin.Description(),
-			Short: strings.SplitN(plugin.Description(), "\n", 2)[0],
+			Short:   strings.SplitN(plugin.Description(), "\n", 2)[0],
+			PreRunE: configLoad(hostsLoad(none)),
 			Run: func(cmd *cobra.Command, args []string) {
 				name := cmd.Name()
 				sidecars.Manager.Apply(name)

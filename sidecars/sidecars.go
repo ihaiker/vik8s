@@ -17,7 +17,7 @@ type Sidecars interface {
 type sidecars []Sidecars
 
 var Manager = sidecars{
-	new(dashboard.Dashboard),
+	dashboard.New(),
 }
 
 func (p *sidecars) Apply(name string) {

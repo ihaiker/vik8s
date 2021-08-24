@@ -15,11 +15,10 @@ import (
 	"strconv"
 )
 
-type Dashboard struct {
-	EnableInsecureLogin bool `flag:"enable-insecure-login" help:"When enabled, Dashboard login view will also be shown when Dashboard is not served over HTTPS." def:"false"`
+type dashboard struct {
+	EnableInsecureLogin bool `flag:"enable-insecure-login" help:"When enabled, dashboard login view will also be shown when dashboard is not served over HTTPS." def:"false"`
 	/*
 		nginx   : https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/
-		traefik : https://docs.traefik.io/v1.7/configuration/backends/kubernetes/
 	*/
 	InsecureHeader bool `flag:"insecure-header" help:"Add secure access control token to the header in ingress." def:"false"`
 
@@ -30,22 +29,31 @@ type Dashboard struct {
 	TlsCert string `help:"dashboard tls dashboard.crt path"`
 }
 
-func (d *Dashboard) Name() string {
+func New() *dashboard {
+	return &dashboard{
+		EnableInsecureLogin: false,
+		InsecureHeader:      false,
+		Expose:              -1,
+	}
+}
+
+func (d *dashboard) Name() string {
 	return "dashboard"
 }
 
-func (d *Dashboard) Description() string {
-	return `Web UI (Dashboard)
+func (d *dashboard) Description() string {
+	return `Web UI (dashboard)
 more info : https://github.com/kubernetes/dashboard/blob/master/docs/user/README.md`
 }
 
-func (d *Dashboard) Flags(cmd *cobra.Command) {
+func (d *dashboard) Flags(cmd *cobra.Command) {
 	err := cobrax.Flags(cmd, d, "", "")
 	utils.Panic(err, "set dashboard flags")
 	cmd.AddCommand(tokenPrintCmd)
+	tokenPrintCmd.PreRunE = cmd.PreRunE
 }
 
-func (d *Dashboard) Apply() {
+func (d *dashboard) Apply() {
 	exposePort := d.Expose
 	enableInsecureLogin := d.EnableInsecureLogin
 	insecureHeader := d.InsecureHeader
@@ -117,25 +125,25 @@ func (d *Dashboard) Apply() {
 			proxyPort = 9090
 		}
 		fmt.Printf(`
-To access Dashboard from your local workstation you must create a secure channel to your Kubernetes cluster. Run the following command:
+To access dashboard from your local workstation you must create a secure channel to your Kubernetes cluster. Run the following command:
 $ kubectl proxy
-Now access Dashboard at:
+Now access dashboard at:
 http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/%s:kubernetes-dashboard:%d/proxy/.
 `, scheme, proxyPort)
 	}
 	if enableInsecureLogin && !insecureHeader {
-		fmt.Println("To make Dashboard use authorization header you simply need to pass Authorization: Bearer <token> in every request to Dashboard.")
+		fmt.Println("To make dashboard use authorization header you simply need to pass Authorization: Bearer <token> in every request to dashboard.")
 		fmt.Println("How to access, please check the documentation help yourself：\n" +
 			"   https://github.com/kubernetes/dashboard/blob/master/docs/user/access-control/README.md#authorization-header")
 	}
 	fmt.Println("\ntoken: ")
 	fmt.Println(token)
 	fmt.Println(`	
-Accessing Dashboard: 
+Accessing dashboard: 
 	https://github.com/kubernetes/dashboard/blob/5e86d6d405df3f85fe13938501689c663fdb9fb0/docs/user/accessing-dashboard/README.md`)
 }
 
-func (d *Dashboard) Delete(data bool) {
+func (d *dashboard) Delete(data bool) {
 	master := hosts.Get(config.K8S().Masters[0])
 	err := master.Sudo().CmdPrefixStdout("kubectl delete namespaces kubernetes-dashboard")
 	utils.Panic(err, "remove kubernests cluster namespace kubernetes-dashboard")
