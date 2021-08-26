@@ -32,7 +32,7 @@ func InstallJQYQTools(node *ssh.Node) {
 			" jq  -r '.assets[] | select(.name == \"yq_linux_amd64\") | .browser_download_url'")
 		utils.Panic(err, "get yq download url error")
 
-		err = node.Sudo().CmdStdout("sh -c 'wget -O /usr/local/bin/yq " + downloadUrl + " | chmod +x /usr/local/bin/yq'")
+		err = node.Sudo().CmdStdout("sh -c 'wget -O /usr/local/bin/yq " + downloadUrl + " && chmod +x /usr/local/bin/yq'")
 		utils.Panic(err, "download yq")
 	} else {
 		node.Logger("command is installed: %s", bin)
