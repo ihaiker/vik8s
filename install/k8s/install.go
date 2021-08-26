@@ -60,6 +60,7 @@ func installKubeletAndKubeadm(node *ssh.Node) {
 	bases.Install("kubeadm", version, node)
 
 	_ = node.Sudo().Cmd("systemctl enable ipvsadm")
+	_ = node.Sudo().Cmd("systemctl start ipvsadm")
 	_ = node.Sudo().Cmd("systemctl enable kubelet")
 	_ = node.Sudo().Cmd("sh -c 'kubeadm completion bash > /etc/bash_completion.d/kubeadm'")
 	_ = node.Sudo().Cmd("sh -c 'kubectl completion bash > /etc/bash_completion.d/kubectl'")
