@@ -10,9 +10,9 @@ ubuntu_image = "https://mirrors.ustc.edu.cn/ubuntu-cloud-images/vagrant/trusty/c
 guest_iso_path = "https://mirrors.tuna.tsinghua.edu.cn/virtualbox/%{version}/VBoxGuestAdditions_%{version}.iso"
 
 boxes = {
-    "centos7" => ["centos/7", "centos/7.2004.01", centos7_image],
-    "centos8" => ["roboxes/centos8", "centos/8.4.2105", centos8_image],
-    "ubuntu" => ["generic/ubuntu1804", "ubuntu/18.04", ubuntu_image]
+  "centos7" => ["centos/7", "centos/7.2004.01", centos7_image],
+  "centos8" => ["roboxes/centos8", "centos/8.4.2105", centos8_image],
+  "ubuntu" => ["generic/ubuntu1804", "ubuntu/18.04", ubuntu_image]
 }
 
 nodes = {
@@ -32,7 +32,7 @@ Vagrant.configure("2") do |config|
   end
 
   nodes.each do |(name, cfg)|
-    numvcpus, memory, storage, ip = cfg
+    numvcpus, memory, storage = cfg
 
     config.vm.define name do |machine|
       machine.vm.hostname = name

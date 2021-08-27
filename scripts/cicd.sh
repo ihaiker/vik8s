@@ -1,11 +1,8 @@
 #!/bin/bash
 set -e
 
-export BASE_PATH="$(
-  cd "$(dirname "${BASH_SOURCE[0]}")"
-  pwd -P
-)"
-cd $BASE_PATH/..
+export SCRIPTS_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")"; pwd -P)"
+cd $SCRIPTS_PATH/..
 
 CHINA=${CHINA:false}
 if [ "$CHINA" == "true" ]; then
@@ -14,38 +11,54 @@ if [ "$CHINA" == "true" ]; then
 fi
 
 vik8s() {
-  ./bin/vik8s --china=${CHINA} -f ./bin/etc $@
+  ./bin/vik8s --china=${CHINA} -f ./bin $@
 }
 
 k8s_install() {
   echo "start install kubernetes clusters."
-  vik8s init --ssh-pk=.vagrant/machines/master0/virtualbox/private_key --k8s-version=1.19.12 --master=10.24.0.10
-  #  vik8s join --ssh-pk=.vagrant/machines/slave20/virtualbox/private_key --node=10.24.0.20
-  #  vik8s join --ssh-pk=.vagrant/machines/slave21/virtualbox/private_key --node=10.24.0.21
+  vik8s init master01
+  vik8s join slave20 slave21
+  vik8s cni calico
 }
 
 k8s_clean() {
-  vik8s clean --force
   vik8s reset all
+  vik8s clean all --force
 }
 
-test_plain() {
+vagrant_cmd() {
+  box_name=$1
+  shift
+  box=$box_name vagrant $@
+}
+
+add_host() {
+  echo "add hosts config: run user $1"
+  . $SCRIPTS_PATH/hosts.sh "$1"
+}
+
+test_plan() {
   box_name=$1
   run_user=$2
+  echo " -------------- remove config root directory -------------------"
+  rm -rf ./bin/default
+  rm -f ./scripts/.vagrant.env
 
-  echo "$run_user test in $box_name start <<<<<<<<"
+  echo "-------- $run_user test in $box_name start --------"
   echo "vagrant setup"
-  box=$box_name vagrant up
-  k8s_install "$run_user"
-  echo "do some test plain"
-  #k8s_clean
-  echo "$run_user test in $box_name end   >>>>>>>>"
+  vagrant_cmd $box_name up --provision
+  time add_host $run_user
+  time k8s_install
+  time k8s_clean
+  vagrant_cmd $box_name destroy -f
+  echo "-------- $run_user test in $box_name end   --------"
 }
 
-test_plain "centos8" "root"
-#test_plain "centos7" "root"
-#
-#test_plain "centos8" "vagrant"
-#test_plain "centos7" "vagrant"
-#
+echo " ----------- build ------------- "
+. $SCRIPTS_PATH/build.sh
+
+test_plan "centos8" "root"
+test_plan "centos7" "root"
+test_plan "centos8" "vagrant"
+test_plan "centos7" "vagrant"
 #test_plain "ubuntu" "vagrant"

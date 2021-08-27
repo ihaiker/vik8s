@@ -1,0 +1,73 @@
+name: test
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  schedule:
+    - cron: "0 0 * * 4"
+
+jobs:
+  check:
+    name: Check code files changed
+    outputs:
+      run_job: ${{ steps.check_files.outputs.run_job }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+
+      - name: check modified files
+        id: check_files
+        run: |
+          echo "=============== list modified files ==============="
+          git diff --name-only HEAD^ HEAD
+
+          num=`git diff --name-only HEAD^ HEAD | grep -c ".go" | tr -d '\n '`
+          if [ "$num" == "0" ] ; then
+            echo "::set-output name=run_job::false"
+          else
+            echo "::set-output name=run_job::true"
+          fi
+
+  test:
+    needs: check
+    if: needs.check.outputs.run_job == 'true'
+    strategy:
+      matrix:
+        go_version:
+          - 1.14
+          - 1.15
+          - 1.16
+        os:
+          - macos
+          - ubuntu
+          - windows
+        goarch:
+          - 386
+          - amd64
+        exclude:
+          - os: macos
+            goarch: 386
+
+    name: test (${{ matrix.os }}/go-${{ matrix.go_version }}/${{ matrix.goarch }})
+    runs-on: ${{ matrix.os }}-latest
+    steps:
+      - uses: actions/setup-go@v2.1.3
+        id: go
+        with:
+          stable: false
+          go-version: ${{ matrix.go_version }}
+
+      - uses: actions/checkout@v2.3.4
+
+      - run: go mod download
+
+      - run: go test ./...
+        env:
+          GOARCH: ${{ matrix.goarch }}
+          GOPROXY: off

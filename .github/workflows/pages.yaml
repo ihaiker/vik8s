@@ -1,0 +1,53 @@
+name: gh-pages
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  check:
+    name: Check docs files changed
+    outputs:
+      run_job: ${{ steps.check_files.outputs.run_job }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+
+      - name: check modified files
+        id: check_files
+        run: |
+          echo "=============== list modified files ==============="
+          git diff --name-only HEAD^ HEAD
+
+          num=`git diff --name-only HEAD^ HEAD | grep "docs/" | wc -l | tr -d '\n '`
+          if [ "$num" == "0" ] ; then
+            echo "::set-output name=run_job::false"
+          else
+            echo "::set-output name=run_job::true"
+          fi
+
+  build:
+    needs: check
+    if: needs.check.outputs.run_job == 'true'
+    name: Deploy docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v2
+
+      - name: build docs
+        run: make mkdocs
+
+      - name: deploy docs
+        uses: crazy-max/ghaction-github-pages@v2
+        with:
+          target_branch: gh-pages
+          build_dir: site
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

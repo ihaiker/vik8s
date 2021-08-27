@@ -13,7 +13,9 @@ import (
 
 func ResetNode(node *ssh.Node) {
 	err := node.Sudo().CmdStdout("kubeadm reset -f")
-	utils.Panic(err, "kubernetes cluster reset")
+	if err != nil {
+		node.Logger("reset %s", err.Error())
+	}
 
 	config.K8S().RemoveNode(node.Host)
 
@@ -32,8 +34,9 @@ func ResetNode(node *ssh.Node) {
 	}
 
 	logs.Infof("ipvsadm clear")
-	err = node.Sudo().Cmd("ipvsadm --clear")
-	utils.Panic(err, "remove ipvsadm all role")
+	if err = node.Sudo().Cmd("ipvsadm --clear"); err != nil {
+		node.Logger("remove ipvsadm all role: %s", err.Error())
+	}
 
 	logs.Infof("clean CNI configuration")
 	_ = node.Sudo().Cmd("rm -rf /etc/cni/net.d")

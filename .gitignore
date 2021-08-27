@@ -27,3 +27,4 @@ bin
 site
 .env
 scripts/.vagrant.env
+dist

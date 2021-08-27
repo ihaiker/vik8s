@@ -1,0 +1,51 @@
+name: release
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  check:
+    name: Check whether to publish release
+    outputs:
+      run_job: ${{ steps.check_release.outputs.enable }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+      - uses: olegtarasov/get-tag@v2.1
+        id: tagName
+        with:
+          tagRegex: "(.*)"
+      - name: check is release
+        id: check_release
+        run: |
+          num=`ls ./docs/releases/*.md | grep ${{ steps.tagName.outputs.tag }} || echo ''`
+          if [ "$num" == "" ] ; then
+            echo "::set-output name=enable::false"
+          else
+            echo "::set-output name=enable::true"
+          fi
+
+  build:
+    name: auto-release
+    runs-on: ubuntu-latest
+    if: needs.check.outputs.enable == 'true'
+    steps:
+      - uses: actions/setup-go@v2.1.3
+        id: go
+        with:
+          stable: false
+          go-version: 1.16
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          args: release --release-header-tmpl=./docs/releases/${{ steps.tagName.outputs.tag }}.md --rm-dist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

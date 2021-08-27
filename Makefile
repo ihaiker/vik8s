@@ -1,4 +1,4 @@
-.PHONY: help chmod build vagrant esxi cicd mkdocs clean test
+.PHONY: help chmod build vagrant esxi cicd mkdocs clean test release
 
 help: ## 帮助信息
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_-]+:.*?## / {sub("\\\\n",sprintf("\n%22c"," "), $$2);printf "\033[36m%s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -16,11 +16,21 @@ vagrant: build ## 启动虚拟机
 	./scripts/vagrant.sh up
 	./scripts/hosts.sh
 
-cicd: vagrant ## 运行CI/CD测试
+cicd: ## 运行CI/CD测试
 	./scripts/cicd.sh
 
 mkdocs: ## 构建文档
 	docker-compose -f ./scripts/docker-compose.yml run --rm mkdocs build -c
+
+release: ## 构建Releasewe年
+	$PWD=`pwd`
+	docker run --rm --privileged \
+      -v ${PWD}:/go/src/github.com/ihaiker/vik8s \
+      -v /var/run/docker.sock:/var/run/docker.sock \
+      -w /go/src/github.com/ihaiker/vik8s \
+	  -e GITHUB_TOKEN=123456789123456789 \
+	  -e GOPROXY=https://goproxy.cn,direct \
+      goreleaser/goreleaser release --rm-dist --release-header-tmpl=./docs/releases/v0.5.0.md
 
 clean: ## 清理
 	./scripts/vagrant.sh destroy -f

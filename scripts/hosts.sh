@@ -2,6 +2,11 @@
 set -e
 export HOSTS_SH_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")"; pwd -P)"
 
+run_user=$1
+if [ "x${run_user}" != "x" ]; then
+  shift
+fi
+
 pushd $HOSTS_SH_PATH/..
   source ${HOSTS_SH_PATH}/vagrant.sh
   mkdir -p $HOME/.ssh
@@ -17,6 +22,9 @@ pushd $HOSTS_SH_PATH/..
           echo "provider == private_network"
           hostname=$(vagrant ssh $host -c 'ifconfig eth1' | grep "inet " | awk '{print $2}')
           port=22
+      fi
+      if [ "$run_user" != "" ]; then
+          username="$run_user"
       fi
       ./bin/vik8s -f ./bin hosts --user $username --private-key $identity --port $port $hostname
   done

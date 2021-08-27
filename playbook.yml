@@ -26,3 +26,34 @@
           - vim
           - net-tools
           - tree
+      retries: 5
+      ignore_errors: true
+
+    - when: ansible_distribution_major_version == "7"
+      block:
+        - name: add key
+          rpm_key:
+            state: present
+            key: https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
+        - name: install elrepo7
+          yum:
+            name: https://www.elrepo.org/elrepo-release-7.el7.elrepo.noarch.rpm
+            state: present
+        - name: install kernel-ml
+          yum:
+            name: kernel-ml
+            enablerepo: elrepo-kernel
+            state: present
+        - name: grub2-set-default
+          command: grub2-set-default 0
+        - name: grub2-mkconfig
+          command: grub2-mkconfig -o /boot/grub2/grub.cfg
+        - name: reboot
+          reboot:
+        - name: list kernel
+          shell: |
+            awk -F\' '$1=="menuentry " {print i++ " : " $2}' /etc/grub2.cfg
+          register: kernel_stdout
+        - name: show kernel
+          debug:
+            msg: "{{kernel_stdout.stdout}}"
