@@ -27,7 +27,8 @@ type (
 
 		Facts Facts `ngx:"-"`
 
-		flag int `ngx:"-"`
+		flag    int `ngx:"-"`
+		retries int `ngx:"-"`
 	}
 	Facts struct {
 		Hostname      string `ngx:"hostname"`

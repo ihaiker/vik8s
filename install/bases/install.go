@@ -47,9 +47,9 @@ func installCentOS(mod, version string, node *ssh.Node) {
 	}
 
 	if version == "" {
-		err = node.Sudo().CmdWatcher(fmt.Sprintf("yum install -y %s", mod), utils.Stdout(node.Prefix()))
+		err = node.Sudo().Retries(3).CmdWatcher(fmt.Sprintf("yum install -y %s", mod), utils.Stdout(node.Prefix()))
 	} else {
-		err = node.Sudo().CmdWatcher(fmt.Sprintf("yum install -y %s-%s", mod, version), utils.Stdout(node.Prefix()))
+		err = node.Sudo().Retries(3).CmdWatcher(fmt.Sprintf("yum install -y %s-%s", mod, version), utils.Stdout(node.Prefix()))
 	}
 	utils.Panic(err, "install package %s %s", mod, version)
 }

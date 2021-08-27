@@ -3,6 +3,7 @@ package ssh
 import (
 	"bytes"
 	"github.com/ihaiker/vik8s/libs/utils"
+	"gopkg.in/fatih/color.v1"
 	"io"
 	"os"
 )
@@ -11,7 +12,7 @@ func (node *Node) Cmd(command string) error {
 	return node.CmdWatcher(command, func(stdout io.Reader) error { return nil })
 }
 
-func (node *Node) CmdWatcher(command string, watcher StreamWatcher) error {
+func (node *Node) CmdWatcher(command string, watcher StreamWatcher) (err error) {
 	defer node.reset()
 	if node.isSudo() {
 		command = "sudo " + command
@@ -19,7 +20,18 @@ func (node *Node) CmdWatcher(command string, watcher StreamWatcher) error {
 	if node.isShowLogger() {
 		node.Logger("run command: %s", command)
 	}
-	return node.easyssh().Stream(command, watcher)
+	retries := node.retries
+	if retries == 0 {
+		retries = 1
+	}
+	for i := 0; i < retries; i++ {
+		if err = node.easyssh().Stream(command, watcher); err == nil {
+			return
+		} else if retries != 1 {
+			node.Logger(color.New(color.FgHiRed).Sprintf("executor: [%s], error: %s", command, err.Error()))
+		}
+	}
+	return
 }
 func (node *Node) CmdOutput(command string, output io.Writer) error {
 	return node.CmdWatcher(command, func(stdout io.Reader) error {
@@ -65,6 +77,12 @@ func (node *Node) HideLog() *Node {
 	node.flag = node.flag | Log
 	return node
 }
+
+func (node *Node) Retries(retries int) *Node {
+	node.retries = retries
+	return node
+}
+
 func (node *Node) isSudo() bool {
 	return node.flag&Sudo == Sudo && node.User != "root"
 }
@@ -74,5 +92,6 @@ func (node *Node) isShowLogger() bool {
 }
 func (node *Node) reset() *Node {
 	node.flag = None
+	node.retries = 1
 	return node
 }
