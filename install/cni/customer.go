@@ -51,6 +51,5 @@ func (f *customer) Apply(cmd *cobra.Command, node *ssh.Node) {
 
 func (f *customer) Clean(node *ssh.Node) {
 	remote := node.Vik8s("yaml/cni/customer")
-	err := node.CmdStdout(fmt.Sprintf("kubectl delete -k %s", remote))
-	utils.Panic(err, "delete customer network")
+	_ = node.CmdStdout(fmt.Sprintf("kubectl delete -k %s", remote))
 }

@@ -9,6 +9,9 @@ import (
 
 func Clean(nodes []*ssh.Node, expFn ...func(node *ssh.Node)) {
 	ssh.Sync(nodes, func(i int, node *ssh.Node) {
+		for _, fn := range expFn {
+			fn(node)
+		}
 
 		_ = node.Sudo().CmdStdout("kubeadm reset -f")
 		_ = node.Sudo().CmdStdout("ipvsadm -C")
@@ -38,10 +41,6 @@ func Clean(nodes []*ssh.Node, expFn ...func(node *ssh.Node)) {
 			ip6tables -F
 			ip6tables -X
 		`, utils.Stdout(""))
-
-		for _, fn := range expFn {
-			fn(node)
-		}
 	})
 	config := paths.Join("vik8s.conf")
 	utils.Panic(os.RemoveAll(config), "remove %s", config)

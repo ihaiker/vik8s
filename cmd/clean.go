@@ -18,7 +18,7 @@ var cleanCmd = &cobra.Command{
 	Use: "clean", Hidden: true, Args: cobra.MinimumNArgs(1),
 	Short:   color.New(color.FgHiRed).Sprintf("This command is used to deeply clean up the environment. %s", strings.Repeat("Use very carefully", 3)),
 	Example: `vik8s clean or vik8s clean 10.24.0.1`,
-
+	PreRunE: configLoad(hostsLoad(none)),
 	Run: func(cmd *cobra.Command, args []string) {
 		force, _ := cmd.Flags().GetBool("force")
 		if !force {
