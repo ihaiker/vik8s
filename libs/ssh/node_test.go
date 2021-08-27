@@ -1,49 +1,36 @@
 package ssh
 
 import (
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 	"testing"
 )
 
-func TestNode_GatheringFacts(t *testing.T) {
-	conf := getConfig("SSH_FACTS_")
-	if conf == nil {
-		t.Log("skip gathering facts")
-		return
-	}
-	node := &Node{
-		Host:       conf.Server,
-		Port:       conf.Port,
-		User:       conf.User,
-		Password:   conf.Password,
-		PrivateKey: conf.KeyPath,
-		Passphrase: conf.Passphrase,
-		Facts:      Facts{},
-	}
-	if err := node.GatheringFacts(); err != nil {
-		t.Fatal(err)
-	}
-	t.Log(node.Facts)
+type nodeSuite struct {
+	*easysshSuite
 }
 
-func TestFlag(t *testing.T) {
+func (t *nodeSuite) TestNodeFlag() {
 	fnode := new(Node)
-	assert.False(t, fnode.isSudo())
-	assert.True(t, fnode.isShowLogger())
+	t.False(fnode.isSudo())
+	t.True(fnode.isShowLogger())
 
 	fnode.Sudo()
-	assert.True(t, fnode.isSudo())
-	assert.True(t, fnode.isShowLogger())
+	t.True(fnode.isSudo())
+	t.True(fnode.isShowLogger())
 
 	fnode.reset()
-	assert.False(t, fnode.isSudo())
-	assert.True(t, fnode.isShowLogger())
+	t.False(fnode.isSudo())
+	t.True(fnode.isShowLogger())
 
 	fnode.HideLog()
-	assert.False(t, fnode.isSudo())
-	assert.False(t, fnode.isShowLogger())
+	t.False(fnode.isSudo())
+	t.False(fnode.isShowLogger())
 
 	fnode.Sudo().HideLog()
-	assert.True(t, fnode.isSudo())
-	assert.False(t, fnode.isShowLogger())
+	t.True(fnode.isSudo())
+	t.False(fnode.isShowLogger())
+}
+
+func TestNode(t *testing.T) {
+	suite.Run(t, &nodeSuite{new(easysshSuite)})
 }
