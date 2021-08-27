@@ -23,13 +23,16 @@ func Line(format string, params ...interface{}) {
 	_, _ = os.Stdout.Write(out.Bytes())
 }
 
-func Stdout(name string) func(reader io.Reader) {
-	return func(reader io.Reader) {
+func Stdout(name string) func(reader io.Reader) error {
+	return func(reader io.Reader) error {
 		r := bufio.NewReader(reader)
 		for {
 			line, isPrefix, err := r.ReadLine()
+			if err == io.EOF {
+				return nil
+			}
 			if err != nil {
-				return
+				return err
 			}
 			if isPrefix {
 				fmt.Print(string(line))

@@ -8,7 +8,7 @@ import (
 )
 
 func (node *Node) Cmd(command string) error {
-	return node.CmdWatcher(command, func(stdout io.Reader) {})
+	return node.CmdWatcher(command, func(stdout io.Reader) error { return nil })
 }
 
 func (node *Node) CmdWatcher(command string, watcher StreamWatcher) error {
@@ -22,8 +22,9 @@ func (node *Node) CmdWatcher(command string, watcher StreamWatcher) error {
 	return node.easyssh().Stream(command, watcher)
 }
 func (node *Node) CmdOutput(command string, output io.Writer) error {
-	return node.CmdWatcher(command, func(stdout io.Reader) {
-		_, _ = io.Copy(output, stdout)
+	return node.CmdWatcher(command, func(stdout io.Reader) error {
+		_, err := io.Copy(output, stdout)
+		return err
 	})
 }
 

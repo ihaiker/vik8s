@@ -54,7 +54,7 @@ type (
 		sshConfig
 		Proxy *sshConfig
 	}
-	StreamWatcher func(stdout io.Reader)
+	StreamWatcher func(stdout io.Reader) error
 )
 
 // returns ssh.Signer from user you running app home path + cutted key path.
@@ -206,7 +206,18 @@ func (conf *easySSHConfig) Stream(command string, watch StreamWatcher) (err erro
 
 	stdout, _ := session.StdoutPipe()
 	stderr, _ := session.StderrPipe()
-	go watch(stdout)
+
+	watchErr := make(chan error)
+	defer close(watchErr)
+
+	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				watchErr <- e.(error)
+			}
+		}()
+		watchErr <- watch(stdout)
+	}()
 
 	if err = session.Start(command); err != nil {
 		return
@@ -221,18 +232,21 @@ func (conf *easySSHConfig) Stream(command string, watch StreamWatcher) (err erro
 			}
 		}
 	}
+	if err, has := <-watchErr; has && err != nil {
+		return err
+	}
 	return
 }
 
 // Run command on remote machine and returns its stdout as a string
 func (conf *easySSHConfig) Run(command string) (out []byte, err error) {
 	stream := bytes.NewBufferString("")
-	if err = conf.Stream(command, func(stdout io.Reader) {
-		_, _ = io.Copy(stream, stdout)
-	}); err != nil {
-		return
+	if err = conf.Stream(command, func(stdout io.Reader) error {
+		_, e := io.Copy(stream, stdout)
+		return e
+	}); err == nil {
+		out = utils.Trdn(stream.Bytes())
 	}
-	out = utils.Trdn(stream.Bytes())
 	return
 }
 

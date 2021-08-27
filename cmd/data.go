@@ -86,8 +86,9 @@ var dataCmd = &cobra.Command{
 		for _, node := range hosts.Nodes() {
 			for _, dir := range dirs {
 				fmt.Printf("%s %s -> %s\n", node.Hostname, dir[2], filepath.Join(data, dir[0]))
-				err := node.Shell(fmt.Sprintf(mvShell, dir[2], filepath.Join(data, dir[0])), func(stdout io.Reader) {
-					_, _ = io.Copy(os.Stdout, stdout)
+				err := node.Shell(fmt.Sprintf(mvShell, dir[2], filepath.Join(data, dir[0])), func(stdout io.Reader) error {
+					_, err := io.Copy(os.Stdout, stdout)
+					return err
 				})
 				utils.Panic(err, "error: %s,%s", node.Host, dir[2])
 			}

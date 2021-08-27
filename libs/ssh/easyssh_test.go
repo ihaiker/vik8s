@@ -28,7 +28,7 @@ func TestSSH(t *testing.T) {
 		return
 	}
 	con := &easySSHConfig{sshConfig: *conf}
-	stdout, err := con.Run("sudo systemctl stop iptables")
+	stdout, err := con.Run("cat /etc/os-release")
 	t.Log(err)
 	assert.Nil(t, err)
 	assert.NotEmpty(t, stdout)

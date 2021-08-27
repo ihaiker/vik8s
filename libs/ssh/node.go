@@ -1,6 +1,7 @@
 package ssh
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"gopkg.in/fatih/color.v1"
@@ -71,22 +72,20 @@ func (node *Node) GatheringFacts() error {
 	}
 
 	envMaps := make(map[string]string)
-	if envs, err := node.Sudo().HideLog().CmdString("cat /etc/os-release"); err != nil {
+	if envs, err := node.Sudo().HideLog().CmdBytes("cat /etc/os-release"); err != nil {
 		return err
 	} else {
-		envLines := strings.Split(envs, "\n")
-		for _, envLine := range envLines {
-			keyAndVal := strings.SplitN(envLine, "=", 2)
-			if len(keyAndVal) == 1 {
-				continue
-			}
-			if unquoteValue, err := strconv.Unquote(keyAndVal[1]); err == nil {
-				envMaps[keyAndVal[0]] = unquoteValue
+		lineReader := bufio.NewReader(envs)
+		for line, _, err := lineReader.ReadLine(); err == nil; line, _, err = lineReader.ReadLine() {
+			key, value := utils.Split2(string(line), "=")
+			if unquoteValue, err := strconv.Unquote(value); err == nil {
+				envMaps[key] = unquoteValue
 			} else {
-				envMaps[keyAndVal[0]] = keyAndVal[1]
+				envMaps[key] = value
 			}
 		}
 	}
+
 	node.Facts.ReleaseName = envMaps["ID"]
 	node.Facts.MajorVersion = envMaps["VERSION_ID"]
 	distribution, err := node.Sudo().HideLog().CmdBytes("uname -r")
@@ -94,6 +93,14 @@ func (node *Node) GatheringFacts() error {
 		return err
 	}
 	node.Facts.KernelVersion = strings.Split(distribution.String(), "-")[0]
+
+	node.Logger("facts: hostname: %s, release: %s, major: %s, kernel: %s",
+		node.Facts.Hostname, node.Facts.ReleaseName, node.Facts.MajorVersion, node.Facts.KernelVersion)
+
+	utils.Assert(node.Facts.Hostname != "", "gathering facts hostname")
+	utils.Assert(node.Facts.ReleaseName != "", "gathering facts release name")
+	utils.Assert(node.Facts.MajorVersion != "", "gathering facts major version")
+	utils.Assert(node.Facts.KernelVersion != "", "gathering facts kernel version")
 	return nil
 }
 
