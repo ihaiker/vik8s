@@ -8,7 +8,7 @@ jobs:
   check:
     name: Check whether to publish release
     outputs:
-      run_job: ${{ steps.check_release.outputs.enable }}
+      enable: ${{ steps.check_release.outputs.enable }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

@@ -9,7 +9,7 @@ if [ "$tag" == "" ]; then
   exit 1
 fi
 
-tag_commit=$(ls $BASE_PATH/../docs/versions/$tag.md)
+tag_commit=$(ls $BASE_PATH/../docs/releases/$tag.md)
 if [ "$tag_commit" == "" ]; then
   echo "The tag $tag.md not found"
   exit 1
