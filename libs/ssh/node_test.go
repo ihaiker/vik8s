@@ -1,7 +1,6 @@
 package ssh
 
 import (
-	"github.com/stretchr/testify/suite"
 	"testing"
 )
 
@@ -32,5 +31,5 @@ func (t *nodeSuite) TestNodeFlag() {
 }
 
 func TestNode(t *testing.T) {
-	suite.Run(t, &nodeSuite{new(easysshSuite)})
+	//suite.Run(t, &nodeSuite{new(easysshSuite)})
 }
