@@ -40,7 +40,7 @@ func (n *nginx) Description() string {
 }
 
 func (n *nginx) Flags(cmd *cobra.Command) {
-	err := cobrax.Flags(cmd, n, "", "")
+	err := cobrax.Flags(cmd, n, "", "VIK8S_INGRESS_NGINX")
 	utils.Panic(err, "set nginx ingress flags")
 }
 

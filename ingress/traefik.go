@@ -45,7 +45,7 @@ func (t *traefik) Description() string {
 }
 
 func (t *traefik) Flags(cmd *cobra.Command) {
-	err := cobrax.Flags(cmd, t, "", "")
+	err := cobrax.Flags(cmd, t, "", "VIK8S_INGRESS_TREAFIK")
 	utils.Panic(err, "set treafik ingress error")
 }
 
