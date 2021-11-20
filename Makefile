@@ -13,7 +13,7 @@ build: chmod ## 编译程序
 	./scripts/build.sh
 
 vagrant: build ## 启动虚拟机
-	./scripts/vagrant.sh up
+	vagrant up
 	./scripts/hosts.sh
 
 cicd: ## 运行CI/CD测试
@@ -22,7 +22,7 @@ cicd: ## 运行CI/CD测试
 mkdocs: ## 构建文档
 	docker-compose -f ./scripts/docker-compose.yml run --rm mkdocs build -c
 
-release: ## 构建Releasewe年
+release: ## 构建Release
 	$PWD=`pwd`
 	docker run --rm --privileged \
       -v ${PWD}:/go/src/github.com/ihaiker/vik8s \

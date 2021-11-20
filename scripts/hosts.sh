@@ -8,10 +8,9 @@ if [ "x${run_user}" != "x" ]; then
 fi
 
 pushd $HOSTS_SH_PATH/..
-  source ${HOSTS_SH_PATH}/vagrant.sh
   mkdir -p $HOME/.ssh
-  vagrant ssh-config | tee $HOME/.ssh/vagrant_config
-  hosts=$(cat "$HOME/.ssh/vagrant_config" | grep "Host " | awk '{print $2}')
+  vagrant ssh-config | tee $HOME/.ssh/vik8s
+  hosts=$(cat "$HOME/.ssh/vik8s" | grep "Host " | awk '{print $2}')
   for host in $hosts ; do
       ssh_config=$(vagrant ssh-config $host)
       hostname=$(echo "$ssh_config" | grep "HostName " | awk '{print $2}')
@@ -26,6 +25,6 @@ pushd $HOSTS_SH_PATH/..
       if [ "$run_user" != "" ]; then
           username="$run_user"
       fi
-      ./bin/vik8s -f ./bin hosts --user $username --private-key $identity --port $port $hostname
+      ./bin/vik8s hosts --user $username --private-key $identity --port $port $hostname
   done
 popd

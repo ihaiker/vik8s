@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"github.com/ihaiker/vik8s/install/paths"
+	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
 	yamls "github.com/ihaiker/vik8s/yaml"
 	"io"
@@ -98,4 +99,17 @@ func Assert(name string, data interface{}, funcs ...template.FuncMap) ([]byte, e
 		}
 	}
 	return pretty.Bytes(), err
+}
+
+func ScpAndApplyAssert(node *ssh.Node, name string, data interface{}, funcs ...template.FuncMap) error {
+	pods, err := Assert(name, data, funcs...)
+	if err != nil {
+		return err
+	}
+	remote := node.Vik8s("apply", strings.TrimPrefix(name, "yaml/"))
+
+	if err = node.HideLog().ScpContent(pods, remote); err != nil {
+		return err
+	}
+	return node.CmdStdout("kubectl apply -f " + remote)
 }
