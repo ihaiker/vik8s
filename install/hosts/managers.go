@@ -46,7 +46,7 @@ func (this *defaultManager) load() error {
 		}
 	}
 	for _, node := range this.Nodes {
-		_ = this.getProxy(node)
+		_ = getProxy(this, node)
 	}
 	return nil
 }
@@ -67,7 +67,7 @@ func (this *defaultManager) All() ssh.Nodes {
 	return this.Nodes
 }
 
-func (this *defaultManager) getProxy(node *ssh.Node) error {
+func getProxy(this Manager, node *ssh.Node) error {
 	if node.Proxy != "" {
 		if proxyNode := this.Get(node.Proxy); proxyNode != nil {
 			node.ProxyNode = proxyNode

@@ -1,3 +1,5 @@
+# QuickStart
+
 ## 安装
 
 ### 1、下载二进制文件
@@ -63,7 +65,7 @@ Use "vik8s [command] --help" for more information about a command.
 | node2    | 172.16.100.14 |
 | node3    | 172.16.100.15 |
 
-**注意：所有主机采用配置root免密登录。如果您不想这么做，请查阅文档多主机密码管理。**
+<span style="color:red;">注意：所有主机采用配置root免密登录，并且端口为22。</span> 如果您的主机访问方式存在差异，那您可以查看[主机访问方式管理](./cmds/hosts/index.md)
 
 
 
@@ -71,14 +73,22 @@ Use "vik8s [command] --help" for more information about a command.
 
 1、master节点安装
 
+```shell
+$ vik8s init 172.16.100.10 # 初始化集群
+$ vik8s join --master 172.16.100.11 172.16.100.12 #添加两个控制节点
+```
+
 2、slave节点安装
+
+```shell
+vik8s join 172.16.100.13-172.16.100.15
+```
 
 3、网络插件安装
 
 ```shell
-vik8s init 172.16.100.10 
-vik8s join --master 172.16.100.11 172.16.100.12
-vik8s join 172.16.100.13-172.16.100.15
 vik8s cni flannel
 ```
+
+更多详细信息查看[Kubernetes集群初始化教程](./cmds/k8s/index.md)和[网络插件安装](./cmds/k8s/cni.md)
 

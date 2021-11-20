@@ -1,15 +1,32 @@
 site_name: vik8s
 site_description: very easy install kubernetes
 site_author: Haiker
-site_url: https://ihaiker.github.io/vik8s
+site_url: https://vik8s.renzhen.la
 repo_url: https://github.com/ihaiker/vik8s
 copyright: Copyright @2021 Haiker
 
 nav:
   - 简介: index.md
   - 快速开始: quickstart.md
-  - 版本历史: versions/index.md
-theme: readthedocs
-
+  - 命令详解:
+      - 集群安装命令:
+          - cmds/k8s/index.md
+          - cmds/k8s/cni.md
+      - cmds/hosts/index.md
+      - cmds/etcd/index.md
+      - cmds/bash.md
+  - Reduce配置简化:
+      - 简单使用: reduce/index.md
+      - 自定义扩展简化: reduce/plugins.md
+  - Terraform支持: terraform.md
+  - 版本历史: releases/index.md
+theme:
+  name: readthedocs
+  highlightjs: true
+  hljs_languages:
+    - yaml
+    - rust
+    - shell
+    - json
 extra_css:
   - extra.css

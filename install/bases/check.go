@@ -21,7 +21,7 @@ func checkDistribution(node *ssh.Node) {
 		"your current version is: %s, the minimum requirement is %s", node.Prefix(), v2.String(), v1.String())
 }
 
-func InstallJQYQTools(node *ssh.Node) {
+func InstallJQTools(node *ssh.Node) {
 	Install("jq", "", node)
 	Install("wget", "", node)
 }

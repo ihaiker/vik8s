@@ -29,6 +29,11 @@ func Fetch(overwrite bool, args ...string) (ssh.Nodes, error) {
 		if node := _manager.Get(arg); node != nil {
 			nodes = append(nodes, node)
 		} else if ns, err := parse_addr(*_opt, arg); err == nil {
+			for _, node := range ns {
+				if err := getProxy(_manager, node); err != nil {
+					return nil, err
+				}
+			}
 			nodes = append(nodes, ns...)
 		} else {
 			return nil, utils.Error("not found node: %s", arg)

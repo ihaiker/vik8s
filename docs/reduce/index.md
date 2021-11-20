@@ -58,10 +58,11 @@ ingress mysql-admin {
 ## Reduce 原理
 
 配置分为四种配置方式：
-- [用户自定配置插件](./REDUCE.PLUGINS.MD)
-- Reduce 系统定义配置方式
-- kubernetes配置转换方式
-- yaml标签方式。
+
+  - [用户自定配置插件](./plugins.md)
+  - Reduce 系统定义配置方式
+  - kubernetes配置转换方式
+  - yaml标签方式。
 
 优先顺序为从前向后。
 
@@ -136,5 +137,7 @@ yamlSource
 ';
 ```
 
-## 更多Demo
-
+## 更多Demo查看
+```shell 
+vik8s reduce demo
+```
