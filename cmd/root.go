@@ -27,11 +27,13 @@ func configLoad(fn func(cmd *cobra.Command, args []string) error) func(cmd *cobr
 //hostsLoad load configuration
 func hostsLoad(fn func(cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		hosts.Load(paths.HostsConfiguration(), &hosts.Option{
+		if err := hosts.Load(paths.HostsConfiguration(), &hosts.Option{
 			Port:       22,
 			User:       "root",
 			PrivateKey: "$HOME/.ssh/id_rsa",
-		}, true)
+		}); err != nil {
+			return err
+		}
 		return fn(cmd, args)
 	}
 }

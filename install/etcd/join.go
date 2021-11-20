@@ -30,7 +30,7 @@ func joinEtcd(node *ssh.Node, image string) {
 
 func addEtcdMember(node *ssh.Node) {
 	node.Logger("add etcd node")
-	master := hosts.Get(config.Config.ETCD.Nodes[0])
+	master := hosts.MustGet(config.Config.ETCD.Nodes[0])
 	num, err := master.Sudo().CmdString(Etcdctl("member list | grep " + node.Host + ":2380 | wc -l"))
 	utils.Panic(err, "etcd list member")
 	if num == "0" {

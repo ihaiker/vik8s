@@ -19,7 +19,7 @@ func ResetCluster(node *ssh.Node) {
 	cleanEtcdData(node)
 
 	if len(config.Config.ETCD.Nodes) > 0 {
-		otherNode := hosts.Get(config.Config.ETCD.Nodes[0])
+		otherNode := hosts.MustGet(config.Config.ETCD.Nodes[0])
 		showClusterStatus(otherNode)
 	} else {
 		utils.Line("all etcd node remove")

@@ -29,7 +29,6 @@ k8s_clean() {
 
 add_host() {
   echo "add hosts config: run user $1"
-  . $SCRIPTS_PATH/hosts.sh "$1"
 }
 
 test_plan() {

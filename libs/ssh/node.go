@@ -58,6 +58,10 @@ func (node *Node) easyssh() *easySSHConfig {
 }
 
 func (node *Node) GatheringFacts() error {
+	if node.Facts.ReleaseName != "" && node.Facts.MajorVersion != "" && node.Facts.KernelVersion != "" {
+		return nil
+	}
+
 	node.Logger("gathering facts")
 
 	if hostname, err := node.Sudo().HideLog().CmdString("hostname -f"); err != nil {
@@ -143,17 +147,11 @@ func (node *Node) Logger(format string, params ...interface{}) {
 	fmt.Println()
 }
 
-func (nodes *Nodes) TryGet(hostnameOrIP string) *Node {
+func (nodes *Nodes) Get(hostnameOrIP string) *Node {
 	for _, node := range *nodes {
 		if node.Hostname == hostnameOrIP || node.Host == hostnameOrIP {
 			return node
 		}
 	}
 	return nil
-}
-
-func (nodes *Nodes) Get(hostnameOrIP string) *Node {
-	node := nodes.TryGet(hostnameOrIP)
-	utils.Assert(node != nil, "not found node %s", hostnameOrIP)
-	return node
 }

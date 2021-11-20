@@ -25,7 +25,7 @@ func ResetNode(node *ssh.Node) {
 		_ = os.RemoveAll(dataDir)
 		if config.Config.ETCD != nil && len(config.Config.ETCD.Nodes) > 0 {
 			logs.Infof("remove all cluster data in etcd")
-			etcdNode := hosts.Get(config.Etcd().Nodes[0])
+			etcdNode := hosts.MustGet(config.Etcd().Nodes[0])
 			err = etcdNode.Sudo().CmdPrefixStdout(etcd.Etcdctl("del /registry --prefix"))
 			utils.Panic(err, "delete etcd cluster data /registry")
 			err = etcdNode.Sudo().CmdPrefixStdout(etcd.Etcdctl("del /calico --prefix"))

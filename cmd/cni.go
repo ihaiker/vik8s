@@ -19,7 +19,7 @@ func init() {
 		cmd.PersistentPreRunE = configLoad(hostsLoad(none))
 		cmd.PersistentPostRunE = configDown(none)
 		cmd.Run = func(cmd *cobra.Command, args []string) {
-			master := hosts.Get(config.K8S().Masters[0])
+			master := hosts.MustGet(config.K8S().Masters[0])
 			cni.Plugins.Apply(cmd, master)
 		}
 		cniCmd.AddCommand(cmd)

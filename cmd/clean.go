@@ -31,7 +31,7 @@ var cleanCmd = &cobra.Command{
 		if len(args) == 1 && args[0] == "all" {
 			nodes = hosts.Nodes()
 		} else {
-			nodes = hosts.Gets(args)
+			nodes = hosts.MustGets(args)
 		}
 		k8s.Clean(nodes, cni.Plugins.Clean)
 	},

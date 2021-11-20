@@ -14,7 +14,7 @@ var ingressRootCmd = &cobra.Command{
 }
 
 func ingressRun(cmd *cobra.Command, args []string) {
-	master := hosts.Get(config.K8S().Masters[0])
+	master := hosts.MustGet(config.K8S().Masters[0])
 	name := cmd.Name()
 	ingress.Manager.Apply(name, master)
 }

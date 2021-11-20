@@ -20,8 +20,7 @@ var initCmd = &cobra.Command{
 	PreRunE: configLoad(hostsLoad(none)), PostRunE: configDown(none),
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		masters := hosts.Gets(args)
-		hosts.MustGatheringFacts(masters...)
+		masters := hosts.MustGets(args)
 
 		utils.Assert(len(masters) != 0, "master node is empty")
 		config.Config.K8S = k8sConfig
@@ -30,6 +29,13 @@ var initCmd = &cobra.Command{
 		for _, ctl := range masters[1:] {
 			k8s.JoinControl(ctl)
 		}
+
+		taint, _ := cmd.Flags().GetBool("taint")
+		if taint {
+			for _, master := range masters {
+				k8s.RemoveTaint(master)
+			}
+		}
 		fmt.Println("-=-=-=- SUCCESS -=-=-=-")
 	},
 }
@@ -37,6 +43,7 @@ var initCmd = &cobra.Command{
 func init() {
 	err := cobrax.FlagsWith(initCmd, cobrax.GetFlags, k8sConfig, "", "VIK8S_K8S")
 	utils.Panic(err, "setting `init` flag error")
+	initCmd.Flags().Bool("taint", false, "Update the taints on the nodes")
 	initCmd.Flags().SortFlags = false
 }
 
@@ -47,12 +54,11 @@ vik8s join 172.10.0.2 172.10.0.3 172.10.0.4 172.10.0.5`,
 	PreRunE: configLoad(hostsLoad(none)), PostRunE: configDown(none),
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		nodes := hosts.Gets(args)
+		nodes := hosts.MustGets(args)
 		if len(nodes) == 0 {
 			fmt.Println(cmd.UseLine())
 			return
 		}
-		hosts.MustGatheringFacts(nodes...)
 		master, _ := cmd.Flags().GetBool("master")
 		for _, node := range nodes {
 			utils.Assert(utils.Search(config.K8S().Masters, node.Host) == -1 &&
@@ -64,6 +70,10 @@ vik8s join 172.10.0.2 172.10.0.3 172.10.0.4 172.10.0.5`,
 			} else {
 				k8s.JoinWorker(node)
 			}
+			taint, _ := cmd.Flags().GetBool("taint")
+			if taint {
+				k8s.RemoveTaint(node)
+			}
 		}
 		fmt.Println("-=-=-=- SUCCESS -=-=-=-")
 	},
@@ -71,6 +81,7 @@ vik8s join 172.10.0.2 172.10.0.3 172.10.0.4 172.10.0.5`,
 
 func init() {
 	joinCmd.Flags().BoolP("master", "m", false, "Whether it is a control plane")
+	joinCmd.Flags().Bool("taint", false, "Update the taints on the nodes")
 }
 
 var resetCmd = &cobra.Command{
@@ -88,10 +99,10 @@ var resetCmd = &cobra.Command{
 		}
 		var master *ssh.Node
 		if len(config.K8S().Masters) > 0 {
-			master = hosts.Get(config.K8S().Masters[0])
+			master = hosts.MustGet(config.K8S().Masters[0])
 		}
 		for _, nodeName := range nodes {
-			node := hosts.Get(nodeName)
+			node := hosts.MustGet(nodeName)
 			utils.Assert(node != nil, "not found kubernetes %s", node.Host)
 			logs.Infof("remove cluster node %s", node.Prefix())
 

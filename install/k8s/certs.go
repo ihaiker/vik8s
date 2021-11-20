@@ -96,7 +96,7 @@ func makeKubeCerts(node *ssh.Node) {
 	}
 	//apisever = MasterIPS + VIP + CertSANS
 	for _, masterIp := range config.K8S().Masters {
-		masterNode := hosts.Get(masterIp)
+		masterNode := hosts.MustGet(masterIp)
 		certNode.SANS = append(certNode.SANS, masterNode.Hostname, masterNode.Host)
 		if masterNode.Hostname != masterNode.Facts.Hostname {
 			certNode.SANS = append(certNode.SANS, masterNode.Facts.Hostname)

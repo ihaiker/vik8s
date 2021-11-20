@@ -20,7 +20,7 @@ func JoinControl(node *ssh.Node) {
 		color.Red("%s already in the cluster\n", node.Host)
 		return
 	}
-	master := hosts.Get(config.K8S().Masters[0])
+	master := hosts.MustGet(config.K8S().Masters[0])
 	bases.Check(node)
 	bases.InstallTimeServices(node, config.K8S().Timezone, config.Config.K8S.NTPServices...)
 	cri.Install(node)
@@ -53,8 +53,7 @@ func JoinWorker(node *ssh.Node) {
 		color.Red("%s already in the cluster\n", node.Host)
 		return
 	}
-	master := hosts.Get(config.K8S().Masters[0])
-	hosts.MustGatheringFacts(master)
+	master := hosts.MustGet(config.K8S().Masters[0])
 
 	bases.Check(node)
 	bases.InstallTimeServices(node, config.K8S().Timezone, config.Config.K8S.NTPServices...)
@@ -80,7 +79,7 @@ func JoinWorker(node *ssh.Node) {
 }
 
 func setNodeHosts(node *ssh.Node) {
-	nodes := hosts.Gets(append(config.K8S().Masters, config.K8S().Nodes...))
+	nodes := hosts.MustGets(append(config.K8S().Masters, config.K8S().Nodes...))
 	setHosts(node, node.Host, node.Hostname)
 	for _, n := range nodes {
 		setHosts(n, node.Host, node.Hostname)

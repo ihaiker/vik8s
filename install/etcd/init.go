@@ -180,7 +180,7 @@ func restoreSnapshot(node *ssh.Node, image string) {
 
 func initialCluster(node *ssh.Node) string {
 	cluster := node.Hostname + "=https://" + node.Host + ":2380"
-	for _, n := range hosts.Gets(config.Config.ETCD.Nodes) {
+	for _, n := range hosts.MustGets(config.Config.ETCD.Nodes) {
 		cluster += "," + n.Hostname + "=https://" + n.Host + ":2380"
 	}
 	return cluster

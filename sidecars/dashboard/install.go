@@ -62,7 +62,7 @@ func (d *dashboard) Apply() {
 	certPath := d.TlsCert
 	keyPath := d.TlsKey
 
-	master := hosts.Get(config.K8S().Masters[0])
+	master := hosts.MustGet(config.K8S().Masters[0])
 
 	certBase64, keyBase64 := makeDashboardCertAndKey(ingress, certPath, keyPath)
 	//dashboard
@@ -144,7 +144,7 @@ Accessing dashboard:
 }
 
 func (d *dashboard) Delete(data bool) {
-	master := hosts.Get(config.K8S().Masters[0])
+	master := hosts.MustGet(config.K8S().Masters[0])
 	err := master.Sudo().CmdPrefixStdout("kubectl delete namespaces kubernetes-dashboard")
 	utils.Panic(err, "remove kubernests cluster namespace kubernetes-dashboard")
 }

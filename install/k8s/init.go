@@ -166,15 +166,15 @@ func applyApiServerEndpoint(node *ssh.Node) {
 }
 
 func templateDate(node *ssh.Node) paths.Json {
-	masters := append(hosts.Gets(config.K8S().Masters), node)
-	nodes := hosts.Gets(config.K8S().Nodes)
+	masters := append(hosts.MustGets(config.K8S().Masters), node)
+	nodes := hosts.MustGets(config.K8S().Nodes)
 	data := paths.Json{
 		"Masters": masters, "Workers": nodes,
-		"Nodes": append(masters, nodes...), "Kubeadm": config.K8S(),
+		"nodes": append(masters, nodes...), "Kubeadm": config.K8S(),
 	}
 	if config.ExternalETCD() {
 		data["Etcd"] = paths.Json{
-			"External": true, "Nodes": config.Etcd().Nodes,
+			"External": true, "nodes": config.Etcd().Nodes,
 		}
 	} else {
 		data["Etcd"] = paths.Json{"External": false}

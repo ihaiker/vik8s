@@ -1,9 +1,10 @@
-# vik8s (very easy install kubernetes)
 ![](./docs/logo.png) ![](docs/logo_txt.png)
 
 一个非常简单kubernetes高可用集群安装部署工具，支持 v1.19.+
 
 程序尽可能采用原生kubernetes特性不对kubernetes进行修改和面向过程模式编写，把安装过程清晰化。
+
+
 
 ## 特性
 
@@ -17,40 +18,21 @@
 - [X] 轻松的增加集群节点 `vik8s join -m <ip>`
 - [X] ETCD节点可单独安装和节点添加。`vik8s etcd init <ip1> <ip2> ...` 和 `vik8s etcd join <ip3> ...`
 - [X] 提供周边 安装，同样简单方便。
-    - [X] dashboard 
+    - [X] dashboard (1.0 后废弃)
     - [X] ingress (nginx/traefik)
-    - [ ] 后续会提供更多的安装方式
-- [X] <span style="color: red">【重磅推出】kubernetes reduce 命令，简化yaml配置文件。 </span> [查看教程和实例](./docs/REDUCE.MD)。
+- [x] 【重磅推出】kubernetes reduce 命令，简化yaml配置文件。 [查看教程和实例](./docs/REDUCE.MD)。
 
-## 快速开始
-> 主机准备
 
-| 主机名称 | IP地址|
-|---|---|
-| master1 | 172.16.100.10 |
-| master2 | 172.16.100.11 |
-| master3 | 172.16.100.12 |
-| node1 | 172.16.100.13 |e
-| node2 | 172.16.100.14 |
-| node3 | 172.16.100.15 |
+## 快速开始：
 
-注意：所有主机采用配置root免密登录。如果您不想这么做，请查阅文档多主机密码管理。
-
->安装
-
-```shell
-vik8s init 172.16.100.10 
-vik8s join --master 172.16.100.11 172.16.100.12
-vik8s join 172.16.100.13-172.16.100.15
-vik8s cni flannel
-```
-
-## [安装详细文档](./docs/INSTALL.MD)
-
-## [Reduce配置简化方案](./docs/REDUCE.MD)
+查看文档：[VIK8S Quickstart][quickstart]
 
 ## 技术支持群
-钉钉群：34673135
-QQ群：715096758
 
-![](./docs/qq.png) 
+| 钉钉群：34673135         | QQ群：715096758    |
+| ------------------------ | ------------------ |
+| ![][dd] | ![][qq] |
+
+[dd]: https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https%3A%2F%2Fqr.dingtalk.com%2Faction%2Fjoingroup%3Fcode%3Dv1%2Ck1%2CZiQs4kjvfFMm5EDwWHPZSGGZRCHeW%2BZUwqlW73xXrO0%3D "钉钉群地址"
+[qq]: https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https%3A%2F%2Fqm.qq.com%2Fcgi-bin%2Fqm%2Fqr%3Fk%3DRif3DnLnNWbZh3BTQod_vYcCpYRSpLkk%26authKey%3DIng0sqF0Wj6o22WMjXBDiu38V9arojuEcy5iGLR%2BfHMNOoYoAkg1tpcK9B3mkL4b%26noverify%3D0 "QQ"
+[quickstart]: https://vik8s.renzhen.la/#quick-start
