@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/ihaiker/vik8s/cmd"
+	"github.com/ihaiker/vik8s/cmd/core"
 	"math/rand"
 	"time"
 )
@@ -14,5 +14,5 @@ var (
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
-	cmd.Execute(version, date, commit)
+	core.Execute(version, date, commit)
 }

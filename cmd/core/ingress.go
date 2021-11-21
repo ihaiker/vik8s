@@ -1,4 +1,4 @@
-package cmd
+package core
 
 import (
 	"github.com/ihaiker/vik8s/config"
