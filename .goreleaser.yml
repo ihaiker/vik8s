@@ -15,6 +15,15 @@ builds:
       - ppc64
       - ppc64le
       - s390x
+archives:
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+checksum:
+  name_template: 'checksums.txt'
 
 #dockers:
 #  - image_templates: ["ghcr.io/goreleaser/example:{{ .Version }}"]
