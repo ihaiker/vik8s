@@ -12,7 +12,7 @@ type ParseAddressSuite struct {
 
 func (t *ParseAddressSuite) SetupTest() {
 	t.opt = &Option{
-		User: "root", Password: "test", Port: 22,
+		User: "root", Password: "test", Port: "22",
 	}
 }
 

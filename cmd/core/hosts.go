@@ -36,7 +36,7 @@ var hostsListCmd = &cobra.Command{
 }
 
 func init() {
-	err := cobrax.Flags(hostsCmd, _hosts_config, "", "VIK8S_SSH")
-	utils.Panic(err, "set hosts command flag error")
+	_ = cobrax.Flags(hostsCmd, _hosts_config, "", "VIK8S_SSH")
+	//utils.Panic(err, "set hosts command flag error")
 	hostsCmd.AddCommand(hostsListCmd)
 }

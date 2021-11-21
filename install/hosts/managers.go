@@ -9,14 +9,7 @@ import (
 	"path/filepath"
 )
 
-type Option struct {
-	Port       int    `ngx:"port" help:"ssh port" def:"22"`
-	User       string `ngx:"user" short:"u" help:"ssh user" def:"root"`
-	Password   string `ngx:"password" short:"P" help:"ssh password"`
-	PrivateKey string `ngx:"private-key" short:"i" help:"ssh private key" def:"$HOME/.ssh/id_rsa"`
-	Passphrase string `ngx:"passphrase" flag:"passphrase" help:"private key passphrase"`
-	Proxy      string `ngx:"proxy" flag:"proxy" help:"ssh proxy server"`
-}
+type Option = ssh.Node
 
 type Manager interface {
 	All() ssh.Nodes

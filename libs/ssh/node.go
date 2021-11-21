@@ -13,22 +13,22 @@ import (
 
 type (
 	Node struct {
-		Host       string `ngx:"host"`
-		Port       string `ngx:"port"`
-		User       string `ngx:"user"`
-		Password   string `ngx:"password"`
-		PrivateKey string `ngx:"private-key"`
-		Passphrase string `ngx:"passphrase"`
+		Host       string `ngx:"host" flag:"-"`
+		Port       string `ngx:"port" short:"p" help:"ssh port" def:"22"`
+		User       string `ngx:"user" short:"u" help:"ssh user" def:"root"`
+		Password   string `ngx:"password" short:"P" help:"ssh password"`
+		PrivateKey string `ngx:"private-key" short:"i" help:"ssh private key" def:"$HOME/.ssh/id_rsa"`
+		Passphrase string `ngx:"passphrase" flag:"passphrase" help:"private key passphrase"`
 
-		Hostname string `ngx:"hostname"`
+		Hostname string `ngx:"hostname" flag:"-"`
 
 		Proxy     string `ngx:"proxy"`
-		ProxyNode *Node  `ngx:"-"`
+		ProxyNode *Node  `ngx:"-" flag:"-"`
 
-		Facts Facts `ngx:"-"`
+		Facts Facts `ngx:"-" flag:"-"`
 
-		flag    int `ngx:"-"`
-		retries int `ngx:"-"`
+		flag    int `ngx:"-" flag:"-"`
+		retries int `ngx:"-" flag:"-"`
 	}
 	Facts struct {
 		Hostname      string `ngx:"hostname"`
