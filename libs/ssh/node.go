@@ -13,12 +13,13 @@ import (
 
 type (
 	Node struct {
-		Host       string `ngx:"host" flag:"-"`
-		Port       string `ngx:"port" short:"p" help:"ssh port" def:"22"`
-		User       string `ngx:"user" short:"u" help:"ssh user" def:"root"`
-		Password   string `ngx:"password" short:"P" help:"ssh password"`
-		PrivateKey string `ngx:"private-key" short:"i" help:"ssh private key" def:"$HOME/.ssh/id_rsa"`
-		Passphrase string `ngx:"passphrase" flag:"passphrase" help:"private key passphrase"`
+		Host          string `ngx:"host" flag:"-"`
+		Port          int    `ngx:"port" short:"p" help:"ssh port" def:"22"`
+		User          string `ngx:"user" short:"u" help:"ssh user" def:"root"`
+		Password      string `ngx:"password" short:"P" help:"ssh password"`
+		PrivateKey    string `ngx:"private-key" short:"i" help:"ssh private key" def:"$HOME/.ssh/id_rsa"`
+		PrivateKeyRaw string `ngx:"private-key-raw" help:"ssh private key"`
+		Passphrase    string `ngx:"passphrase" flag:"passphrase" help:"private key passphrase"`
 
 		Hostname string `ngx:"hostname" flag:"-"`
 
@@ -29,6 +30,12 @@ type (
 
 		flag    int `ngx:"-" flag:"-"`
 		retries int `ngx:"-" flag:"-"`
+
+		Timeout           time.Duration `ngx:"-" flag:"-"`
+		Ciphers           []string      `ngx:"-" flag:"-"`
+		KeyExchanges      []string      `ngx:"-" flag:"-"`
+		Fingerprint       string        `ngx:"-" flag:"-"`
+		UseInsecureCipher bool          `ngx:"-" flag:"-"`
 	}
 	Facts struct {
 		Hostname      string `ngx:"hostname"`
@@ -38,24 +45,6 @@ type (
 	}
 	Nodes []*Node
 )
-
-func (node *Node) easyssh() *easySSHConfig {
-	config := &easySSHConfig{
-		sshConfig: sshConfig{
-			User: node.User, Server: node.Host, Port: node.Port,
-			KeyPath: node.PrivateKey, Passphrase: node.Passphrase,
-			Password: node.Password, Timeout: time.Second * 3,
-		},
-	}
-	if node.Proxy != "" {
-		config.Proxy = &sshConfig{
-			User: node.ProxyNode.User, Server: node.ProxyNode.Host, Port: node.ProxyNode.Port,
-			KeyPath: node.ProxyNode.PrivateKey, Passphrase: node.ProxyNode.Passphrase,
-			Password: node.ProxyNode.Password, Timeout: time.Second * 3,
-		}
-	}
-	return config
-}
 
 func (node *Node) GatheringFacts() error {
 	if node.Facts.ReleaseName != "" && node.Facts.MajorVersion != "" && node.Facts.KernelVersion != "" {

@@ -13,47 +13,9 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"time"
 )
 
 type (
-	// sshConfig for ssh proxy config
-	sshConfig struct {
-		User         string
-		Server       string
-		Key          []byte //pem key bytes
-		KeyPath      string //private key path
-		Port         string
-		Passphrase   string
-		Password     string
-		Timeout      time.Duration
-		Ciphers      []string
-		KeyExchanges []string
-		Fingerprint  string
-
-		// Enable the use of insecure ciphers and key exchange methods.
-		// This enables the use of the the following insecure ciphers and key exchange methods:
-		// - aes128-cbc
-		// - aes192-cbc
-		// - aes256-cbc
-		// - 3des-cbc
-		// - diffie-hellman-group-exchange-sha256
-		// - diffie-hellman-group-exchange-sha1
-		// Those algorithms are insecure and may allow plaintext data to be recovered by an attacker.
-		UseInsecureCipher bool
-	}
-
-	// easySSHConfig Contains main authority information.
-	// User field should be a name of user on remote server (ex. john in ssh john@example.com).
-	// Server field should be a remote machine address (ex. example.com in ssh john@example.com)
-	// Key is a path to private key on your local machine.
-	// Port is SSH server port on remote machine.
-	// Note: easyssh looking for private key in user's home directory (ex. /home/john + Key).
-	// Then ensure your Key begins from '/' (ex. /.ssh/id_rsa)
-	easySSHConfig struct {
-		sshConfig
-		Proxy *sshConfig
-	}
 	StreamWatcher func(stdout io.Reader) error
 )
 
@@ -78,7 +40,7 @@ func getKeySigner(key []byte, passphrase string) (pubkey ssh.Signer, err error) 
 // returns *ssh.ClientConfig and io.Closer.
 // if io.Closer is not nil, io.Closer.Close() should be called when
 // *ssh.ClientConfig is no longer used.
-func getSSHConfig(config *sshConfig) (*ssh.ClientConfig, io.Closer, error) {
+func getSSHConfig(config *Node) (*ssh.ClientConfig, io.Closer, error) {
 	var sshAgent io.Closer
 
 	// auths holds the detected ssh auth methods
@@ -89,14 +51,14 @@ func getSSHConfig(config *sshConfig) (*ssh.ClientConfig, io.Closer, error) {
 		auths = append(auths, ssh.Password(config.Password))
 	}
 
-	if config.Key != nil {
-		if signer, err := getKeySigner(config.Key, config.Passphrase); err != nil {
+	if config.PrivateKeyRaw != "" {
+		if signer, err := getKeySigner([]byte(config.PrivateKey), config.Passphrase); err != nil {
 			return nil, nil, utils.Wrap(err, "get key singer")
 		} else {
 			auths = append(auths, ssh.PublicKeys(signer))
 		}
-	} else if config.KeyPath != "" {
-		if signer, err := getKeySignerFile(config.KeyPath, config.Passphrase); err != nil {
+	} else if config.PrivateKey != "" {
+		if signer, err := getKeySignerFile(config.PrivateKey, config.Passphrase); err != nil {
 			return nil, nil, utils.Wrap(err, "get key singer error: %v", err)
 		} else {
 			auths = append(auths, ssh.PublicKeys(signer))
@@ -142,11 +104,11 @@ func getSSHConfig(config *sshConfig) (*ssh.ClientConfig, io.Closer, error) {
 }
 
 // connect to remote server using easySSHConfig struct and returns *ssh.Session
-func (conf *easySSHConfig) connect() (*ssh.Session, *ssh.Client, error) {
+func (node *Node) connect() (*ssh.Session, *ssh.Client, error) {
 	var client *ssh.Client
 	var err error
 
-	targetConfig, closer, err := getSSHConfig(&conf.sshConfig)
+	targetConfig, closer, err := getSSHConfig(node)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -155,8 +117,8 @@ func (conf *easySSHConfig) connect() (*ssh.Session, *ssh.Client, error) {
 	}
 
 	// Enable proxy command
-	if conf.Proxy != nil {
-		proxyConfig, closer, err := getSSHConfig(conf.Proxy)
+	if node.Proxy != "" {
+		proxyConfig, closer, err := getSSHConfig(node.ProxyNode)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -164,24 +126,24 @@ func (conf *easySSHConfig) connect() (*ssh.Session, *ssh.Client, error) {
 			defer closer.Close()
 		}
 
-		proxyClient, err := ssh.Dial("tcp", net.JoinHostPort(conf.Proxy.Server, conf.Proxy.Port), proxyConfig)
+		proxyClient, err := ssh.Dial("tcp", net.JoinHostPort(node.ProxyNode.Host, strconv.Itoa(node.ProxyNode.Port)), proxyConfig)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		conn, err := proxyClient.Dial("tcp", net.JoinHostPort(conf.Server, conf.Port))
+		conn, err := proxyClient.Dial("tcp", net.JoinHostPort(node.Host, strconv.Itoa(node.Port)))
 		if err != nil {
 			return nil, nil, err
 		}
 
-		ncc, chans, reqs, err := ssh.NewClientConn(conn, net.JoinHostPort(conf.Server, conf.Port), targetConfig)
+		ncc, chans, reqs, err := ssh.NewClientConn(conn, net.JoinHostPort(node.Host, strconv.Itoa(node.Port)), targetConfig)
 		if err != nil {
 			return nil, nil, err
 		}
 
 		client = ssh.NewClient(ncc, chans, reqs)
 	} else {
-		client, err = ssh.Dial("tcp", net.JoinHostPort(conf.Server, conf.Port), targetConfig)
+		client, err = ssh.Dial("tcp", net.JoinHostPort(node.Host, strconv.Itoa(node.Port)), targetConfig)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -193,7 +155,7 @@ func (conf *easySSHConfig) connect() (*ssh.Session, *ssh.Client, error) {
 	return session, client, nil
 }
 
-func (conf *easySSHConfig) Stream(command string, watch StreamWatcher) (err error) {
+func (conf *Node) stream(command string, watch StreamWatcher) (err error) {
 	var session *ssh.Session
 	var client *ssh.Client
 
@@ -239,9 +201,9 @@ func (conf *easySSHConfig) Stream(command string, watch StreamWatcher) (err erro
 }
 
 // Run command on remote machine and returns its stdout as a string
-func (conf *easySSHConfig) Run(command string) (out []byte, err error) {
+func (conf *Node) run(command string) (out []byte, err error) {
 	stream := bytes.NewBufferString("")
-	if err = conf.Stream(command, func(stdout io.Reader) error {
+	if err = conf.stream(command, func(stdout io.Reader) error {
 		_, e := io.Copy(stream, stdout)
 		return e
 	}); err == nil {
@@ -250,12 +212,12 @@ func (conf *easySSHConfig) Run(command string) (out []byte, err error) {
 	return
 }
 
-func (conf *easySSHConfig) Mkdir(path string) error {
-	_, err := conf.Run("mkdir -p " + strconv.Quote(path))
+func (conf *Node) mkdir(path string) error {
+	_, err := conf.run("mkdir -p " + strconv.Quote(path))
 	return err
 }
 
-func (conf *easySSHConfig) ScpContent(content []byte, destFilePath string) error {
+func (conf *Node) scpContent(content []byte, destFilePath string) error {
 	session, client, err := conf.connect()
 	if err != nil {
 		return err
@@ -283,7 +245,7 @@ func (conf *easySSHConfig) ScpContent(content []byte, destFilePath string) error
 }
 
 // Scp uploads sourceFile to remote machine like native scp console app.
-func (conf *easySSHConfig) Scp(sourceFilePath string, destFilePath string, bars ...func(step, total int64)) error {
+func (conf *Node) _scp(sourceFilePath string, destFilePath string, bars ...func(step, total int64)) error {
 	if utils.NotExists(sourceFilePath) {
 		return utils.Error("file not found %s", sourceFilePath)
 	}
@@ -338,7 +300,7 @@ func (conf *easySSHConfig) Scp(sourceFilePath string, destFilePath string, bars 
 }
 
 // Pull uploads sourceFile to remote machine like native scp console app.
-func (conf *easySSHConfig) Pull(sourceFilePath string, destFilePath string, bars ...func(step, total int64)) error {
+func (conf *Node) pull(sourceFilePath string, destFilePath string, bars ...func(step, total int64)) error {
 	//mkdir local dir
 	if utils.NotExists(filepath.Dir(destFilePath)) {
 		if err := utils.Mkdir(filepath.Dir(destFilePath)); err != nil {

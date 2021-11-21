@@ -10,7 +10,7 @@ import (
 func Vik8sHost() *schema.Resource {
 	return &schema.Resource{
 		ReadWithoutTimeout: hostReadContext,
-		Schema:             schemas.Node(false),
+		Schema:             schemas.Node(false, true),
 	}
 }
 
@@ -23,5 +23,9 @@ func hostReadContext(ctx context.Context, data *schema.ResourceData, i interface
 		return diag.FromErr(err)
 	}
 	data.SetId(schemas.NodeId(node))
+	nodeData := schemas.ToResourceData(node)
+	if err := data.Set("facts", nodeData["facts"]); err != nil {
+		return diag.FromErr(err)
+	}
 	return diag.Diagnostics{}
 }

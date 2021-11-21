@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -73,9 +74,12 @@ func ParseAddr(opt Option, arg string) (nodes ssh.Nodes, err error) {
 	from := net.ParseIP(startIp).To4()
 	to := net.ParseIP(endIp).To4()
 
-	port := groups[11]
-	if port == "" {
-		port = opt.Port
+	port := 22
+	if groups[11] != "" {
+		if port, err = strconv.Atoi(groups[11]); err != nil {
+			err = utils.Wrap(err, "Wrong port number：%v", groups[11])
+			return
+		}
 	}
 	proxy := opt.Proxy
 

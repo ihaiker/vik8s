@@ -13,7 +13,7 @@ import (
 func NodeId(node *ssh.Node) string {
 	id := fmt.Sprintf("%v:%v:%v:%v@%v:%v#%v",
 		node.User, node.Password, node.PrivateKey, node.Passphrase, node.Host, node.Port, node.Proxy)
-	return fmt.Sprintf("%x", sha256.Sum224([]byte(id)))
+	return fmt.Sprintf("host-%x", sha256.Sum224([]byte(id)))
 }
 
 func NodeFromResourceData(data *schema.ResourceData) (*ssh.Node, error) {
@@ -29,14 +29,33 @@ func NodeFromResourceData(data *schema.ResourceData) (*ssh.Node, error) {
 		User:       username,
 		Password:   password,
 		Host:       address,
-		Port:       fmt.Sprintf("%v", port),
+		Port:       port,
 		PrivateKey: privateKey,
 		Passphrase: passphrase,
 		Proxy:      proxy,
 	}, nil
 }
 
-func Node(id bool) map[string]*schema.Schema {
+func ToResourceData(node *ssh.Node) map[string]interface{} {
+	data := make(map[string]interface{}, 0)
+	data["username"] = node.User
+	data["password"] = node.Password
+	data["private_key"] = node.PrivateKey
+	data["passphrase"] = node.Passphrase
+	data["address"] = node.Host
+	data["port"] = node.Port
+	data["proxy"] = node.Proxy
+	data["id"] = NodeId(node)
+	data["facts"] = []map[string]interface{}{{
+		"hostname":       node.Facts.Hostname,
+		"release_name":   node.Facts.ReleaseName,
+		"major_version":  node.Facts.MajorVersion,
+		"kernel_version": node.Facts.KernelVersion,
+	}}
+	return data
+}
+
+func Node(id, facts bool) map[string]*schema.Schema {
 	node := map[string]*schema.Schema{
 		"username": {
 			Type:        schema.TypeString,
@@ -102,5 +121,40 @@ func Node(id bool) map[string]*schema.Schema {
 			Optional: true,
 		}
 	}
+	if facts {
+		node["facts"] = &schema.Schema{
+			Description: "node facts",
+			Type:        schema.TypeList,
+			Computed:    true,
+			Elem: &schema.Resource{
+				Schema: factsSchema(),
+			},
+		}
+	}
 	return node
+}
+
+func factsSchema() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"hostname": {
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "node hostname",
+		},
+		"release_name": {
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "os release name. example `centos`,`ubuntu`",
+		},
+		"major_version": {
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "os majorVersion",
+		},
+		"kernel_version": {
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "os kernelVersion",
+		},
+	}
 }

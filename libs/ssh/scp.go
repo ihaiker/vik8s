@@ -57,10 +57,10 @@ func (node *Node) ScpContent(content []byte, remotePath string) error {
 	defer node.reset()
 
 	if node.IsRoot() || !node.isSudo() {
-		return node.easyssh().ScpContent(content, remotePath)
+		return node.ScpContent(content, remotePath)
 	} else {
 		path := fmt.Sprintf("/tmp/vik8s/%s", filepath.Base(remotePath))
-		if err := node.easyssh().ScpContent(content, path); err != nil {
+		if err := node.ScpContent(content, path); err != nil {
 			return err
 		}
 		dir := filepath.Dir(remotePath)
@@ -86,7 +86,7 @@ func (node *Node) scp(localPath, temporaryRemotePath, remotePath string, showPro
 		bar.Start()
 	}
 
-	return node.easyssh().Scp(localPath, temporaryRemotePath, func(step, all int64) {
+	return node._scp(localPath, temporaryRemotePath, func(step, all int64) {
 		if showProgressBar {
 			bar.SetTotal(all)
 			bar.SetCurrent(step)
@@ -104,7 +104,7 @@ func (node *Node) Pull(remotePath, localPath string) error {
 	bar.Set(pb.Terminal, true)
 	bar.Start()
 
-	return node.easyssh().Pull(remotePath, localPath, func(step, total int64) {
+	return node.pull(remotePath, localPath, func(step, total int64) {
 		bar.SetTotal(total)
 		bar.SetCurrent(step)
 	})

@@ -25,7 +25,7 @@ func (node *Node) CmdWatcher(command string, watcher StreamWatcher) (err error) 
 		retries = 1
 	}
 	for i := 0; i < retries; i++ {
-		if err = node.easyssh().Stream(command, watcher); err == nil {
+		if err = node.stream(command, watcher); err == nil {
 			return
 		} else if retries != 1 {
 			node.Logger(color.New(color.FgHiRed).Sprintf("executor: [%s], error: %s", command, err.Error()))

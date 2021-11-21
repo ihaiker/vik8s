@@ -28,7 +28,7 @@ func configLoad(fn func(cmd *cobra.Command, args []string) error) func(cmd *cobr
 func hostsLoad(fn func(cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		if err := hosts.Load(paths.HostsConfiguration(), &hosts.Option{
-			Port:       "22",
+			Port:       22,
 			User:       "root",
 			PrivateKey: "$HOME/.ssh/id_rsa",
 		}); err != nil {
