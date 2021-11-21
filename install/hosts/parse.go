@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 )
 
@@ -81,7 +80,7 @@ func parse_addr(opt Option, arg string) (nodes ssh.Nodes, err error) {
 
 	port := groups[11]
 	if port == "" {
-		port = strconv.Itoa(opt.Port)
+		port = opt.Port
 	}
 	proxy := opt.Proxy
 
