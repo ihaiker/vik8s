@@ -8,6 +8,7 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.9.0
 	github.com/ihaiker/cobrax v1.2.5
 	github.com/ihaiker/ngx/v2 v2.0.6
+	github.com/kr/pretty v0.2.1
 	github.com/kvz/logstreamer v0.0.0-20150507115422-a635b98146f0
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/peterh/liner v1.2.0

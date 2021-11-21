@@ -20,16 +20,11 @@ var (
 	pattern    = regexp.MustCompile(fmt.Sprintf(`(%s@)?((%s)-)?(%s)(:(%s))?`, userAndPwd, ip, ip, port))
 )
 
-func is_hostname(str string) bool {
-	match, _ := regexp.MatchString(`[a-zA-Z0-9\_]*`, str)
-	return match
-}
-
-//parse_addrs 解析地址
-func parse_addrs(opt Option, args ...string) (ssh.Nodes, error) {
+//ParseAddrs 解析地址
+func ParseAddrs(opt Option, args ...string) (ssh.Nodes, error) {
 	nodes := ssh.Nodes{}
 	for _, arg := range args {
-		if ns, err := parse_addr(opt, arg); err != nil {
+		if ns, err := ParseAddr(opt, arg); err != nil {
 			return nil, err
 		} else {
 			nodes = append(nodes, ns...)
@@ -38,8 +33,8 @@ func parse_addrs(opt Option, args ...string) (ssh.Nodes, error) {
 	return nodes, nil
 }
 
-//parse_addr 解析地址
-func parse_addr(opt Option, arg string) (nodes ssh.Nodes, err error) {
+//ParseAddr 解析地址
+func ParseAddr(opt Option, arg string) (nodes ssh.Nodes, err error) {
 	defer utils.Catch(func(e error) {
 		err = e
 	})

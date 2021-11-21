@@ -1,5 +1,8 @@
 .PHONY: help chmod build vagrant esxi cicd mkdocs clean test release terraform tf-test
 
+export TF_LOG=info
+export TF_LOG_PATH=/dev/stdout
+
 help: ## 帮助信息
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_-]+:.*?## / {sub("\\\\n",sprintf("\n%22c"," "), $$2);printf "\033[36m%s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
@@ -29,4 +32,6 @@ terraform: ## terraform插件编译
 	./scripts/plugins-build.sh
 
 tf-test: terraform ## terraform插件测试
-	@cd scripts | tf apply --auto-approve
+	@cd scripts && \
+	rm -rf .terraform && rm -f .terraform.lock.hcl && \
+	tf init && tf apply --auto-approve

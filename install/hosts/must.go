@@ -28,7 +28,7 @@ func Fetch(overwrite bool, args ...string) (ssh.Nodes, error) {
 	for _, arg := range args {
 		if node := _manager.Get(arg); node != nil {
 			nodes = append(nodes, node)
-		} else if ns, err := parse_addr(*_opt, arg); err == nil {
+		} else if ns, err := ParseAddr(*_opt, arg); err == nil {
 			for _, node := range ns {
 				if err := getProxy(_manager, node); err != nil {
 					return nil, err
