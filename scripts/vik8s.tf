@@ -13,17 +13,13 @@ provider "vik8s" {
 data "vik8s_host" "proxy" {
   username    = "root"
   private_key = "/Users/haiker/workbench/self/esxi/admin/.vagrant/machines/admin/vmware_esxi/private_key"
-  address     = "192.168.11.45"
+  address     = "velcyr.eicp.net"
+  port        = "21687"
 }
 
 data "vik8s_host" "master" {
-  username = "root"
-  address  = "10.24.1.4"
-  password = "jianchi"
-}
-
-data "vik8s_hosts" "slaves" {
-  username = "root"
-  address  = "10.24.1.12-14"
-  password = "jianchi"
+  username    = "root"
+  address     = "192.168.10.176"
+  private_key = "/Users/haiker/workbench/self/go/vik8s/.vagrant/machines/master01/vmware_esxi/private_key"
+  proxy       = data.vik8s_host.proxy.id
 }
