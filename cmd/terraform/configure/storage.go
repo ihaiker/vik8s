@@ -1,4 +1,4 @@
-package config
+package configure
 
 import "github.com/ihaiker/vik8s/libs/ssh"
 

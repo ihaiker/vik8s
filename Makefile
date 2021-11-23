@@ -18,7 +18,7 @@ build: chmod ## 编译程序
 vagrant: ## 启动虚拟机
 	vagrant up
 
-cicd: ## 运行CI/CD测试
+cicd: ## 运行CI/CD测试¸
 	./scripts/cicd.sh
 
 mkdocs: ## 构建文档
@@ -33,5 +33,7 @@ terraform: ## terraform插件编译
 
 tf-test: terraform ## terraform插件测试
 	@cd scripts && \
-	rm -rf .terraform && rm -f .terraform.lock.hcl && \
-	tf init && tf apply --auto-approve
+	rm -rf .terraform && rm -f .terraform.* && \
+	tf init && \
+	tf apply --auto-approve
+

@@ -5,17 +5,16 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/ihaiker/vik8s/cmd/terraform/config"
-	"github.com/ihaiker/vik8s/cmd/terraform/schemas"
+	"github.com/ihaiker/vik8s/cmd/terraform/configure"
 	"github.com/ihaiker/vik8s/install/hosts"
 )
 
 func Vik8sHosts() *schema.Resource {
-	inputs := schemas.Node(false, false)
+	inputs := NodeSchema(false, false)
 	inputs["nodes"] = &schema.Schema{
 		Type: schema.TypeList,
 		Elem: &schema.Resource{
-			Schema: schemas.Node(true, true),
+			Schema: NodeSchema(true, true),
 		},
 		Computed: true,
 	}
@@ -27,13 +26,13 @@ func Vik8sHosts() *schema.Resource {
 
 func hostsReadContext(ctx context.Context, data *schema.ResourceData, i interface{}) diag.Diagnostics {
 	diags := diag.Diagnostics{}
-	storage := i.(*config.MemStorage)
+	storage := i.(*configure.MemStorage)
 
-	node, err := schemas.NodeFromResourceData(data)
+	node, err := NodeFromResourceData(data)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	data.SetId(schemas.NodeId(node))
+	data.SetId(NodeId(node))
 
 	nodes, err := hosts.ParseAddr(*node, node.Host)
 	if err != nil {
@@ -52,8 +51,8 @@ func hostsReadContext(ctx context.Context, data *schema.ResourceData, i interfac
 		if err = node.GatheringFacts(); err != nil {
 			return diag.FromErr(err)
 		}
-		storage.Hosts[schemas.NodeId(node)] = node
-		outputs = append(outputs, schemas.ToResourceData(node))
+		storage.Hosts[NodeId(node)] = node
+		outputs = append(outputs, ToResourceData(node))
 	}
 	if err = data.Set("nodes", outputs); err != nil {
 		return diag.FromErr(err)

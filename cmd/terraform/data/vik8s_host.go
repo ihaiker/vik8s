@@ -1,9 +1,12 @@
-package schemas
+package data
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/ihaiker/vik8s/cmd/terraform/configure"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"os"
@@ -11,8 +14,7 @@ import (
 )
 
 func NodeId(node *ssh.Node) string {
-	id := fmt.Sprintf("%v:%v:%v:%v@%v:%v#%v",
-		node.User, node.Password, node.PrivateKey, node.Passphrase, node.Host, node.Port, node.Proxy)
+	id := fmt.Sprintf("%v@%v", node.User, node.Host)
 	return fmt.Sprintf("host-%x", sha256.Sum224([]byte(id)))
 }
 
@@ -55,7 +57,7 @@ func ToResourceData(node *ssh.Node) map[string]interface{} {
 	return data
 }
 
-func Node(id, facts bool) map[string]*schema.Schema {
+func NodeSchema(id, facts bool) map[string]*schema.Schema {
 	node := map[string]*schema.Schema{
 		"username": {
 			Type:        schema.TypeString,
@@ -157,4 +159,38 @@ func factsSchema() map[string]*schema.Schema {
 			Description: "os kernelVersion",
 		},
 	}
+}
+
+func Vik8sHost() *schema.Resource {
+	return &schema.Resource{
+		ReadWithoutTimeout: hostReadContext,
+		Schema:             NodeSchema(false, true),
+	}
+}
+
+func hostReadContext(ctx context.Context, data *schema.ResourceData, i interface{}) diag.Diagnostics {
+	node, err := NodeFromResourceData(data)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	storage := i.(*configure.MemStorage)
+
+	if node.Proxy != "" {
+		if proxyNode, has := storage.Hosts[node.Proxy]; !has {
+			return diag.FromErr(fmt.Errorf("proxy node not found: %s", node.Proxy))
+		} else {
+			node.ProxyNode = proxyNode
+		}
+	}
+	if err := node.GatheringFacts(); err != nil {
+		return diag.FromErr(err)
+	}
+	id := NodeId(node)
+	data.SetId(NodeId(node))
+	nodeData := ToResourceData(node)
+	if err := data.Set("facts", nodeData["facts"]); err != nil {
+		return diag.FromErr(err)
+	}
+	storage.Hosts[id] = node
+	return diag.Diagnostics{}
 }
