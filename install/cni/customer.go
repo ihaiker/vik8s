@@ -3,6 +3,7 @@ package cni
 import (
 	"fmt"
 	"github.com/ihaiker/cobrax"
+	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/spf13/cobra"
@@ -24,7 +25,7 @@ func (f *customer) Flags(cmd *cobra.Command) {
 	utils.Panic(err, "set customer flag")
 }
 
-func (f *customer) Apply(cmd *cobra.Command, node *ssh.Node) {
+func (f *customer) Apply(cmd *cobra.Command, configure *config.Configuration, node *ssh.Node) {
 	utils.Assert(len(f.Files) != 0 || len(f.Urls) != 0,
 		"No custom network plugin found，see: --url or --file ")
 

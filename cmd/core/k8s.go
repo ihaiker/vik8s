@@ -23,17 +23,17 @@ var initCmd = &cobra.Command{
 		masters := hosts.MustGets(args)
 
 		utils.Assert(len(masters) != 0, "master node is empty")
-		config.Config.K8S = k8sConfig
+		configure.K8S = k8sConfig
 
-		k8s.InitCluster(masters[0])
+		k8s.InitCluster(configure, masters[0])
 		for _, ctl := range masters[1:] {
-			k8s.JoinControl(ctl)
+			k8s.JoinControl(configure, ctl)
 		}
 
 		taint, _ := cmd.Flags().GetBool("taint")
 		if taint {
 			for _, master := range masters {
-				k8s.RemoveTaint(master)
+				k8s.RemoveTaint(configure, master)
 			}
 		}
 		fmt.Println("-=-=-=- SUCCESS -=-=-=-")
@@ -61,18 +61,18 @@ vik8s join 172.10.0.2 172.10.0.3 172.10.0.4 172.10.0.5`,
 		}
 		master, _ := cmd.Flags().GetBool("master")
 		for _, node := range nodes {
-			utils.Assert(utils.Search(config.K8S().Masters, node.Host) == -1 &&
-				utils.Search(config.K8S().Nodes, node.Host) == -1,
+			utils.Assert(utils.Search(configure.K8S.Masters, node.Host) == -1 &&
+				utils.Search(configure.K8S.Nodes, node.Host) == -1,
 				"the host is cluster node yet. %s", node.Hostname)
 
 			if master {
-				k8s.JoinControl(node)
+				k8s.JoinControl(configure, node)
 			} else {
-				k8s.JoinWorker(node)
+				k8s.JoinWorker(configure, node)
 			}
 			taint, _ := cmd.Flags().GetBool("taint")
 			if taint {
-				k8s.RemoveTaint(node)
+				k8s.RemoveTaint(configure, node)
 			}
 		}
 		fmt.Println("-=-=-=- SUCCESS -=-=-=-")
@@ -91,15 +91,15 @@ var resetCmd = &cobra.Command{
 	PreRunE: configLoad(hostsLoad(none)), PostRunE: configDown(none),
 	Run: func(cmd *cobra.Command, args []string) {
 		nodes := args
-		if config.Config.K8S == nil {
-			config.Config.K8S = config.DefaultK8SConfiguration()
+		if configure.K8S == nil {
+			configure.K8S = config.DefaultK8SConfiguration()
 		}
 		if args[0] == "all" {
-			nodes = append(config.K8S().Nodes, utils.Reverse(config.K8S().Masters)...)
+			nodes = append(configure.K8S.Nodes, utils.Reverse(configure.K8S.Masters)...)
 		}
 		var master *ssh.Node
-		if len(config.K8S().Masters) > 0 {
-			master = hosts.MustGet(config.K8S().Masters[0])
+		if len(configure.K8S.Masters) > 0 {
+			master = hosts.MustGet(configure.K8S.Masters[0])
 		}
 		for _, nodeName := range nodes {
 			node := hosts.MustGet(nodeName)
@@ -111,7 +111,7 @@ var resetCmd = &cobra.Command{
 				utils.Assert(err == nil || strings.Contains(err.Error(), "not found"),
 					"reset kubernetes node: %v", err)
 			}
-			k8s.ResetNode(node)
+			k8s.ResetNode(configure, node)
 		}
 		fmt.Println("-=-=-=- SUCCESS -=-=-=-")
 	},

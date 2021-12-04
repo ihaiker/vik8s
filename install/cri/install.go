@@ -8,15 +8,15 @@ import (
 	"github.com/ihaiker/vik8s/libs/ssh"
 )
 
-func Install(node *ssh.Node) {
-	if config.Config.Docker == nil && config.Config.Containerd == nil {
+func Install(configure *config.Configuration, node *ssh.Node) {
+	if configure.Docker == nil && configure.Containerd == nil {
 		node.Logger("the runtime container interface not found, config it use docker container .")
-		config.Config.Docker = config.DefaultDockerConfiguration()
+		configure.Docker = config.DefaultDockerConfiguration()
 	}
 
-	if config.Config.IsDockerCri() {
-		docker.Install(config.Config.Docker, node, paths.China)
+	if configure.IsDockerCri() {
+		docker.Install(configure.Docker, node, paths.China)
 	} else {
-		containerd.Install(config.Config.Docker, node, paths.China)
+		containerd.Install(configure.Docker, node, paths.China)
 	}
 }

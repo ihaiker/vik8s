@@ -4,7 +4,6 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"github.com/ihaiker/vik8s/certs"
-	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/install/tools"
 	"github.com/ihaiker/vik8s/libs/logs"
 	"github.com/ihaiker/vik8s/libs/utils"
@@ -44,14 +43,15 @@ func line(node, format string, args ...interface{}) {
 
 type createAction func(dir string, node Node)
 
-func CreatePKIAssets(dir string, node Node) {
+func CreatePKIAssets(apiServerAddress string, dir string, node Node) {
 	line(node.Name, "creating PKI assets %s", dir)
 	actions := []createAction{
 		createServiceAccountKeyPair,
 		createCACertAndKeyFiles,
 		createFrontProxyFiles,
-
-		createApiServerFiles,
+		func(dir string, node Node) {
+			createApiServerFiles(apiServerAddress, dir, node)
+		},
 		createApiServerKubeletClientFiles,
 		createFrontProxyClient,
 	}
@@ -98,7 +98,7 @@ func createFrontProxyFiles(dir string, node Node) {
 	certs.WriteCertAndKey(dir, "front-proxy-ca", caCert, caKey)
 }
 
-func createApiServerFiles(dir string, node Node) {
+func createApiServerFiles(apiServer string, dir string, node Node) {
 	fileName := "apiserver-" + node.Name
 	if certs.CertOrKeyExist(dir, fileName) {
 		line(node.Name, "%s.key and %s.crt already exist", fileName, fileName)
@@ -106,7 +106,6 @@ func createApiServerFiles(dir string, node Node) {
 	}
 	line(node.Name, "creating apiserver %s", node.Name)
 
-	apiServerVip := config.K8S().ApiServerVIP
 	mix, _ := tools.AddressRange(node.SvcCIDR)
 
 	cfg := certs.NewConfig("kube-apiserver")
@@ -114,7 +113,7 @@ func createApiServerFiles(dir string, node Node) {
 	sans := []string{
 		"cluster.local", "localhost", node.Name, node.ApiServer,
 		"kubernetes", "kubernetes.default", "kubernetes.default.svc", "kubernetes.default.svc.cluster.local",
-		"127.0.0.1", node.Host, utils.NextIP(mix).String() /*服务cidr第一个地址为内部通讯使用*/, apiServerVip,
+		"127.0.0.1", node.Host, utils.NextIP(mix).String() /*服务cidr第一个地址为内部通讯使用*/, apiServer,
 	}
 	sans = append(sans, node.SANS...)
 	cfg.AltNames = *certs.GetAltNames(sans, "apiserver")

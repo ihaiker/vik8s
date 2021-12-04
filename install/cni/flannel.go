@@ -34,10 +34,10 @@ func (f *flannel) Flags(cmd *cobra.Command) {
 	utils.Panic(err, "set flannel flag error")
 }
 
-func (f *flannel) Apply(cmd *cobra.Command, node *ssh.Node) {
+func (f *flannel) Apply(cmd *cobra.Command, configure *config.Configuration, node *ssh.Node) {
 	data := paths.Json{
 		"Version": f.Version, "Repo": repo.QuayIO(f.Repo),
-		"CIDR": config.K8S().PodCIDR, "Interface": config.K8S().Interface,
+		"CIDR": configure.K8S.PodCIDR, "Interface": configure.K8S.Interface,
 		"LimitCPU": f.LimitCPU, "LimitMemory": f.LimitMemory,
 	}
 	name := "yaml/cni/flannel.conf"

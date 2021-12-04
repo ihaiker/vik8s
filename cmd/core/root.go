@@ -14,17 +14,19 @@ import (
 	"strings"
 )
 
-//configLoad load configuration
+var configure *config.Configuration
+
+//configLoad load configure
 func configLoad(fn func(cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		if err := config.Load(paths.Vik8sConfiguration()); err != nil {
-			return err
+	return func(cmd *cobra.Command, args []string) (err error) {
+		if configure, err = config.Load(paths.Vik8sConfiguration()); err != nil {
+			return
 		}
 		return fn(cmd, args)
 	}
 }
 
-//hostsLoad load configuration
+//hostsLoad load configure
 func hostsLoad(fn func(cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		if err := hosts.Load(paths.HostsConfiguration(), &hosts.Option{
@@ -38,11 +40,11 @@ func hostsLoad(fn func(cmd *cobra.Command, args []string) error) func(cmd *cobra
 	}
 }
 
-//configDown the configuration save it.
+//configDown the configure save it.
 func configDown(fn func(cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		if err := config.Config.Write(); err != nil {
-			return err
+		if err := configure.Write(); err != nil {
+			return utils.Wrap(err, "write configuration error")
 		}
 		return fn(cmd, args)
 	}
@@ -78,14 +80,14 @@ var completionCmd = &cobra.Command{
 
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&paths.ConfigDir, "config", "f",
-		paths.ConfigDir, "The folder where the configuration file is located")
+		paths.ConfigDir, "The folder where the configure file is located")
 	rootCmd.PersistentFlags().StringVarP(&paths.Cloud, "cloud", "c", paths.Cloud,
 		"Multi-kubernetes cluster selection")
 	rootCmd.PersistentFlags().BoolVar(&paths.China, "china", true, "Whether domestic network")
 
 	rootCmd.AddCommand(hostsCmd, etcdCmd)
 	rootCmd.AddCommand(initCmd, joinCmd, resetCmd, cleanCmd)
-	rootCmd.AddCommand(ingressRootCmd, sidecarsCmd)
+	rootCmd.AddCommand(ingressRootCmd)
 	rootCmd.AddCommand(completionCmd)
 	rootCmd.AddCommand(bashCmd)
 	rootCmd.Flags().SortFlags = false

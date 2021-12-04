@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/ihaiker/vik8s/libs/utils"
 	"time"
 )
 
@@ -18,6 +19,14 @@ type ETCD struct {
 	RemoteSnapshot string `ngx:"remote-snapshot" help:"Etcd v3 snapshot (remote disk at first node) file used to initialize member"`
 
 	Repo string `ngx:"repo" flag:"repo" help:"the repo url"`
+}
+
+func (this *ETCD) RemoveNode(node string) bool {
+	idx := utils.Search(this.Nodes, node)
+	if idx != -1 {
+		this.Nodes = append(this.Nodes[0:idx], this.Nodes[idx+1:]...)
+	}
+	return idx != -1
 }
 
 func DefaultETCDConfiguration() *ETCD {

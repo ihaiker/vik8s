@@ -16,38 +16,21 @@ type Configuration struct {
 	ETCD       *ETCD                    `ngx:"etcd"`
 }
 
-var (
-	Config = &Configuration{}
-)
-
-func Docker() *DockerConfiguration {
-	return Config.Docker
-}
-func Containerd() *ContainerdConfiguration {
-	return Config.Containerd
-}
-func K8S() *K8SConfiguration {
-	return Config.K8S
-}
-func Etcd() *ETCD {
-	return Config.ETCD
-}
-
-func ExternalETCD() bool {
-	return Config.ETCD != nil && len(Config.ETCD.Nodes) > 0
-}
-
-//加载vik8s.conf配置，如果配置文件不存在，直接返回空配置
-func Load(filename string) (err error) {
-	Config.filename = filename
+//Load 加载vik8s.conf配置，如果配置文件不存在，直接返回空配置
+func Load(filename string) (cfg *Configuration, err error) {
+	cfg = new(Configuration)
+	cfg.filename = filename
 	if !utils.Exists(filename) {
+		cfg.K8S = DefaultK8SConfiguration()
+		cfg.Docker = DefaultDockerConfiguration()
 		return
 	}
+
 	var data []byte
 	if data, err = ioutil.ReadFile(filename); err != nil {
 		return
 	}
-	if err = ngx.Unmarshal(data, Config); err != nil {
+	if err = ngx.Unmarshal(data, cfg); err != nil {
 		return
 	}
 	return
@@ -63,4 +46,8 @@ func (cfg *Configuration) Write() error {
 
 func (cfg *Configuration) IsDockerCri() bool {
 	return cfg.Docker != nil
+}
+
+func (cfg *Configuration) IsExternalETCD() bool {
+	return cfg.ETCD != nil && len(cfg.ETCD.Nodes) > 0
 }
