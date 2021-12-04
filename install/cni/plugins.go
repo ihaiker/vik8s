@@ -1,7 +1,7 @@
 package cni
 
 import (
-	"fmt"
+	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/spf13/cobra"
 )
@@ -9,13 +9,13 @@ import (
 type Plugin interface {
 	Name() string
 
-	//为初始化添加命令行参数
+	//Flags 为初始化添加命令行参数
 	Flags(cmd *cobra.Command)
 
-	//生成插件
-	Apply(cmd *cobra.Command, node *ssh.Node)
+	//Apply 生成插件
+	Apply(cmd *cobra.Command, configure *config.Configuration, node *ssh.Node)
 
-	//清楚插件内容
+	//Clean 清楚插件内容
 	Clean(node *ssh.Node)
 }
 
@@ -26,10 +26,10 @@ var Plugins = plugins{
 	new(customer),
 }
 
-func (p *plugins) Apply(cmd *cobra.Command, node *ssh.Node) {
+func (p *plugins) Apply(cmd *cobra.Command, configure *config.Configuration, node *ssh.Node) {
 	for _, plugin := range *p {
 		if plugin.Name() == cmd.Use {
-			plugin.Apply(cmd, node)
+			plugin.Apply(cmd, configure, node)
 		}
 	}
 }
@@ -41,8 +41,4 @@ func (p *plugins) Clean(node *ssh.Node) {
 	for _, plugin := range *p {
 		plugin.Clean(node)
 	}
-}
-
-func flags(f Plugin, name string) string {
-	return fmt.Sprintf("cni-%s-%s", f.Name(), name)
 }

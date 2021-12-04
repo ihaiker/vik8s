@@ -9,28 +9,27 @@ import (
 	"github.com/ihaiker/vik8s/libs/utils"
 )
 
-func JoinCluster(node *ssh.Node) {
+func JoinCluster(configure *config.Configuration, node *ssh.Node) {
 	bases.Check(node)
-	cri.Install(node)
-	image := pullContainerImage(node)
-	cleanEtcdData(node)
-	makeAndPushCerts(node)
-	addEtcdMember(node)
-	joinEtcd(node, image)
+	cri.Install(configure, node)
+	image := pullContainerImage(configure, node)
+	cleanEtcdData(configure, node)
+	makeAndPushCerts(configure, node)
+	addEtcdMember(configure, node)
+	joinEtcd(configure, node, image)
 	waitEtcdReady(node)
 	showClusterStatus(node)
-	config.Config.ETCD.Nodes = append(config.Config.ETCD.Nodes, node.Host)
 }
 
-func joinEtcd(node *ssh.Node, image string) {
-	if config.Config.IsDockerCri() {
-		initEtcdDocker(node, image, "existing")
+func joinEtcd(configure *config.Configuration, node *ssh.Node, image string) {
+	if configure.IsDockerCri() {
+		initEtcdDocker(configure, node, image, "existing")
 	}
 }
 
-func addEtcdMember(node *ssh.Node) {
+func addEtcdMember(configure *config.Configuration, node *ssh.Node) {
 	node.Logger("add etcd node")
-	master := hosts.MustGet(config.Config.ETCD.Nodes[0])
+	master := hosts.MustGet(configure.ETCD.Nodes[0])
 	num, err := master.Sudo().CmdString(Etcdctl("member list | grep " + node.Host + ":2380 | wc -l"))
 	utils.Panic(err, "etcd list member")
 	if num == "0" {

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/ingress"
 	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/libs/utils"
@@ -14,7 +13,7 @@ var ingressRootCmd = &cobra.Command{
 }
 
 func ingressRun(cmd *cobra.Command, args []string) {
-	master := hosts.MustGet(config.K8S().Masters[0])
+	master := hosts.MustGet(configure.K8S.Masters[0])
 	name := cmd.Name()
 	ingress.Manager.Apply(name, master)
 }

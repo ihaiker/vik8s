@@ -12,7 +12,7 @@ import (
 )
 
 var reduceCmd = &cobra.Command{
-	Use: "reduce", Short: "Simplify kubernetes configuration file",
+	Use: "reduce", Short: "Simplify kubernetes configure file",
 	Args:    cobra.ExactArgs(1),
 	PreRunE: configLoad(hostsLoad(none)),
 	RunE: func(cmd *cobra.Command, args []string) error {

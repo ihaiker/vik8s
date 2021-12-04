@@ -14,20 +14,20 @@ import (
 	"path/filepath"
 )
 
-func makeKubernetesCerts(node *ssh.Node) {
-	if config.ExternalETCD() {
+func makeKubernetesCerts(configure *config.Configuration, node *ssh.Node) {
+	if configure.IsExternalETCD() {
 		scpExternalEtcdCa(node)
 	} else {
-		makeEtcdCerts(node)
+		makeEtcdCerts(configure, node)
 		makeEtcdctlCommand(node)
 	}
-	makeKubeCerts(node)
+	makeKubeCerts(configure, node)
 }
 
-func makeJoinControlPlaneConfigFiles(node *ssh.Node) {
+func makeJoinControlPlaneConfigFiles(configure *config.Configuration, node *ssh.Node) {
 	dir := paths.Join("kube")
-	endpoint := fmt.Sprintf("https://%s:6443", config.K8S().ApiServer)
-	files := kubecerts.CreateJoinControlPlaneKubeConfigFiles(dir, node.Hostname, endpoint, config.K8S().CertsValidity)
+	endpoint := fmt.Sprintf("https://%s:6443", configure.K8S.ApiServer)
+	files := kubecerts.CreateJoinControlPlaneKubeConfigFiles(dir, node.Hostname, endpoint, configure.K8S.CertsValidity)
 	for key, path := range files {
 		remote := filepath.Join("/etc/kubernetes", fmt.Sprintf("%s.conf", key))
 		err := node.Sudo().Scp(path, remote)
@@ -35,17 +35,17 @@ func makeJoinControlPlaneConfigFiles(node *ssh.Node) {
 	}
 }
 
-func makeWorkerConfigFiles(node *ssh.Node) {
+func makeWorkerConfigFiles(configure *config.Configuration, node *ssh.Node) {
 	dir := paths.Join("kube")
-	endpoint := fmt.Sprintf("https://%s:6443", config.K8S().ApiServer)
-	files := kubecerts.CreateWorkerKubeConfigFile(dir, node.Hostname, endpoint, config.K8S().CertsValidity)
+	endpoint := fmt.Sprintf("https://%s:6443", configure.K8S.ApiServer)
+	files := kubecerts.CreateWorkerKubeConfigFile(dir, node.Hostname, endpoint, configure.K8S.CertsValidity)
 	for key, path := range files {
 		remote := filepath.Join("/etc/kubernetes", fmt.Sprintf("%s.conf", key))
 		utils.Panic(node.Sudo().Scp(path, remote), "scp %s %s", path, remote)
 	}
 }
 
-func makeEtcdCerts(node *ssh.Node) {
+func makeEtcdCerts(configure *config.Configuration, node *ssh.Node) {
 	node.Logger("make etcd certs files")
 
 	name := node.Hostname
@@ -53,13 +53,13 @@ func makeEtcdCerts(node *ssh.Node) {
 
 	// local + master + apiserversans + apiserver-vip
 	sans := []string{"127.0.0.1", "localhost", node.Hostname, node.Host, net.IPv6loopback.String()}
-	sans = append(sans, utils.ParseIPS(config.K8S().Masters)...)
+	sans = append(sans, utils.ParseIPS(configure.K8S.Masters)...)
 	if node.Hostname != node.Facts.Hostname {
 		sans = append(sans, node.Facts.Hostname)
 	}
-	sans = append(sans, config.K8S().ApiServer, config.K8S().ApiServerVIP)
+	sans = append(sans, configure.K8S.ApiServer, configure.K8S.ApiServerVIP)
 
-	vt := config.K8S().CertsValidity
+	vt := configure.K8S.CertsValidity
 	etcdcerts.CreatePKIAssets(name, dir, sans, vt)
 
 	certsFiles := map[string]string{
@@ -85,29 +85,29 @@ func scpExternalEtcdCa(node *ssh.Node) {
 	}
 }
 
-func makeKubeCerts(node *ssh.Node) {
+func makeKubeCerts(configure *config.Configuration, node *ssh.Node) {
 	certNode := kubecerts.Node{
 		Name:                node.Hostname,
 		Host:                node.Host,
-		ApiServer:           config.K8S().ApiServer,
-		SvcCIDR:             config.K8S().SvcCIDR,
-		CertificateValidity: config.K8S().CertsValidity,
-		SANS:                config.K8S().ApiServerCertExtraSans,
+		ApiServer:           configure.K8S.ApiServer,
+		SvcCIDR:             configure.K8S.SvcCIDR,
+		CertificateValidity: configure.K8S.CertsValidity,
+		SANS:                configure.K8S.ApiServerCertExtraSans,
 	}
 	//apisever = MasterIPS + VIP + CertSANS
-	for _, masterIp := range config.K8S().Masters {
+	for _, masterIp := range configure.K8S.Masters {
 		masterNode := hosts.MustGet(masterIp)
 		certNode.SANS = append(certNode.SANS, masterNode.Hostname, masterNode.Host)
 		if masterNode.Hostname != masterNode.Facts.Hostname {
 			certNode.SANS = append(certNode.SANS, masterNode.Facts.Hostname)
 		}
 	}
-	certNode.SANS = append(certNode.SANS, config.K8S().ApiServer, config.K8S().ApiServerVIP)
+	certNode.SANS = append(certNode.SANS, configure.K8S.ApiServer, configure.K8S.ApiServerVIP)
 
 	node.Logger("make kube certs files")
 
 	dir := paths.Join("kube", "pki")
-	kubecerts.CreatePKIAssets(dir, certNode)
+	kubecerts.CreatePKIAssets(configure.K8S.ApiServerVIP, dir, certNode)
 
 	//sa
 	{

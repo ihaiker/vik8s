@@ -8,10 +8,10 @@ import (
 	"github.com/ihaiker/vik8s/libs/utils"
 )
 
-func installKubernetes(node *ssh.Node) {
+func installKubernetesSoftware(configure *config.Configuration, node *ssh.Node) {
 	setRepo(node)
 	sysctl(node)
-	installKubeletAndKubeadm(node)
+	installKubeletAndKubeadm(configure.K8S, node)
 	modprobe(node)
 }
 
@@ -39,8 +39,8 @@ net.ipv4.ip_forward=1
 	_ = node.Sudo().Cmd("update-alternatives --set ebtables /usr/sbin/ebtables-legacy")
 }
 
-func installKubeletAndKubeadm(node *ssh.Node) {
-	version := config.K8S().Version[1:]
+func installKubeletAndKubeadm(configure *config.K8SConfiguration, node *ssh.Node) {
+	version := configure.Version[1:]
 	node.Logger("Install kubelet & kubeadm v%s", version)
 
 	bases.Install("ethtool", "", node)

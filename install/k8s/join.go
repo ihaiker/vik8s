@@ -13,26 +13,26 @@ import (
 	"strings"
 )
 
-func JoinControl(node *ssh.Node) {
+func JoinControl(configure *config.Configuration, node *ssh.Node) {
 	node.Logger("join control plane kubernetes cluster %s ", node.Host)
 
-	if exists, _ := config.K8S().ExistsNode(node.Host); exists {
+	if exists, _ := configure.K8S.ExistsNode(node.Host); exists {
 		color.Red("%s already in the cluster\n", node.Host)
 		return
 	}
-	master := hosts.MustGet(config.K8S().Masters[0])
+	master := hosts.MustGet(configure.K8S.Masters[0])
 	bases.Check(node)
-	bases.InstallTimeServices(node, config.K8S().Timezone, config.Config.K8S.NTPServices...)
-	cri.Install(node)
+	bases.InstallTimeServices(node, configure.K8S.Timezone, configure.K8S.NTPServices...)
+	cri.Install(configure, node)
 
-	installKubernetes(node)
+	installKubernetesSoftware(configure, node)
 
-	setNodeHosts(node)
-	setApiServerHosts(node)
-	setIpvsadmApiServer(master, node)
+	setNodeHosts(configure, node)
+	setApiServerHosts(configure, node)
+	setIpvsadmApiServer(configure, master, node)
 
-	makeKubernetesCerts(node)
-	makeJoinControlPlaneConfigFiles(node)
+	makeKubernetesCerts(configure, node)
+	makeJoinControlPlaneConfigFiles(configure, node)
 
 	remote := node.Vik8s("apply/kubeadm.yaml")
 	bugfixImages(master, node, remote)
@@ -42,30 +42,30 @@ func JoinControl(node *ssh.Node) {
 	utils.Panic(node.Sudo().CmdOutput(control, os.Stdout), "control plane join %s", node.Host)
 	copyKubeletAdminConfig(node)
 
-	fix(master, node)
+	fix(configure, master, node)
 
-	config.K8S().JoinNode(true, node.Host)
+	configure.K8S.JoinNode(true, node.Host)
 }
 
-func JoinWorker(node *ssh.Node) {
+func JoinWorker(configure *config.Configuration, node *ssh.Node) {
 	node.Logger("join worker kubernetes cluster %s ", node.Host)
-	if exists, _ := config.K8S().ExistsNode(node.Host); exists {
+	if exists, _ := configure.K8S.ExistsNode(node.Host); exists {
 		color.Red("%s already in the cluster\n", node.Host)
 		return
 	}
-	master := hosts.MustGet(config.K8S().Masters[0])
+	master := hosts.MustGet(configure.K8S.Masters[0])
 
 	bases.Check(node)
-	bases.InstallTimeServices(node, config.K8S().Timezone, config.Config.K8S.NTPServices...)
-	cri.Install(node)
+	bases.InstallTimeServices(node, configure.K8S.Timezone, configure.K8S.NTPServices...)
+	cri.Install(configure, node)
 
-	installKubernetes(node)
+	installKubernetesSoftware(configure, node)
 
-	setNodeHosts(node)
-	setApiServerHosts(node)
-	setIpvsadmApiServer(master, node)
+	setNodeHosts(configure, node)
+	setApiServerHosts(configure, node)
+	setIpvsadmApiServer(configure, master, node)
 
-	makeWorkerConfigFiles(node)
+	makeWorkerConfigFiles(configure, node)
 
 	remote := node.Vik8s("apply/kubeadm.yaml")
 	bugfixImages(master, node, remote)
@@ -74,12 +74,12 @@ func JoinWorker(node *ssh.Node) {
 	cmd := fmt.Sprintf("%s --apiserver-advertise-address=%s --ignore-preflight-errors=FileAvailable--etc-kubernetes-kubelet.conf --v=5", joinCmd, node.Host)
 	utils.Panic(node.Sudo().CmdOutput(cmd, os.Stdout), "join %s", node.Host)
 
-	fix(master, node)
-	config.K8S().JoinNode(false, node.Host)
+	fix(configure, master, node)
+	configure.K8S.JoinNode(false, node.Host)
 }
 
-func setNodeHosts(node *ssh.Node) {
-	nodes := hosts.MustGets(append(config.K8S().Masters, config.K8S().Nodes...))
+func setNodeHosts(configure *config.Configuration, node *ssh.Node) {
+	nodes := hosts.MustGets(append(configure.K8S.Masters, configure.K8S.Nodes...))
 	setHosts(node, node.Host, node.Hostname)
 	for _, n := range nodes {
 		setHosts(n, node.Host, node.Hostname)
@@ -87,13 +87,13 @@ func setNodeHosts(node *ssh.Node) {
 	}
 }
 
-func setApiServerHosts(node *ssh.Node) {
-	apiServerVip := config.K8S().ApiServerVIP
-	setHosts(node, apiServerVip, config.K8S().ApiServer)
+func setApiServerHosts(configure *config.Configuration, node *ssh.Node) {
+	apiServerVip := configure.K8S.ApiServerVIP
+	setHosts(node, apiServerVip, configure.K8S.ApiServer)
 }
 
-func setIpvsadmApiServer(master, node *ssh.Node) {
-	apiServerVip := config.K8S().ApiServerVIP
+func setIpvsadmApiServer(configure *config.Configuration, master, node *ssh.Node) {
+	apiServerVip := configure.K8S.ApiServerVIP
 	_ = node.Sudo().Cmd(fmt.Sprintf("ipvsadm -D -t %s:6443", apiServerVip))
 
 	err := node.Sudo().Cmd(fmt.Sprintf("ipvsadm -A -t %s:6443 -s rr", apiServerVip))
@@ -111,13 +111,13 @@ func setIpvsadmApiServer(master, node *ssh.Node) {
 	utils.Panic(err, "change ipvsadm-config")
 }
 
-func fix(master, node *ssh.Node) {
+func fix(configure *config.Configuration, master, node *ssh.Node) {
 	// for flannel
 	//kubectl get nodes -o jsonpath='{.items[*].spec.podCIDR}'
 	//kubectl get nodes -o template --template={{.spec.podCIDR}}
 	err := master.Cmd(fmt.Sprintf("kubectl patch node %s -p '{\"spec\":{\"podCIDR\":\"%s\"}}'",
-		node.Hostname, config.K8S().PodCIDR))
-	utils.Panic(err, "patch node %s %s", node.Hostname, config.K8S().PodCIDR)
+		node.Hostname, configure.K8S.PodCIDR))
+	utils.Panic(err, "patch node %s %s", node.Hostname, configure.K8S.PodCIDR)
 }
 
 func getJoinCmd(node *ssh.Node) string {

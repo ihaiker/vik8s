@@ -4,7 +4,6 @@ import (
 	"github.com/ihaiker/cobrax"
 	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/install/cri/docker"
-	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/spf13/cobra"
 )
@@ -15,17 +14,13 @@ var criCmd = &cobra.Command{
 
 var dockerFlag = config.DefaultDockerConfiguration()
 var dockerCmd = &cobra.Command{
-	Use: "docker", Short: "defined kubernetes cni configuration for docker",
-	Example: "vik8s docker --tls.enable",
-	PreRunE: func(cmd *cobra.Command, args []string) error {
-		return config.Load(paths.Vik8sConfiguration())
-	},
+	Use: "docker", Short: "defined kubernetes cni configure for docker",
+	Example:  "vik8s docker --tls.enable",
+	PreRunE:  configLoad(none),
+	PostRunE: configDown(none),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := docker.Config(dockerFlag); err == nil {
-			config.Config.Docker = dockerFlag
-			if err = config.Config.Write(); err != nil {
-				return err
-			}
+			configure.Docker = dockerFlag
 		}
 		return nil
 	},

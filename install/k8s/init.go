@@ -18,35 +18,35 @@ import (
 	"strings"
 )
 
-func InitCluster(node *ssh.Node) *ssh.Node {
+func InitCluster(configure *config.Configuration, node *ssh.Node) *ssh.Node {
 	node.Logger("init kubernetes cluster %s", node.Host)
 
-	config.Config.K8S.Repo = repo.KubeletImage(config.K8S().Repo)
-	if config.Config.K8S.ApiServerVIP == "" {
-		config.Config.K8S.ApiServerVIP = tools.GetVip(config.K8S().SvcCIDR, tools.Vik8sApiServer)
+	configure.K8S.Repo = repo.KubeletImage(configure.K8S.Repo)
+	if configure.K8S.ApiServerVIP == "" {
+		configure.K8S.ApiServerVIP = tools.GetVip(configure.K8S.SvcCIDR, tools.Vik8sApiServer)
 	}
 
 	bases.Check(node)
-	bases.InstallTimeServices(node, config.K8S().Timezone, config.K8S().NTPServices...)
+	bases.InstallTimeServices(node, configure.K8S.Timezone, configure.K8S.NTPServices...)
 	bases.InstallJQTools(node)
-	cri.Install(node)
+	cri.Install(configure, node)
 
-	installKubernetes(node)
+	installKubernetesSoftware(configure, node)
 
 	node.Logger("init cluster")
 	{
-		setHosts(node, node.Host, config.K8S().ApiServer)
+		setHosts(node, node.Host, configure.K8S.ApiServer)
 		setHosts(node, node.Host, node.Hostname)
 		if node.Hostname != node.Facts.Hostname {
 			setHosts(node, node.Host, node.Facts.Hostname)
 		}
-		makeKubernetesCerts(node)
-		makeJoinControlPlaneConfigFiles(node)
-		initKubernetes(node)
+		makeKubernetesCerts(configure, node)
+		makeJoinControlPlaneConfigFiles(configure, node)
+		initKubernetes(configure, node)
 		copyKubeletAdminConfig(node)
-		applyApiServerEndpoint(node)
+		applyApiServerEndpoint(configure, node)
 	}
-	config.K8S().JoinNode(true, node.Host)
+	configure.K8S.JoinNode(true, node.Host)
 	return node
 }
 
@@ -114,24 +114,24 @@ func bugfixImages(master, node *ssh.Node, remote string) {
 	}
 }
 
-func initKubernetes(node *ssh.Node) {
-	remote := scpKubeConfig(node)
+func initKubernetes(configure *config.Configuration, node *ssh.Node) {
+	remote := scpKubeConfig(configure, node)
 	bugfixImages(node, node, remote)
 	err := node.Sudo().CmdOutput(fmt.Sprintf("kubeadm init --config=%s --upload-certs", remote), os.Stdout)
 	utils.Panic(err, "kubeadm init")
 }
 
-func scpKubeConfig(node *ssh.Node) string {
+func scpKubeConfig(configure *config.Configuration, node *ssh.Node) string {
 	var kubeadmConfigBytes []byte
 	var err error
 
-	tmpData := templateDate(node)
+	tmpData := templateDate(configure, node)
 
-	if config.K8S().KubeadmConfig != "" {
-		configBytes, err := ioutil.ReadFile(config.K8S().KubeadmConfig)
-		utils.Panic(err, "read kubeadm-config file %s", config.K8S().KubeadmConfig)
+	if configure.K8S.KubeadmConfig != "" {
+		configBytes, err := ioutil.ReadFile(configure.K8S.KubeadmConfig)
+		utils.Panic(err, "read kubeadm-config file %s", configure.K8S.KubeadmConfig)
 		kubeadmConfigBytes, err = tools.Template(string(configBytes), tmpData)
-		utils.Panic(err, "parse user kubeadm config error: %s", config.K8S().KubeadmConfig)
+		utils.Panic(err, "parse user kubeadm config error: %s", configure.K8S.KubeadmConfig)
 	} else {
 		kubeadmConfigBytes, err = tools.Assert("yaml/kubeadm-config.yaml", tmpData)
 		utils.Panic(err, "parse kubeadm config error")
@@ -150,35 +150,32 @@ func copyKubeletAdminConfig(node *ssh.Node) {
 	err = node.Sudo().Cmd("cp -f /etc/kubernetes/admin.conf $HOME/.kube/config")
 	utils.Panic(err, "copy kubectl config")
 
-	err = node.Sudo().Cmd("chown $(id -u):$(id -g) $HOME/.kube/config")
-	utils.Panic(err, "change kubectl config owner")
-
-	err = node.Sudo().Cmd("chown -R $(id -u):$(id -g) $HOME/.vik8s")
+	err = node.Sudo().Cmd("chown -R $(id -u):$(id -g) $HOME/.kube")
 	utils.Panic(err, "change vik8s config dir")
 }
 
-func applyApiServerEndpoint(node *ssh.Node) {
+func applyApiServerEndpoint(configure *config.Configuration, node *ssh.Node) {
 	name := "yaml/vik8s-api-server.conf"
-	data := templateDate(node)
+	data := templateDate(configure, node)
 	//tools.MustScpAndApplyAssert(node, name, data)
 	err := reduce.ApplyAssert(node, name, data)
 	utils.Panic(err, "apply vik8s-api-server")
 }
 
-func templateDate(node *ssh.Node) paths.Json {
-	masters := append(hosts.MustGets(config.K8S().Masters), node)
-	nodes := hosts.MustGets(config.K8S().Nodes)
+func templateDate(configure *config.Configuration, node *ssh.Node) paths.Json {
+	masters := append(hosts.MustGets(configure.K8S.Masters), node)
+	nodes := hosts.MustGets(configure.K8S.Nodes)
 	data := paths.Json{
 		"Masters": masters, "Workers": nodes,
-		"nodes": append(masters, nodes...), "Kubeadm": config.K8S(),
+		"nodes": append(masters, nodes...), "Kubeadm": configure.K8S,
 	}
-	if config.ExternalETCD() {
+	if configure.IsExternalETCD() {
 		data["Etcd"] = paths.Json{
-			"External": true, "nodes": config.Etcd().Nodes,
+			"External": true, "Nodes": configure.ETCD.Nodes,
 		}
 	} else {
 		data["Etcd"] = paths.Json{"External": false}
 	}
-	data["Kubeadm"] = config.K8S()
+	data["Kubeadm"] = configure.K8S
 	return data
 }

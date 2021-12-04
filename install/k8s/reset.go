@@ -11,21 +11,21 @@ import (
 	"os"
 )
 
-func ResetNode(node *ssh.Node) {
+func ResetNode(configure *config.Configuration, node *ssh.Node) {
 	err := node.Sudo().CmdStdout("kubeadm reset -f")
 	if err != nil {
 		node.Logger("reset %s", err.Error())
 	}
 
-	config.K8S().RemoveNode(node.Host)
+	configure.K8S.RemoveNode(node.Host)
 
-	if len(config.K8S().Masters) == 0 && len(config.K8S().Nodes) == 0 {
+	if len(configure.K8S.Masters) == 0 && len(configure.K8S.Nodes) == 0 {
 		dataDir := paths.Join("kube")
 		logs.Infof("remove data folder %s", dataDir)
 		_ = os.RemoveAll(dataDir)
-		if config.Config.ETCD != nil && len(config.Config.ETCD.Nodes) > 0 {
+		if configure.IsExternalETCD() {
 			logs.Infof("remove all cluster data in etcd")
-			etcdNode := hosts.MustGet(config.Etcd().Nodes[0])
+			etcdNode := hosts.MustGet(configure.ETCD.Nodes[0])
 			err = etcdNode.Sudo().CmdPrefixStdout(etcd.Etcdctl("del /registry --prefix"))
 			utils.Panic(err, "delete etcd cluster data /registry")
 			err = etcdNode.Sudo().CmdPrefixStdout(etcd.Etcdctl("del /calico --prefix"))

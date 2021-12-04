@@ -24,19 +24,26 @@ var etcdInitCmd = &cobra.Command{
 	Example: `  vik8s etcd init 172.16.100.11-172.16.100.13
   vik8s etcd init 172.16.100.11 172.16.100.12 172.16.100.13`,
 	Run: func(cmd *cobra.Command, args []string) {
-		config.Config.ETCD = etcdConfig
-		nodes := hosts.MustGets(args)
-		etcd.InitCluster(nodes[0])
-		for _, ip := range nodes[1:] {
-			etcd.JoinCluster(ip)
+		if configure.ETCD != nil && configure.ETCD.Token != "" {
+			panic("The cluster has been initialized, if you want to re-initialize. use `vik8s etcd reset all` first ")
 		}
-		fmt.Println("-=-=-=- SUCCESS -=-=-=-")
+
+		configure.ETCD = etcdConfig
+		nodes := hosts.MustGets(args)
+		etcd.InitCluster(configure, nodes[0])
+		configure.ETCD.Nodes = append(configure.ETCD.Nodes, nodes[0].Host)
+
+		args = make([]string, len(nodes)-1)
+		for i, node := range nodes[1:] {
+			args[i] = node.Host
+		}
+		etcdJoinCmd.Run(cmd, args)
 	},
 }
 
 func init() {
 	err := cobrax.Flags(etcdInitCmd, etcdConfig, "", "VIK8S_ETCD")
-	utils.Panic(err, "set etcd configuration")
+	utils.Panic(err, "set etcd configure")
 	etcdInitCmd.Flags().SortFlags = false
 }
 
@@ -46,13 +53,14 @@ var etcdJoinCmd = &cobra.Command{
 	Args:    cobra.MinimumNArgs(1),
 	PreRunE: configLoad(hostsLoad(none)), PostRunE: configDown(none),
 	Run: func(cmd *cobra.Command, args []string) {
-		utils.Assert(config.Config.ETCD != nil && len(config.Config.ETCD.Nodes) != 0,
+		utils.Assert(configure.ETCD != nil && len(configure.ETCD.Nodes) != 0,
 			"etcd cluster not initialized yet")
 		nodes := hosts.MustGets(args)
 		for _, node := range nodes {
-			utils.Assert(utils.Search(config.Config.ETCD.Nodes, node.Host) == -1,
+			utils.Assert(utils.Search(configure.ETCD.Nodes, node.Host) == -1,
 				"has joined %s", node.Host)
-			etcd.JoinCluster(node)
+			etcd.JoinCluster(configure, node)
+			configure.ETCD.Nodes = append(configure.ETCD.Nodes, node.Host)
 		}
 		fmt.Println("-=-=-=- SUCCESS -=-=-=-")
 	},
@@ -64,22 +72,23 @@ var etcdResetCmd = &cobra.Command{
 reset one node: vik8s etcd reset 172.16.100.10`,
 	Args: cobra.MinimumNArgs(1), PreRunE: configLoad(hostsLoad(none)), PostRunE: configDown(none),
 	Run: func(cmd *cobra.Command, args []string) {
-		if config.Config.ETCD == nil {
-			config.Config.ETCD = config.DefaultETCDConfiguration()
+		if configure.ETCD == nil {
+			configure.ETCD = config.DefaultETCDConfiguration()
 		}
 
 		var nodes []*ssh.Node
 		if len(args) == 1 && args[0] == "all" {
-			nodes = hosts.MustGets(config.Etcd().Nodes)
+			nodes = hosts.MustGets(utils.Reverse(configure.ETCD.Nodes))
 		} else {
 			nodes = hosts.MustGets(args)
 		}
+
 		for _, node := range nodes {
-			etcd.ResetCluster(node)
+			etcd.ResetCluster(configure, node)
 		}
 
-		if len(config.Config.ETCD.Nodes) == 0 {
-			config.Config.ETCD = nil
+		if len(configure.ETCD.Nodes) == 0 {
+			configure.ETCD = nil
 		}
 		fmt.Println("-=-=-=- SUCCESS -=-=-=-")
 	},

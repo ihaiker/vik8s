@@ -11,20 +11,20 @@ type TestConfigSuite struct {
 }
 
 func (p *TestConfigSuite) TestDocker() {
-	err := config.Load("./_testdata/docker.conf")
+	cfg, err := config.Load("./_testdata/docker.conf")
 	p.Nil(err)
-	p.Equal("v20.1.10", config.Config.Docker.Version)
-	p.Equal("/data", config.Config.Docker.DataRoot)
-	p.Equal("{}", config.Config.Docker.DaemonJson)
-	p.True(config.Config.Docker.StraitVersion)
+	p.Equal("v20.1.10", cfg.Docker.Version)
+	p.Equal("/data", cfg.Docker.DataRoot)
+	p.Equal("{}", cfg.Docker.DaemonJson)
+	p.True(cfg.Docker.StraitVersion)
 }
 
 func (p *TestConfigSuite) TestContainerd() {
-	err := config.Load("./_testdata/containerd.conf")
+	cfg, err := config.Load("./_testdata/containerd.conf")
 	p.Nil(err)
-	p.Equal("v1.21.2", config.Config.Containerd.Version)
-	p.Equal("/data", config.Config.Containerd.DataRoot)
-	p.True(config.Config.Containerd.StraitVersion)
+	p.Equal("v1.21.2", cfg.Containerd.Version)
+	p.Equal("/data", cfg.Containerd.DataRoot)
+	p.True(cfg.Containerd.StraitVersion)
 }
 
 func TestConfig(t *testing.T) {

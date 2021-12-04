@@ -37,7 +37,7 @@ func (f *calico) Flags(cmd *cobra.Command) {
 	_ = cobrax.Flags(cmd, f, "", "")
 }
 
-func (f *calico) Apply(cmd *cobra.Command, node *ssh.Node) {
+func (f *calico) Apply(cmd *cobra.Command, configure *config.Configuration, node *ssh.Node) {
 	image := fmt.Sprintf("%s/tigera/operator", repo.QuayIO(f.Repo))
 	err := tools.ScpAndApplyAssert(node, "yaml/cni/calico/tigera-operator.yaml", paths.Json{
 		"Image": image, "Version": f.OperatorVersion,
@@ -45,7 +45,7 @@ func (f *calico) Apply(cmd *cobra.Command, node *ssh.Node) {
 	utils.Panic(err, "apply calico error")
 
 	err = tools.ScpAndApplyAssert(node, "yaml/cni/calico/custom-resources.yaml", paths.Json{
-		"NetworkCidr": config.Config.K8S.PodCIDR,
+		"NetworkCidr": configure.K8S.PodCIDR,
 	})
 	utils.Panic(err, "apply calico custom resources error")
 }

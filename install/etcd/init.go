@@ -20,29 +20,28 @@ import (
 	"time"
 )
 
-func InitCluster(node *ssh.Node) {
+func InitCluster(configure *config.Configuration, node *ssh.Node) {
 	node.Logger("install etcd server")
-	if config.Config.ETCD.Token == "" {
+	if configure.ETCD.Token == "" {
 		token := utils.Random(16)
 		node.Logger("make etcd token: %s", token)
-		config.Config.ETCD.Token = token
+		configure.ETCD.Token = token
 	}
 	bases.Check(node)
-	cri.Install(node)
-	image := pullContainerImage(node)
-	cleanEtcdData(node)
-	makeAndPushCerts(node)
-	restoreSnapshot(node, image)
-	initEtcd(node, image)
+	cri.Install(configure, node)
+	image := pullContainerImage(configure, node)
+	cleanEtcdData(configure, node)
+	makeAndPushCerts(configure, node)
+	restoreSnapshot(configure, node, image)
+	initEtcd(configure, node, image)
 	waitEtcdReady(node)
 	showClusterStatus(node)
-	config.Config.ETCD.Nodes = append(config.Config.ETCD.Nodes, node.Host)
 }
 
-func pullContainerImage(node *ssh.Node) (image string) {
-	if config.Config.IsDockerCri() {
-		repoUrl := config.Config.ETCD.Repo
-		image = fmt.Sprintf("%s/%s:%s", repo.QuayIO(repoUrl), "coreos/etcd", config.Config.ETCD.Version)
+func pullContainerImage(configure *config.Configuration, node *ssh.Node) (image string) {
+	if configure.IsDockerCri() {
+		repoUrl := configure.ETCD.Repo
+		image = fmt.Sprintf("%s/%s:%s", repo.QuayIO(repoUrl), "coreos/etcd", configure.ETCD.Version)
 		num, err := node.Sudo().CmdString(fmt.Sprintf("docker images --format '{{.Repository}}:{{.Tag}}' | grep %s | wc -l", image))
 		utils.Panic(err, "check docker image tag")
 		if num == "0" {
@@ -53,15 +52,15 @@ func pullContainerImage(node *ssh.Node) (image string) {
 	return
 }
 
-func makeAndPushCerts(node *ssh.Node) {
+func makeAndPushCerts(configure *config.Configuration, node *ssh.Node) {
 	node.Logger("make certs files")
 
 	name := node.Hostname
 	dir := CertsDir()
 	sans := []string{"127.0.0.1", "localhost", node.Hostname, node.Host}
-	sans = append(sans, config.Config.ETCD.ServerCertExtraSans...)
-	sans = append(sans, config.Config.ETCD.Nodes...)
-	vt := config.Config.ETCD.CertsValidity
+	sans = append(sans, configure.ETCD.ServerCertExtraSans...)
+	sans = append(sans, configure.ETCD.Nodes...)
+	vt := configure.ETCD.CertsValidity
 	etcdcerts.CreatePKIAssets(name, dir, sans, vt)
 
 	certsFiles := map[string]string{
@@ -76,28 +75,28 @@ func makeAndPushCerts(node *ssh.Node) {
 	for localFile, remoteFile := range certsFiles {
 		for _, exp := range []string{".key", ".crt"} {
 			local := filepath.Join(dir, localFile+exp)
-			remote := filepath.Join(config.Config.ETCD.CertsDir, remoteFile+exp)
+			remote := filepath.Join(configure.ETCD.CertsDir, remoteFile+exp)
 			utils.Panic(node.Sudo().Scp(local, remote), "scp %s %s", local, remote)
 		}
 	}
 }
 
-func initEtcd(node *ssh.Node, image string) {
-	if config.Config.IsDockerCri() {
-		initEtcdDocker(node, image, "new")
+func initEtcd(configure *config.Configuration, node *ssh.Node, image string) {
+	if configure.IsDockerCri() {
+		initEtcdDocker(configure, node, image, "new")
 	}
 }
 
-func initEtcdDocker(node *ssh.Node, image string, state string) {
+func initEtcdDocker(configure *config.Configuration, node *ssh.Node, image string, state string) {
 	envs := map[string]string{
 		"initial-advertise-peer-urls": "https://" + node.Host + ":2380",                        //对外通告该节点的同伴（Peer）监听地址，这个值会告诉集群中其他节点。
 		"listen-peer-urls":            "https://" + node.Host + ":2380",                        //指定和 Cluster 其他 Node 通信的地址
 		"listen-client-urls":          "https://" + node.Host + ":2379,https://127.0.0.1:2379", //指定对外提供服务的地址
 		"advertise-client-urls":       "https://" + node.Host + ":2380",                        //对外通告的该节点的客户端监听地址，会告诉集群中其他节点。
 
-		"initial-cluster-token": config.Config.ETCD.Token, //创建集群
-		"initial-cluster-state": state,                    //初始化新集群时使用 new, 加入已有集群时使用 existing
-		"initial-cluster":       initialCluster(node),     //指定集群成员列表
+		"initial-cluster-token": configure.ETCD.Token,            //创建集群
+		"initial-cluster-state": state,                           //初始化新集群时使用 new, 加入已有集群时使用 existing
+		"initial-cluster":       initialCluster(configure, node), //指定集群成员列表
 
 		"client-cert-auth":      "true", //客户端 TLS 相关参数
 		"trusted-ca-file":       "/etc/etcd/pki/ca.crt",
@@ -115,8 +114,8 @@ func initEtcdDocker(node *ssh.Node, image string, state string) {
 		"key":       "/etc/etcd/pki/etcdctl-etcd-client.key ",
 	}
 	cmd := "docker run -d --name vik8s-etcd --workdir /var/lib/etcd  --restart always --network host --hostname " + node.Hostname +
-		" -v " + config.Config.ETCD.CertsDir + ":/etc/etcd/pki" +
-		" -v " + config.Config.ETCD.Data + ":/var/lib/etcd "
+		" -v " + configure.ETCD.CertsDir + ":/etc/etcd/pki" +
+		" -v " + configure.ETCD.Data + ":/var/lib/etcd "
 	for key, value := range envs {
 		cmd += fmt.Sprintf(" -e ETCD_%s=%s", strings.ToUpper(strings.ReplaceAll(key, "-", "_")), value)
 	}
@@ -137,40 +136,40 @@ func initEtcdDocker(node *ssh.Node, image string, state string) {
 	utils.Panic(err, "chmod Etcdctl command")
 }
 
-func restoreSnapshot(node *ssh.Node, image string) {
-	if config.Etcd().RemoteSnapshot != "" {
-		logs.Infof("download etcd snapshot file: %s", config.Etcd().RemoteSnapshot)
+func restoreSnapshot(configure *config.Configuration, node *ssh.Node, image string) {
+	if configure.ETCD.RemoteSnapshot != "" {
+		logs.Infof("download etcd snapshot file: %s", configure.ETCD.RemoteSnapshot)
 
-		resp, err := http.Get(config.Etcd().RemoteSnapshot)
+		resp, err := http.Get(configure.ETCD.RemoteSnapshot)
 		utils.Panic(err, "etcd get remote snapshot")
 		utils.Assert(resp.StatusCode == 200,
 			"etcd get remote, the response status is %d not 200 %s", resp.StatusCode, resp.Status)
 		defer resp.Body.Close()
 
-		config.Config.ETCD.Snapshot = paths.Join("etcd", "snapshot.db")
-		err = os.MkdirAll(filepath.Dir(config.Etcd().Snapshot), os.ModePerm)
+		configure.ETCD.Snapshot = paths.Join("etcd", "snapshot.db")
+		err = os.MkdirAll(filepath.Dir(configure.ETCD.Snapshot), os.ModePerm)
 		utils.Panic(err, "make etcd config directory")
 
-		fs, err := os.Create(config.Etcd().Snapshot)
+		fs, err := os.Create(configure.ETCD.Snapshot)
 		utils.Panic(err, "etcd get remote snapshot")
 		defer fs.Close()
 
 		_, err = io.Copy(fs, resp.Body)
 	}
 
-	utils.Assert(config.Etcd().Snapshot == "" || utils.Exists(config.Etcd().Snapshot),
-		"etcd snapshot file not found: %s", config.Etcd().Snapshot)
+	utils.Assert(configure.ETCD.Snapshot == "" || utils.Exists(configure.ETCD.Snapshot),
+		"etcd snapshot file not found: %s", configure.ETCD.Snapshot)
 
-	if config.Etcd().Snapshot != "" {
-		node.Logger("found etcd snapshot: %s", config.Etcd().Snapshot)
+	if configure.ETCD.Snapshot != "" {
+		node.Logger("found etcd snapshot: %s", configure.ETCD.Snapshot)
 
 		remotePath := node.HomeDir("snapshot.db")
-		err := node.Scp(config.Etcd().Snapshot, remotePath)
+		err := node.Scp(configure.ETCD.Snapshot, remotePath)
 		utils.Panic(err, "upload etcd snapshot")
 
-		restoreCmd := "docker run --rm --name etcd-restore-" + config.Etcd().Token +
+		restoreCmd := "docker run --rm --name etcd-restore-" + configure.ETCD.Token +
 			" -v " + remotePath + ":/snapshot.db " +
-			" -v " + filepath.Dir(config.Etcd().Data) + ":/snapshot" +
+			" -v " + filepath.Dir(configure.ETCD.Data) + ":/snapshot" +
 			" " + image +
 			" etcdctl snapshot restore /snapshot.db --data-dir /snapshot/etcd"
 		err = node.Sudo().Cmd(restoreCmd)
@@ -178,9 +177,9 @@ func restoreSnapshot(node *ssh.Node, image string) {
 	}
 }
 
-func initialCluster(node *ssh.Node) string {
+func initialCluster(configure *config.Configuration, node *ssh.Node) string {
 	cluster := node.Hostname + "=https://" + node.Host + ":2380"
-	for _, n := range hosts.MustGets(config.Config.ETCD.Nodes) {
+	for _, n := range hosts.MustGets(configure.ETCD.Nodes) {
 		cluster += "," + n.Hostname + "=https://" + n.Host + ":2380"
 	}
 	return cluster
