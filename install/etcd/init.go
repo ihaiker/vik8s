@@ -6,7 +6,6 @@ import (
 	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/install/bases"
 	"github.com/ihaiker/vik8s/install/cri"
-	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/install/repo"
 	"github.com/ihaiker/vik8s/libs/logs"
@@ -115,7 +114,7 @@ func initEtcdDocker(configure *config.Configuration, node *ssh.Node, image strin
 	}
 	cmd := "docker run -d --name vik8s-etcd --workdir /var/lib/etcd  --restart always --network host --hostname " + node.Hostname +
 		" -v " + configure.ETCD.CertsDir + ":/etc/etcd/pki" +
-		" -v " + configure.ETCD.Data + ":/var/lib/etcd "
+		" -v " + configure.ETCD.DataRoot + ":/var/lib/etcd "
 	for key, value := range envs {
 		cmd += fmt.Sprintf(" -e ETCD_%s=%s", strings.ToUpper(strings.ReplaceAll(key, "-", "_")), value)
 	}
@@ -169,7 +168,7 @@ func restoreSnapshot(configure *config.Configuration, node *ssh.Node, image stri
 
 		restoreCmd := "docker run --rm --name etcd-restore-" + configure.ETCD.Token +
 			" -v " + remotePath + ":/snapshot.db " +
-			" -v " + filepath.Dir(configure.ETCD.Data) + ":/snapshot" +
+			" -v " + filepath.Dir(configure.ETCD.DataRoot) + ":/snapshot" +
 			" " + image +
 			" etcdctl snapshot restore /snapshot.db --data-dir /snapshot/etcd"
 		err = node.Sudo().Cmd(restoreCmd)
@@ -179,7 +178,7 @@ func restoreSnapshot(configure *config.Configuration, node *ssh.Node, image stri
 
 func initialCluster(configure *config.Configuration, node *ssh.Node) string {
 	cluster := node.Hostname + "=https://" + node.Host + ":2380"
-	for _, n := range hosts.MustGets(configure.ETCD.Nodes) {
+	for _, n := range configure.Hosts.MustGets(configure.ETCD.Nodes) {
 		cluster += "," + n.Hostname + "=https://" + n.Host + ":2380"
 	}
 	return cluster
@@ -187,7 +186,7 @@ func initialCluster(configure *config.Configuration, node *ssh.Node) string {
 
 func waitEtcdReady(node *ssh.Node) {
 	for i := 0; i < 5; i++ {
-		status, _ := node.Sudo().CmdString("docker inspect vik8s-etcd -f '{{.State.Status}}'")
+		status, _ := node.Sudo().HideLog().CmdString("docker inspect vik8s-etcd -f '{{.State.Status}}'")
 		if status == "running" {
 			node.Logger("etcd node %s is ready", node.Host)
 			return
@@ -195,8 +194,8 @@ func waitEtcdReady(node *ssh.Node) {
 		node.Logger("etcd node %s status: %s", node.Host, status)
 		time.Sleep(time.Second)
 	}
-	logs, err := node.Sudo().CmdString("docker logs --tail 10 vik8s-etcd")
-	utils.Panic(utils.Wrap(err, logs), "")
+	log, err := node.Sudo().CmdString("docker logs --tail 10 vik8s-etcd")
+	utils.Panic(utils.Wrap(err, log), "")
 }
 
 func showClusterStatus(node *ssh.Node) {

@@ -5,7 +5,6 @@ import (
 	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/install/bases"
 	"github.com/ihaiker/vik8s/install/cri"
-	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"gopkg.in/fatih/color.v1"
@@ -20,7 +19,7 @@ func JoinControl(configure *config.Configuration, node *ssh.Node) {
 		color.Red("%s already in the cluster\n", node.Host)
 		return
 	}
-	master := hosts.MustGet(configure.K8S.Masters[0])
+	master := configure.Hosts.MustGet(configure.K8S.Masters[0])
 	bases.Check(node)
 	bases.InstallTimeServices(node, configure.K8S.Timezone, configure.K8S.NTPServices...)
 	cri.Install(configure, node)
@@ -53,7 +52,7 @@ func JoinWorker(configure *config.Configuration, node *ssh.Node) {
 		color.Red("%s already in the cluster\n", node.Host)
 		return
 	}
-	master := hosts.MustGet(configure.K8S.Masters[0])
+	master := configure.Hosts.MustGet(configure.K8S.Masters[0])
 
 	bases.Check(node)
 	bases.InstallTimeServices(node, configure.K8S.Timezone, configure.K8S.NTPServices...)
@@ -79,7 +78,7 @@ func JoinWorker(configure *config.Configuration, node *ssh.Node) {
 }
 
 func setNodeHosts(configure *config.Configuration, node *ssh.Node) {
-	nodes := hosts.MustGets(append(configure.K8S.Masters, configure.K8S.Nodes...))
+	nodes := configure.Hosts.MustGets(append(configure.K8S.Masters, configure.K8S.Nodes...))
 	setHosts(node, node.Host, node.Hostname)
 	for _, n := range nodes {
 		setHosts(n, node.Host, node.Hostname)

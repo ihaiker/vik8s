@@ -10,6 +10,7 @@ type Json map[string]interface{}
 var ConfigDir = os.ExpandEnv("$HOME/.vik8s")
 var Cloud = "default"
 var China = true
+var IsTerraform = false
 
 func Join(path ...string) string {
 	paths := append([]string{os.ExpandEnv(ConfigDir), Cloud}, path...)

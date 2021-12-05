@@ -1,4 +1,4 @@
-package terraform
+package cluster
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -87,7 +87,7 @@ func k8SConfigSchema() *schema.Schema {
 
 func expendK8SConfiguration(p interface{}) (cfg *config.K8SConfiguration, err error) {
 	cfg = config.DefaultK8SConfiguration()
-	var in tools.ResourceDataWrapper
+	var in *tools.ResourceDataWrapper
 	if in = tools.ListWrapper(p); in == nil {
 		return
 	}

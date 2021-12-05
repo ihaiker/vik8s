@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ihaiker/vik8s/config"
-	"github.com/ihaiker/vik8s/install/hosts"
+	hs "github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/spf13/cobra"
@@ -22,19 +22,12 @@ func configLoad(fn func(cmd *cobra.Command, args []string) error) func(cmd *cobr
 		if configure, err = config.Load(paths.Vik8sConfiguration()); err != nil {
 			return
 		}
-		return fn(cmd, args)
-	}
-}
-
-//hostsLoad load configure
-func hostsLoad(fn func(cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		if err := hosts.Load(paths.HostsConfiguration(), &hosts.Option{
+		if configure.Hosts, err = hs.New(paths.HostsConfiguration(), hs.Option{
 			Port:       22,
 			User:       "root",
 			PrivateKey: "$HOME/.ssh/id_rsa",
 		}); err != nil {
-			return err
+			return
 		}
 		return fn(cmd, args)
 	}

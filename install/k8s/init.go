@@ -5,7 +5,6 @@ import (
 	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/install/bases"
 	"github.com/ihaiker/vik8s/install/cri"
-	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/install/repo"
 	"github.com/ihaiker/vik8s/install/tools"
@@ -163,15 +162,23 @@ func applyApiServerEndpoint(configure *config.Configuration, node *ssh.Node) {
 }
 
 func templateDate(configure *config.Configuration, node *ssh.Node) paths.Json {
-	masters := append(hosts.MustGets(configure.K8S.Masters), node)
-	nodes := hosts.MustGets(configure.K8S.Nodes)
+	masters := append(configure.Hosts.MustGets(configure.K8S.Masters), node)
+	nodes := configure.Hosts.MustGets(configure.K8S.Nodes)
 	data := paths.Json{
 		"Masters": masters, "Workers": nodes,
 		"nodes": append(masters, nodes...), "Kubeadm": configure.K8S,
 	}
 	if configure.IsExternalETCD() {
+		endpoints := make([]string, 0)
+		if configure.ExternalETCD != nil {
+			endpoints = configure.ExternalETCD.Endpoints
+		} else {
+			for _, node := range configure.ETCD.Nodes {
+				endpoints = append(endpoints, fmt.Sprintf("https://%s:2379", node))
+			}
+		}
 		data["Etcd"] = paths.Json{
-			"External": true, "Nodes": configure.ETCD.Nodes,
+			"External": true, "Endpoints": endpoints,
 		}
 	} else {
 		data["Etcd"] = paths.Json{"External": false}

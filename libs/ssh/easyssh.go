@@ -104,7 +104,7 @@ func getSSHConfig(config *Node) (*ssh.ClientConfig, io.Closer, error) {
 }
 
 // connect to remote server using easySSHConfig struct and returns *ssh.Session
-func (node *Node) connect() (*ssh.Session, *ssh.Client, error) {
+func (node *Node) _connect() (*ssh.Session, *ssh.Client, error) {
 	var client *ssh.Client
 	var err error
 
@@ -160,7 +160,7 @@ func (conf *Node) stream(command string, watch StreamWatcher) (err error) {
 	var client *ssh.Client
 
 	// connect to remote host
-	if session, client, err = conf.connect(); err != nil {
+	if session, client, err = conf._connect(); err != nil {
 		return
 	}
 	defer client.Close()
@@ -217,8 +217,8 @@ func (conf *Node) mkdir(path string) error {
 	return err
 }
 
-func (conf *Node) scpContent(content []byte, destFilePath string) error {
-	session, client, err := conf.connect()
+func (conf *Node) _scpContent(content []byte, destFilePath string) error {
+	session, client, err := conf._connect()
 	if err != nil {
 		return err
 	}
@@ -249,7 +249,7 @@ func (conf *Node) _scp(sourceFilePath string, destFilePath string, bars ...func(
 	if utils.NotExists(sourceFilePath) {
 		return utils.Error("file not found %s", sourceFilePath)
 	}
-	session, client, err := conf.connect()
+	session, client, err := conf._connect()
 	if err != nil {
 		return err
 	}
@@ -300,7 +300,7 @@ func (conf *Node) _scp(sourceFilePath string, destFilePath string, bars ...func(
 }
 
 // Pull uploads sourceFile to remote machine like native scp console app.
-func (conf *Node) pull(sourceFilePath string, destFilePath string, bars ...func(step, total int64)) error {
+func (conf *Node) _pull(sourceFilePath string, destFilePath string, bars ...func(step, total int64)) error {
 	//mkdir local dir
 	if utils.NotExists(filepath.Dir(destFilePath)) {
 		if err := utils.Mkdir(filepath.Dir(destFilePath)); err != nil {
@@ -308,7 +308,7 @@ func (conf *Node) pull(sourceFilePath string, destFilePath string, bars ...func(
 		}
 	}
 
-	session, client, err := conf.connect()
+	session, client, err := conf._connect()
 	if err != nil {
 		return err
 	}

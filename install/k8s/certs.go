@@ -6,7 +6,6 @@ import (
 	kubecerts "github.com/ihaiker/vik8s/certs/kubernetes"
 	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/install/etcd"
-	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
@@ -16,7 +15,7 @@ import (
 
 func makeKubernetesCerts(configure *config.Configuration, node *ssh.Node) {
 	if configure.IsExternalETCD() {
-		scpExternalEtcdCa(node)
+		scpExternalEtcdCa(configure, node)
 	} else {
 		makeEtcdCerts(configure, node)
 		makeEtcdctlCommand(node)
@@ -72,12 +71,17 @@ func makeEtcdCerts(configure *config.Configuration, node *ssh.Node) {
 	scpCerts(certsFiles, node, dir)
 }
 
-func scpExternalEtcdCa(node *ssh.Node) {
-	dir := etcd.CertsDir()
-	files := map[string]string{
-		filepath.Join(dir, "ca.crt"):                    "/etc/kubernetes/pki/etcd/ca.crt",
-		filepath.Join(dir, "apiserver-etcd-client.key"): "/etc/kubernetes/pki/etcd/apiserver-etcd-client.key",
-		filepath.Join(dir, "apiserver-etcd-client.crt"): "/etc/kubernetes/pki/etcd/apiserver-etcd-client.crt",
+func scpExternalEtcdCa(configure *config.Configuration, node *ssh.Node) {
+	files := map[string]string{}
+	if configure.ExternalETCD != nil {
+		files[configure.ExternalETCD.CaFile] = "/etc/kubernetes/pki/etcd/ca.crt"
+		files[configure.ExternalETCD.Key] = "/etc/kubernetes/pki/etcd/apiserver-etcd-client.key"
+		files[configure.ExternalETCD.Cert] = "/etc/kubernetes/pki/etcd/apiserver-etcd-client.crt"
+	} else {
+		dir := etcd.CertsDir()
+		files[filepath.Join(dir, "ca.crt")] = "/etc/kubernetes/pki/etcd/ca.crt"
+		files[filepath.Join(dir, "apiserver-etcd-client.key")] = "/etc/kubernetes/pki/etcd/apiserver-etcd-client.key"
+		files[filepath.Join(dir, "apiserver-etcd-client.crt")] = "/etc/kubernetes/pki/etcd/apiserver-etcd-client.crt"
 	}
 	for local, remote := range files {
 		err := node.Sudo().Scp(local, remote)
@@ -96,7 +100,7 @@ func makeKubeCerts(configure *config.Configuration, node *ssh.Node) {
 	}
 	//apisever = MasterIPS + VIP + CertSANS
 	for _, masterIp := range configure.K8S.Masters {
-		masterNode := hosts.MustGet(masterIp)
+		masterNode := configure.Hosts.MustGet(masterIp)
 		certNode.SANS = append(certNode.SANS, masterNode.Hostname, masterNode.Host)
 		if masterNode.Hostname != masterNode.Facts.Hostname {
 			certNode.SANS = append(certNode.SANS, masterNode.Facts.Hostname)

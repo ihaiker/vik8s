@@ -2,7 +2,6 @@ package core
 
 import (
 	"github.com/ihaiker/vik8s/install/cni"
-	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/spf13/cobra"
 )
 
@@ -15,10 +14,10 @@ func init() {
 		name := plugin.Name()
 		cmd := &cobra.Command{Use: name}
 		plugin.Flags(cmd)
-		cmd.PersistentPreRunE = configLoad(hostsLoad(none))
+		cmd.PersistentPreRunE = configLoad(none)
 		cmd.PersistentPostRunE = configDown(none)
 		cmd.Run = func(cmd *cobra.Command, args []string) {
-			master := hosts.MustGet(configure.K8S.Masters[0])
+			master := configure.Hosts.MustGet(configure.K8S.Masters[0])
 			cni.Plugins.Apply(cmd, configure, master)
 		}
 		cniCmd.AddCommand(cmd)

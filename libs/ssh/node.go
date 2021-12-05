@@ -3,6 +3,7 @@ package ssh
 import (
 	"bufio"
 	"fmt"
+	"github.com/ihaiker/vik8s/libs/logs"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"gopkg.in/fatih/color.v1"
 	"path/filepath"
@@ -131,9 +132,7 @@ func (node *Node) Prefix() string {
 }
 
 func (node *Node) Logger(format string, params ...interface{}) {
-	fmt.Print(node.Prefix(), " ")
-	fmt.Printf(format, params...)
-	fmt.Println()
+	logs.Info(node.Prefix(), " ", fmt.Sprintf(format, params...))
 }
 
 func (nodes *Nodes) Get(hostnameOrIP string) *Node {
@@ -143,4 +142,12 @@ func (nodes *Nodes) Get(hostnameOrIP string) *Node {
 		}
 	}
 	return nil
+}
+
+func (nodes Nodes) Hosts() []string {
+	nodeHosts := make([]string, len(nodes))
+	for i, node := range nodes {
+		nodeHosts[i] = node.Host
+	}
+	return nodeHosts
 }

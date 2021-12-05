@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/cheggaaa/pb/v3 v3.0.8
+	github.com/hashicorp/go-hclog v0.15.0
 	github.com/hashicorp/go-version v1.3.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.9.0
 	github.com/ihaiker/cobrax v1.2.5

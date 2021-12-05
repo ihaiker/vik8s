@@ -25,12 +25,16 @@ func (t TestHostsSuite) TearDownTest() {
 
 func (t TestHostsSuite) TestGetOrAdd() {
 	cfg := paths.HostsConfiguration()
-	manager, err := hosts.New(cfg)
+	manager, err := hosts.New(cfg, hosts.Option{
+		Port:       22,
+		User:       "root",
+		PrivateKey: "$HOME/.ssh/id_rsa",
+	})
 	t.Nil(err, "初始化 hosts.conf错误")
 
 	node := &ssh.Node{
 		Host:       "10.24.0.10",
-		Port:       "22",
+		Port:       22,
 		User:       "root",
 		Password:   "",
 		PrivateKey: "",

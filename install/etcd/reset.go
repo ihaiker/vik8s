@@ -2,7 +2,6 @@ package etcd
 
 import (
 	"github.com/ihaiker/vik8s/config"
-	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
 )
@@ -17,7 +16,7 @@ func ResetCluster(configure *config.Configuration, node *ssh.Node) {
 	cleanEtcdData(configure, node)
 
 	if len(configure.ETCD.Nodes) > 0 {
-		otherNode := hosts.MustGet(configure.ETCD.Nodes[0])
+		otherNode := configure.Hosts.MustGet(configure.ETCD.Nodes[0])
 		showClusterStatus(otherNode)
 	} else {
 		utils.Line("all etcd node remove")
@@ -25,15 +24,19 @@ func ResetCluster(configure *config.Configuration, node *ssh.Node) {
 }
 
 func removeEtcdMember(configure *config.Configuration, node *ssh.Node) {
-	node.Logger("remove etcd node %s", node.Host)
+	if len(configure.ETCD.Nodes) == 1 {
+		return
+	}
+	master := configure.Hosts.MustGet(utils.Any(configure.ETCD.Nodes, node.Host))
 
-	id, err := node.Sudo().CmdString(Etcdctl("member list | grep " + node.Host + ":2380 | awk -F',' '{print $1}'"))
+	id, err := master.Sudo().CmdString(Etcdctl("member list | grep " + node.Host + ":2380 | awk -F',' '{print $1}'"))
 	utils.Panic(err, "etcd list member")
 
 	if id != "" {
+		node.Logger("remove etcd node %s", node.Host)
 		if len(configure.ETCD.Nodes) != 1 {
 			node.Logger("remove etcd member %s", id)
-			err = node.Sudo().CmdPrefixStdout(Etcdctl("member remove " + id))
+			err = master.Sudo().CmdPrefixStdout(Etcdctl("member remove " + id))
 			utils.Panic(err, "etcd remove member")
 		}
 	} else {
@@ -45,8 +48,8 @@ func cleanEtcdData(configure *config.Configuration, node *ssh.Node) {
 	node.Logger("remove docker container vik8s-etcd")
 	_ = node.Sudo().CmdPrefixStdout("docker rm -vf vik8s-etcd")
 
-	node.Logger("remove etcd member data %s", configure.ETCD.Data)
-	_ = node.Sudo().CmdPrefixStdout("rm -rf " + configure.ETCD.Data)
+	node.Logger("remove etcd member data %s", configure.ETCD.DataRoot)
+	_ = node.Sudo().CmdPrefixStdout("rm -rf " + configure.ETCD.DataRoot)
 
 	node.Logger("remove etcd config data %s", configure.ETCD.CertsDir)
 	_ = node.Sudo().CmdPrefixStdout("rm -rf " + configure.ETCD.CertsDir)

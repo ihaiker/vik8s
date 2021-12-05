@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/ihaiker/cobrax"
 	"github.com/ihaiker/vik8s/config"
-	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/k8s"
 	"github.com/ihaiker/vik8s/libs/logs"
 	"github.com/ihaiker/vik8s/libs/ssh"
@@ -17,10 +16,10 @@ var k8sConfig = config.DefaultK8SConfiguration()
 var initCmd = &cobra.Command{
 	Use: "init", Short: "Initialize the kubernetes cluster",
 	Example: `vik8s init 10.24.1.10 172.10.0.2-172.10.0.5`,
-	PreRunE: configLoad(hostsLoad(none)), PostRunE: configDown(none),
+	PreRunE: configLoad(none), PostRunE: configDown(none),
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		masters := hosts.MustGets(args)
+		masters := configure.Hosts.MustGets(args)
 
 		utils.Assert(len(masters) != 0, "master node is empty")
 		configure.K8S = k8sConfig
@@ -51,10 +50,10 @@ var joinCmd = &cobra.Command{
 	Use: "join", Short: "join to k8s",
 	Example: `vik8s join --master 172.10.0.2-172.10.0.4
 vik8s join 172.10.0.2 172.10.0.3 172.10.0.4 172.10.0.5`,
-	PreRunE: configLoad(hostsLoad(none)), PostRunE: configDown(none),
+	PreRunE: configLoad(none), PostRunE: configDown(none),
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		nodes := hosts.MustGets(args)
+		nodes := configure.Hosts.MustGets(args)
 		if len(nodes) == 0 {
 			fmt.Println(cmd.UseLine())
 			return
@@ -88,7 +87,7 @@ var resetCmd = &cobra.Command{
 	Use: "reset", Short: "reset kubernetes cluster node",
 	Example: "vik8s reset <nodeIP|nodeHostName|all>",
 	Args:    cobra.MinimumNArgs(1),
-	PreRunE: configLoad(hostsLoad(none)), PostRunE: configDown(none),
+	PreRunE: configLoad(none), PostRunE: configDown(none),
 	Run: func(cmd *cobra.Command, args []string) {
 		nodes := args
 		if configure.K8S == nil {
@@ -99,10 +98,10 @@ var resetCmd = &cobra.Command{
 		}
 		var master *ssh.Node
 		if len(configure.K8S.Masters) > 0 {
-			master = hosts.MustGet(configure.K8S.Masters[0])
+			master = configure.Hosts.MustGet(configure.K8S.Masters[0])
 		}
 		for _, nodeName := range nodes {
-			node := hosts.MustGet(nodeName)
+			node := configure.Hosts.MustGet(nodeName)
 			utils.Assert(node != nil, "not found kubernetes %s", node.Host)
 			logs.Infof("remove cluster node %s", node.Prefix())
 

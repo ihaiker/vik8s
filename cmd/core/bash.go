@@ -2,7 +2,6 @@ package core
 
 import (
 	"fmt"
-	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
@@ -58,9 +57,9 @@ func runCmd(sync bool, cmd string, nodes []*ssh.Node, filters ...string) {
 var bashCmd = &cobra.Command{
 	Use: "bash", Short: "Run commands uniformly in the cluster",
 	//SilenceErrors: true, SilenceUsage: true,
-	PersistentPreRunE: hostsLoad(none),
+	PersistentPreRunE: configLoad(none),
 	Run: func(cmd *cobra.Command, args []string) {
-		nodes := hosts.Nodes()
+		nodes := configure.Hosts.All()
 		utils.Assert(len(nodes) > 0, "not found any host, use `vik8s host <node>` to add.")
 
 		if len(args) > 0 {

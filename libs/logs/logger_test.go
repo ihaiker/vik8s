@@ -47,16 +47,7 @@ func (t *testLogsSuite) TestRoot() {
 	logs.Error("test")
 }
 
-func (t *testLogsSuite) TestNew() {
-	var logger = logs.New("test")
-	logger.SetLevel(logrus.DebugLevel)
-	logger.Debug("test")
-	logger.Info("test")
-	logger.Warn("test")
-	logger.Error("test")
-}
-
-func TestOut(t *testing.T) {
+func (t *testLogsSuite) TestOut() {
 	out := bytes.NewBuffer([]byte{})
 	logs.SetOutput(out)
 	logs.SetLevel(logrus.DebugLevel)
@@ -66,5 +57,5 @@ func TestOut(t *testing.T) {
 	logs.Warn("test")
 	logs.Error("test")
 
-	t.Log(out.String())
+	t.T().Log(out.String())
 }

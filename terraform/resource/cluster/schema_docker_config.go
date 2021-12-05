@@ -1,4 +1,4 @@
-package terraform
+package cluster
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -145,15 +145,15 @@ func expendDockerConfiguration(p interface{}) (cfg *config.DockerConfiguration, 
 	cfg.DaemonJson = in.String("daemon_json", cfg.DaemonJson)
 	cfg.InsecureRegistries = in.Set("insecure_registries", cfg.InsecureRegistries)
 	cfg.RegistryMirrors = in.Set("registry_mirrors", cfg.RegistryMirrors)
-	if cfg.Storage, err = expendDockerStorageConfiguration(in.Get("storage")); err != nil {
-		return
-	}
-	if cfg.DNS, err = expendDockerDNSConfiguration(in.Get("dns")); err != nil {
-		return
-	}
-	if cfg.TLS, err = expendDockerTLSConfiguration(in.Get("tls")); err != nil {
-		return
-	}
+	//if cfg.Storage, err = expendDockerStorageConfiguration(in.Get("storage")); err != nil {
+	//	return
+	//}
+	//if cfg.DNS, err = expendDockerDNSConfiguration(in.Get("dns")); err != nil {
+	//	return
+	//}
+	//if cfg.TLS, err = expendDockerTLSConfiguration(in.Get("tls")); err != nil {
+	//	return
+	//}
 	return
 }
 

@@ -5,8 +5,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/cheggaaa/pb/v3"
+	"github.com/ihaiker/vik8s/install/paths"
 	"io/ioutil"
-	"os"
+	"log"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -57,7 +58,7 @@ func (node *Node) ScpContent(content []byte, remotePath string) error {
 	defer node.reset()
 
 	if node.IsRoot() || !node.isSudo() {
-		return node.ScpContent(content, remotePath)
+		return node._scpContent(content, remotePath)
 	} else {
 		path := fmt.Sprintf("/tmp/vik8s/%s", filepath.Base(remotePath))
 		if err := node.ScpContent(content, path); err != nil {
@@ -75,11 +76,13 @@ func (node *Node) ScpContent(content []byte, remotePath string) error {
 func (node *Node) scp(localPath, temporaryRemotePath, remotePath string, showProgressBar bool) error {
 	defer node.reset()
 
+	showProgressBar = showProgressBar && !paths.IsTerraform
+
 	var bar *pb.ProgressBar
 	if showProgressBar {
 		bar = pb.New64(100)
 		defer bar.Finish()
-		bar.SetWriter(os.Stdout)
+		bar.SetWriter(log.Writer())
 		bar.SetRefreshRate(time.Millisecond * 300)
 		bar.Set("prefix",
 			fmt.Sprintf("%s scp %s %s  ", node.Prefix(), localPath, remotePath))
@@ -97,15 +100,20 @@ func (node *Node) scp(localPath, temporaryRemotePath, remotePath string, showPro
 func (node *Node) Pull(remotePath, localPath string) error {
 	node.Logger("pull %s %s", remotePath, localPath)
 
-	bar := pb.New64(100)
-	defer bar.Finish()
-	bar.SetWriter(os.Stdout)
-	bar.SetRefreshRate(time.Millisecond * 300)
-	bar.Set(pb.Terminal, true)
-	bar.Start()
+	var bar *pb.ProgressBar
+	if !paths.IsTerraform {
+		bar = pb.New64(100)
+		defer bar.Finish()
+		bar.SetWriter(log.Writer())
+		bar.SetRefreshRate(time.Millisecond * 300)
+		bar.Set(pb.Terminal, true)
+		bar.Start()
+	}
 
-	return node.pull(remotePath, localPath, func(step, total int64) {
-		bar.SetTotal(total)
-		bar.SetCurrent(step)
+	return node._pull(remotePath, localPath, func(step, total int64) {
+		if bar != nil {
+			bar.SetTotal(total)
+			bar.SetCurrent(step)
+		}
 	})
 }

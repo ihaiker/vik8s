@@ -3,7 +3,6 @@ package k8s
 import (
 	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/install/etcd"
-	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/libs/logs"
 	"github.com/ihaiker/vik8s/libs/ssh"
@@ -25,7 +24,7 @@ func ResetNode(configure *config.Configuration, node *ssh.Node) {
 		_ = os.RemoveAll(dataDir)
 		if configure.IsExternalETCD() {
 			logs.Infof("remove all cluster data in etcd")
-			etcdNode := hosts.MustGet(configure.ETCD.Nodes[0])
+			etcdNode := configure.Hosts.MustGet(configure.ETCD.Nodes[0])
 			err = etcdNode.Sudo().CmdPrefixStdout(etcd.Etcdctl("del /registry --prefix"))
 			utils.Panic(err, "delete etcd cluster data /registry")
 			err = etcdNode.Sudo().CmdPrefixStdout(etcd.Etcdctl("del /calico --prefix"))

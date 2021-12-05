@@ -1,14 +1,14 @@
-package terraform
+package cluster
 
 import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/ihaiker/vik8s/terraform/tools"
-	"github.com/kr/pretty"
 	"log"
 	"os"
 	"time"
@@ -18,13 +18,13 @@ var (
 	TaintEffectTypes = []string{"NoExecute", "NoSchedule", "PreferNoSchedule"}
 )
 
-type node struct {
+type nodeConfig struct {
 	role   []string
 	labels map[string]string
 	nodes  ssh.Nodes
 }
 
-type nodes []*node
+type nodesConfig []*nodeConfig
 
 func nodeSchema() *schema.Schema {
 	return &schema.Schema{
@@ -127,9 +127,9 @@ func nodeSchema() *schema.Schema {
 	}
 }
 
-func expendNodes(p interface{}) (_nodes nodes, err error) {
+func expendNodes(p interface{}) (_nodes nodesConfig, err error) {
 	in := tools.ListItemsWrapper(p)
-	_nodes = make([]*node, 0)
+	_nodes = make([]*nodeConfig, 0)
 	for _, item := range in {
 		sshKey := item.String("ssh_key", "")
 		if sshKey != "" {
@@ -146,7 +146,7 @@ func expendNodes(p interface{}) (_nodes nodes, err error) {
 			return
 		}
 		bastion := item.String("bastion", "")
-		_node := &node{
+		_node := &nodeConfig{
 			role:   item.Set("role", []string{"worker"}),
 			labels: item.Map("labels", map[string]string{}),
 		}
@@ -173,7 +173,7 @@ func expendNodes(p interface{}) (_nodes nodes, err error) {
 }
 
 //checkAllNodes 检查所有主机是否可连接
-func checkAllNodes(nodes nodes) (err error) {
+func checkAllNodes(configure *config.Configuration, nodes nodesConfig) (err error) {
 	log.Println("check all nodes")
 	for _, sn := range nodes {
 		for _, sshNode := range sn.nodes {
@@ -187,13 +187,13 @@ func checkAllNodes(nodes nodes) (err error) {
 			if err = sshNode.GatheringFacts(); err != nil {
 				return
 			}
+			_ = configure.Hosts.Add(sshNode)
 		}
-		pretty.Log(sn)
 	}
 	return
 }
 
-func (this nodes) get(host string) (*ssh.Node, error) {
+func (this nodesConfig) get(host string) (*ssh.Node, error) {
 	for _, _node := range this {
 		if _node.nodes == nil {
 			continue
@@ -203,4 +203,14 @@ func (this nodes) get(host string) (*ssh.Node, error) {
 		}
 	}
 	return nil, fmt.Errorf("host %s not found", host)
+}
+
+func (this nodesConfig) roleNode(role string) ssh.Nodes {
+	items := ssh.Nodes{}
+	for _, defNode := range this {
+		if utils.Search(defNode.role, role) != -1 {
+			items = append(items, defNode.nodes...)
+		}
+	}
+	return items
 }

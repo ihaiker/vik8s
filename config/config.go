@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/ihaiker/ngx/v2"
+	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"io/ioutil"
 	"os"
@@ -9,11 +10,13 @@ import (
 )
 
 type Configuration struct {
-	filename   string
-	Docker     *DockerConfiguration     `ngx:"docker"`
-	Containerd *ContainerdConfiguration `ngx:"containerd"`
-	K8S        *K8SConfiguration        `ngx:"k8s"`
-	ETCD       *ETCD                    `ngx:"etcd"`
+	filename     string
+	Docker       *DockerConfiguration       `ngx:"docker"`
+	Containerd   *ContainerdConfiguration   `ngx:"containerd"`
+	K8S          *K8SConfiguration          `ngx:"k8s"`
+	ETCD         *ETCDConfiguration         `ngx:"etcd"`
+	ExternalETCD *ExternalETCDConfiguration `ngx:"external_etcd"`
+	Hosts        *hosts.Manager             `ngx:"-"`
 }
 
 //Load 加载vik8s.conf配置，如果配置文件不存在，直接返回空配置
@@ -49,5 +52,5 @@ func (cfg *Configuration) IsDockerCri() bool {
 }
 
 func (cfg *Configuration) IsExternalETCD() bool {
-	return cfg.ETCD != nil && len(cfg.ETCD.Nodes) > 0
+	return (cfg.ETCD != nil && len(cfg.ETCD.Nodes) > 0) || cfg.ExternalETCD != nil
 }

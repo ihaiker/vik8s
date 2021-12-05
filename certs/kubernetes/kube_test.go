@@ -12,7 +12,7 @@ import (
 const testdata = "_testdata"
 
 func TestKubernetesCerts(t *testing.T) {
-	config.Config.K8S = config.DefaultK8SConfiguration()
+	config := config.DefaultK8SConfiguration()
 	defer os.RemoveAll(testdata)
 
 	node := Node{
@@ -22,7 +22,7 @@ func TestKubernetesCerts(t *testing.T) {
 		SvcCIDR:             "10.96.0.0/12",
 		CertificateValidity: time.Hour * 24 * 365 * 10,
 	}
-	CreatePKIAssets(filepath.Join(testdata, "pki"), node)
+	CreatePKIAssets(config.ApiServer, filepath.Join(testdata, "pki"), node)
 
 	endpoint := fmt.Sprintf("https://%s:6443", "vik8s-api-server")
 	files := CreateWorkerKubeConfigFile(testdata, "vm09", endpoint, time.Hour)

@@ -2,26 +2,32 @@ package tools
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/json"
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/ihaiker/vik8s/config"
+	"github.com/ihaiker/vik8s/libs/logs"
 	"github.com/ihaiker/vik8s/libs/utils"
-	"log"
-	"strings"
 )
 
-type input = func(context.Context, *schema.ResourceData, *config.Configuration) diag.Diagnostics
+type input = func(context.Context, *schema.ResourceData, *config.Configuration) error
 type output = func(context.Context, *schema.ResourceData, interface{}) diag.Diagnostics
 
-func Safe(method string, fn input) output {
+func Logger(method string, fn input) output {
 	return func(ctx context.Context, data *schema.ResourceData, i interface{}) (dd diag.Diagnostics) {
-		defer utils.Catch(func(err error) {
-			log.Println(utils.Stack())
-			dd = diag.FromErr(err)
+		defer utils.Catch(func(e error) {
+			logs.Info(utils.Stack())
+			dd = diag.FromErr(e)
 		})
-		log.Println(strings.Repeat("<", 30), method, strings.Repeat("<", 30))
-		defer func() { log.Println(strings.Repeat(">", 30), method, strings.Repeat("<", 30)) }()
-		return fn(ctx, data, new(config.Configuration))
+		if err := fn(ctx, data, i.(*config.Configuration)); err != nil {
+			return diag.FromErr(err)
+		}
+		if err := i.(*config.Configuration).Write(); err != nil {
+			return diag.FromErr(err)
+		}
+		return
 	}
 }
 
@@ -43,4 +49,31 @@ func GetDataSetString(p interface{}) []string {
 		strs[i] = item.(string)
 	}
 	return strs
+}
+
+func Length(p interface{}) int {
+	if p == nil {
+		return 0
+	}
+	if list, match := p.([]interface{}); match {
+		return len(list)
+	}
+	if set, match := p.(*schema.Set); match {
+		return set.Len()
+	}
+	return 0
+}
+
+func SetState(p interface{}, data *schema.ResourceData) error {
+	for k, v := range p.([]interface{})[0].(map[string]interface{}) {
+		if err := data.Set(k, v); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func Id(prefix string, i interface{}) string {
+	bs, _ := json.Marshal(i)
+	return fmt.Sprintf("%s-%x", prefix, md5.Sum(bs))
 }

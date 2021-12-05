@@ -1,4 +1,4 @@
-package terraform
+package cluster
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -26,11 +26,11 @@ func expendContainerConfig(p interface{}) (cfg *config.DockerConfiguration, err 
 	if in == nil {
 		return
 	}
-	if d := in.Get("docker"); d != nil {
-		if cfg, err = expendDockerConfiguration(d); err != nil {
-			return
-		}
-	}
+	//if d := in.Get("docker"); d != nil {
+	//	if cfg, err = expendDockerConfiguration(d); err != nil {
+	//		return
+	//	}
+	//}
 	return
 }
 

@@ -14,7 +14,7 @@ import (
 var reduceCmd = &cobra.Command{
 	Use: "reduce", Short: "Simplify kubernetes configure file",
 	Args:    cobra.ExactArgs(1),
-	PreRunE: configLoad(hostsLoad(none)),
+	PreRunE: configLoad(none),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if utils.NotExists(args[0]) {
 			return fmt.Errorf("file not found: %s", args[0])
@@ -33,7 +33,7 @@ var reduceCmd = &cobra.Command{
 var reduceDemoCmd = &cobra.Command{
 	Use: "demo", Short: "show config demo",
 	Args: cobra.ExactValidArgs(1), ValidArgs: []string{},
-	PreRunE: configLoad(hostsLoad(none)),
+	PreRunE: configLoad(none),
 	Run: func(cmd *cobra.Command, args []string) {
 		for _, m := range plugins.Manager {
 			for _, name := range m.Names {

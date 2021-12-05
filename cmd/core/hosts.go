@@ -3,33 +3,28 @@ package core
 import (
 	"fmt"
 	"github.com/ihaiker/cobrax"
-	"github.com/ihaiker/vik8s/install/hosts"
-	"github.com/ihaiker/vik8s/install/paths"
+	hs "github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/spf13/cobra"
 )
 
-var _hosts_config = new(hosts.Option)
-
+var _hosts_config = new(hs.Option)
 var hostsCmd = &cobra.Command{
 	Use: "hosts", Short: "Add Management Host",
-	Long: `vik8s hosts 172.16.100.4 172.16.100.10-172.16.100.15`,
-	Args: cobra.MinimumNArgs(1),
+	Long:    `vik8s hosts 172.16.100.4 172.16.100.10-172.16.100.15`,
+	Args:    cobra.MinimumNArgs(1),
+	PreRunE: configLoad(none),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := hosts.Load(paths.HostsConfiguration(), _hosts_config)
-		utils.Panic(err, "load host.conf error")
-
-		_, err = hosts.Fetch(true, args...)
+		_, err := configure.Hosts.Fetch(true, args...)
 		utils.Panic(err, "add hosts")
 	},
 }
 
 var hostsListCmd = &cobra.Command{
 	Use: "list", Aliases: []string{"ls"},
+	PreRunE: configLoad(none),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := hosts.Load(paths.HostsConfiguration(), _hosts_config)
-		utils.Panic(err, "load hosts.conf error")
-		for _, node := range hosts.Nodes() {
+		for _, node := range configure.Hosts.All() {
 			fmt.Println(node.Hostname, " ", node.Host)
 		}
 	},

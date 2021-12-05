@@ -239,3 +239,14 @@ func Random(n int) string {
 	}
 	return key
 }
+
+func Any(arrays []string, excludes ...string) string {
+	for _, array := range arrays {
+		for _, exclude := range excludes {
+			if array != exclude {
+				return array
+			}
+		}
+	}
+	return ""
+}

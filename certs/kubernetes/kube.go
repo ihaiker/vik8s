@@ -7,7 +7,6 @@ import (
 	"github.com/ihaiker/vik8s/install/tools"
 	"github.com/ihaiker/vik8s/libs/logs"
 	"github.com/ihaiker/vik8s/libs/utils"
-	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"time"
 )
@@ -29,16 +28,8 @@ type Node struct {
 	SANS []string
 }
 
-var log = logs.NewLogger("cert", func(hook *logs.FieldsHook, logger *logrus.Logger) {
-	logger.WithField("module", "kubernetes")
-	logger.SetFormatter(&logs.Formatter{
-		TimestampFormat: "[2006-01-02 15:04:05.000]",
-		HideCaller:      true, HideKeys: true, HideLevel: false,
-	})
-})
-
 func line(node, format string, args ...interface{}) {
-	log.Infof("node=%s "+format, append(args, node)...)
+	logs.Infof("node=%s "+format, append(args, node)...)
 }
 
 type createAction func(dir string, node Node)
