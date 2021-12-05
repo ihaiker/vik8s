@@ -1,9 +1,9 @@
-package cluster
+package terraform
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/ihaiker/vik8s/cmd/terraform/tools"
 	"github.com/ihaiker/vik8s/config"
+	"github.com/ihaiker/vik8s/terraform/tools"
 	"time"
 )
 
@@ -19,7 +19,6 @@ func k8SConfigSchema() *schema.Schema {
 					Type:     schema.TypeString,
 					Optional: true,
 					Computed: true,
-					ForceNew: true,
 				},
 				"api_server": {
 					Type:     schema.TypeString,

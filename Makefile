@@ -34,6 +34,7 @@ terraform: ## terraform插件编译
 tf-test: terraform ## terraform插件测试
 	@cd scripts && \
 	rm -rf .terraform && rm -f .terraform.* && \
+	rm -f terraform.tfstate && \
 	tf init && \
 	tf apply --auto-approve
 

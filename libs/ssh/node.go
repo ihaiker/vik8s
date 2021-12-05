@@ -123,7 +123,7 @@ func (node *Node) Vik8s(join ...string) string {
 }
 
 func (node *Node) Prefix() string {
-	addr := fmt.Sprintf("%s:%s", node.Host, node.Port)
+	addr := fmt.Sprintf("%s:%d", node.Host, node.Port)
 	if node.Hostname != "" {
 		addr = node.Hostname
 	}

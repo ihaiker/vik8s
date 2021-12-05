@@ -47,6 +47,5 @@ func DefaultDockerConfiguration() *DockerConfiguration {
 		DataRoot:      "/var/lib/docker",
 		Hosts:         []string{"fd://"},
 		StraitVersion: false,
-		TLS:           new(DockerCertsConfiguration),
 	}
 }

@@ -2,59 +2,48 @@ terraform {
   required_providers {
     vik8s = {
       source  = "xhaiker/vik8s"
-      version = "0.5.2"
+      version = "0.6.0"
     }
   }
 }
 
 provider "vik8s" {
+  china = true
 }
 
 locals {
   path = "${path.module}/../.vagrant/machines"
 }
 
-/*data "vik8s_host" "proxy" {
-  username = "root"
-  address  = "velcyr.eicp.net"
-  port     = "21687"
-}
-
-data "vik8s_host" "master" {
-  username    = "root"
-  address     = "192.168.10.176"
-  private_key = "${local.path}/master01/vmware_esxi/private_key"
-  proxy       = data.vik8s_host.proxy.id
-}*/
-
-/*
-data "vik8s_host" "slave20" {
-  username    = "root"
-  address     = "192.168.11.160"
-  private_key = "${local.path}/slave20/vmware_esxi/private_key"
-  proxy       = data.vik8s_host.proxy.id
-}
-
-data "vik8s_host" "slave21" {
-  username    = "root"
-  address     = "192.168.11.152"
-  private_key = "${local.path}/slave21/vmware_esxi/private_key"
-  proxy       = data.vik8s_host.proxy.id
-}
-*/
-/*
-
-resource "vik8s_cluster_node" "master" {
-  host_id = "name"
-  master  = false
-}
-*/
-
-resource "vik8s_cluster_node" "slave" {
-  host_id = "name"
-  master  = false
-  config {
-    ntp_services = ["t1", "t2"]
+resource "vik8s_cluster" "cluster" {
+  nodes {
+    address = "velcyr.eicp.net"
+    port    = "21687"
+    ssh_key = "$HOME/.ssh/id_rsa"
+    role    = ["bastion"]
   }
-
+  nodes {
+    address = "192.168.10.176"
+    ssh_key = "${local.path}/master01/vmware_esxi/private_key"
+    role    = ["control_plane"]
+    labels  = {
+      name = "name"
+    }
+    bastion = "velcyr.eicp.net"
+  }
+  nodes {
+    address = "192.168.11.160"
+    ssh_key = "${local.path}/slave20/vmware_esxi/private_key"
+    bastion = "velcyr.eicp.net"
+    role    = ["etcd"]
+  }
+  nodes {
+    username = "vagrant"
+    address  = "192.168.11.152"
+    ssh_key  = "${local.path}/slave21/vmware_esxi/private_key"
+    bastion  = "velcyr.eicp.net"
+  }
+  config {
+    repo = "vik8s.io"
+  }
 }

@@ -17,7 +17,7 @@ var (
 	userAndPwd = `([^:]+)(:(\S+))?`
 	ip         = `(\d{1,3}\.\d{1,3}\.\d{1,3}\.)?\d{1,3}`
 	port       = `\d{2,5}`
-	pattern    = regexp.MustCompile(fmt.Sprintf(`(%s@)?((%s)-)?(%s)(:(%s))?`, userAndPwd, ip, ip, port))
+	PATTERN    = regexp.MustCompile(fmt.Sprintf(`(%s@)?((%s)-)?(%s)(:(%s))?`, userAndPwd, ip, ip, port))
 )
 
 //ParseAddrs 解析地址
@@ -38,7 +38,7 @@ func ParseAddr(opt Option, arg string) (nodes ssh.Nodes, err error) {
 	defer utils.Catch(func(e error) {
 		err = e
 	})
-	groups := pattern.FindStringSubmatch(arg)
+	groups := PATTERN.FindStringSubmatch(arg)
 
 	user := groups[2]
 	if user == "" {

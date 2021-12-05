@@ -1,9 +1,9 @@
-package cluster
+package terraform
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/ihaiker/vik8s/cmd/terraform/tools"
 	"github.com/ihaiker/vik8s/config"
+	"github.com/ihaiker/vik8s/terraform/tools"
 )
 
 func dockerSchema() *schema.Schema {

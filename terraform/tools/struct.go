@@ -32,6 +32,20 @@ func ListWrapper(values interface{}) ResourceDataWrapper {
 	return out
 }
 
+func ListItemsWrapper(values interface{}) []ResourceDataWrapper {
+	if values == nil {
+		return nil
+	} else if len(values.([]interface{})) == 0 {
+		return nil
+	} else {
+		items := make([]ResourceDataWrapper, len(values.([]interface{})))
+		for i, item := range values.([]interface{}) {
+			items[i] = item.(map[string]interface{})
+		}
+		return items
+	}
+}
+
 func (this *ResourceDataWrapper) Get(name string) interface{} {
 	return (*this)[name]
 }
@@ -66,7 +80,7 @@ func (this ResourceDataWrapper) Bool(name string) bool {
 	}
 }
 
-/*func (this ResourceDataWrapper) List(name string, def []string) []string {
+func (this ResourceDataWrapper) List(name string, def []string) []string {
 	if value, has := this[name]; !has {
 		return nil
 	} else if str, match := value.([]interface{}); match {
@@ -78,17 +92,27 @@ func (this ResourceDataWrapper) Bool(name string) bool {
 	} else {
 		return nil
 	}
-}*/
+}
 
 func (this ResourceDataWrapper) Set(name string, def []string) []string {
 	if value, has := this[name]; !has {
 		return def
-	} else if set, match := value.(*schema.Set); match {
+	} else if set, match := value.(*schema.Set); match && set.Len() > 0 {
 		outs := make([]string, set.Len())
 		for i, s := range set.List() {
 			outs[i] = s.(string)
 		}
 		return outs
+	} else {
+		return def
+	}
+}
+
+func (this ResourceDataWrapper) Map(name string, def map[string]string) map[string]string {
+	if value, has := this[name]; !has {
+		return def
+	} else if m, match := value.(map[string]string); match {
+		return m
 	} else {
 		return def
 	}

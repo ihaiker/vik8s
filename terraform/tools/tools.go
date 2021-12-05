@@ -4,23 +4,24 @@ import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/ihaiker/vik8s/cmd/terraform/configure"
+	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"log"
 	"strings"
 )
 
-type input = func(context.Context, *schema.ResourceData, *configure.MemStorage) diag.Diagnostics
+type input = func(context.Context, *schema.ResourceData, *config.Configuration) diag.Diagnostics
 type output = func(context.Context, *schema.ResourceData, interface{}) diag.Diagnostics
 
 func Safe(method string, fn input) output {
 	return func(ctx context.Context, data *schema.ResourceData, i interface{}) (dd diag.Diagnostics) {
 		defer utils.Catch(func(err error) {
+			log.Println(utils.Stack())
 			dd = diag.FromErr(err)
 		})
 		log.Println(strings.Repeat("<", 30), method, strings.Repeat("<", 30))
 		defer func() { log.Println(strings.Repeat(">", 30), method, strings.Repeat("<", 30)) }()
-		return fn(ctx, data, i.(*configure.MemStorage))
+		return fn(ctx, data, new(config.Configuration))
 	}
 }
 
@@ -32,9 +33,14 @@ func SetValue(str []string) *schema.Set {
 	return schema.NewSet(schema.HashString, ins)
 }
 
-func StringValue(str string) *string {
-	if str == "" {
+func GetDataSetString(p interface{}) []string {
+	if p == nil {
 		return nil
 	}
-	return &str
+	items := p.(*schema.Set).List()
+	strs := make([]string, len(items))
+	for i, item := range items {
+		strs[i] = item.(string)
+	}
+	return strs
 }
