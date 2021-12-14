@@ -17,30 +17,29 @@ const (
 	custom_resources = "apply/cni/calico/custom-resources.yaml"
 )
 
-type calico struct {
-	OperatorVersion string `flag:"operator-version" help:"calico operator server version"`
-	Repo            string `flag:"repo" help:"tigera/operator image repository. default: from quay.io or quay.mirrors.ustc.edu.cn in china"`
-	Version         string `flag:"version" help:"calico server"`
+type Calico struct {
+	Version string `flag:"version" help:"calico server"`
+	Repo    string `flag:"repo" help:"tigera/operator image repository. default: from quay.io or quay.mirrors.ustc.edu.cn in china"`
 }
 
-func NewCalico() Plugin {
-	return &calico{
-		OperatorVersion: "v1.23.1",
+func NewCalico() *Calico {
+	return &Calico{
+		Version: "v1.23.1",
 	}
 }
 
-func (f *calico) Name() string {
+func (f *Calico) Name() string {
 	return "calico"
 }
 
-func (f *calico) Flags(cmd *cobra.Command) {
+func (f *Calico) Flags(cmd *cobra.Command) {
 	_ = cobrax.Flags(cmd, f, "", "")
 }
 
-func (f *calico) Apply(cmd *cobra.Command, configure *config.Configuration, node *ssh.Node) {
+func (f *Calico) Apply(configure *config.Configuration, node *ssh.Node) {
 	image := fmt.Sprintf("%s/tigera/operator", repo.QuayIO(f.Repo))
 	err := tools.ScpAndApplyAssert(node, "yaml/cni/calico/tigera-operator.yaml", paths.Json{
-		"Image": image, "Version": f.OperatorVersion,
+		"Image": image, "Version": f.Version,
 	})
 	utils.Panic(err, "apply calico error")
 
@@ -50,7 +49,7 @@ func (f *calico) Apply(cmd *cobra.Command, configure *config.Configuration, node
 	utils.Panic(err, "apply calico custom resources error")
 }
 
-func (f *calico) Clean(node *ssh.Node) {
+func (f *Calico) Clean(node *ssh.Node) {
 	remote := node.Vik8s(tigera_operator)
 	_ = node.CmdStdout("kubectl delete -f " + remote)
 

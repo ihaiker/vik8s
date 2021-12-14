@@ -11,21 +11,21 @@ import (
 	"path/filepath"
 )
 
-type customer struct {
+type Customer struct {
 	Urls  []string `flag:"url" help:"User-defined network plugin URL, if used for kubectl apply -f <url>"`
 	Files []string `flag:"file" help:"User-defined network plugin file location, if used for kubectl apply -f <file>"`
 }
 
-func (f *customer) Name() string {
+func (f *Customer) Name() string {
 	return "customer"
 }
 
-func (f *customer) Flags(cmd *cobra.Command) {
+func (f *Customer) Flags(cmd *cobra.Command) {
 	err := cobrax.Flags(cmd, f, "", "")
 	utils.Panic(err, "set customer flag")
 }
 
-func (f *customer) Apply(cmd *cobra.Command, configure *config.Configuration, node *ssh.Node) {
+func (f *Customer) Apply(configure *config.Configuration, node *ssh.Node) {
 	utils.Assert(len(f.Files) != 0 || len(f.Urls) != 0,
 		"No custom network plugin found，see: --url or --file ")
 
@@ -50,7 +50,7 @@ func (f *customer) Apply(cmd *cobra.Command, configure *config.Configuration, no
 	utils.Panic(err, "apply customer network")
 }
 
-func (f *customer) Clean(node *ssh.Node) {
+func (f *Customer) Clean(node *ssh.Node) {
 	remote := node.Vik8s("yaml/cni/customer")
 	_ = node.CmdStdout(fmt.Sprintf("kubectl delete -k %s", remote))
 }

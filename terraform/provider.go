@@ -12,6 +12,7 @@ import (
 	cri_docker "github.com/ihaiker/vik8s/terraform/data/cri/docker"
 	"github.com/ihaiker/vik8s/terraform/data/external_etcd"
 	hostsData "github.com/ihaiker/vik8s/terraform/data/hosts"
+	"github.com/ihaiker/vik8s/terraform/resource/cluster"
 	"github.com/ihaiker/vik8s/terraform/resource/etcd"
 	"log"
 )
@@ -37,7 +38,8 @@ func Provider() *schema.Provider {
 			"vik8s_external_etcd": external_etcd.ExternalEtcd(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"vik8s_etcd": etcd.Vik8sETCD(),
+			"vik8s_etcd":    etcd.Vik8sETCD(),
+			"vik8s_cluster": cluster.Vik8sCluster(),
 		},
 		ConfigureContextFunc: configureProvider,
 	}

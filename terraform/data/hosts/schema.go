@@ -5,6 +5,7 @@ import (
 	"github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/terraform/tools"
+	"os"
 )
 
 func hostsSchema() map[string]*schema.Schema {
@@ -52,6 +53,7 @@ func hostsSchema() map[string]*schema.Schema {
 			Description:   "ssh private key",
 			Optional:      true,
 			Default:       "",
+			Sensitive:     true,
 			ConflictsWith: []string{"password"},
 		},
 		"ssh_key_raw": {
@@ -59,6 +61,7 @@ func hostsSchema() map[string]*schema.Schema {
 			Optional:      true,
 			Description:   "SSH Private Key",
 			Default:       "",
+			Sensitive:     true,
 			ConflictsWith: []string{"ssh_key", "password"},
 		},
 		"passphrase": {
@@ -91,7 +94,7 @@ func expendOption(data *schema.ResourceData, host string) *hosts.Option {
 		Port:          in.Int("port"),
 		User:          in.String("username", "root"),
 		Password:      in.String("password", ""),
-		PrivateKey:    in.String("ssh_key", ""),
+		PrivateKey:    in.String("ssh_key", os.ExpandEnv("$HOME/.ssh/id_rsa")),
 		PrivateKeyRaw: in.String("ssh_key_raw", ""),
 		Passphrase:    in.String("passphrase", ""),
 		Host:          host,

@@ -139,17 +139,17 @@ func expendDockerConfiguration(data *schema.ResourceData) (cfg *config.DockerCon
 	cfg.InsecureRegistries = in.Set("insecure_registries", cfg.InsecureRegistries)
 	cfg.RegistryMirrors = in.Set("registry_mirrors", cfg.RegistryMirrors)
 
-	if v, has := in.Get("storage"); has {
+	if v, has := in.GetOk("storage"); has {
 		if cfg.Storage, err = expendDockerStorageConfiguration(v); err != nil {
 			return
 		}
 	}
-	if v, has := in.Get("dns"); has {
+	if v, has := in.GetOk("dns"); has {
 		if cfg.DNS, err = expendDockerDNSConfiguration(v); err != nil {
 			return
 		}
 	}
-	if v, has := in.Get("tls"); has {
+	if v, has := in.GetOk("tls"); has {
 		if cfg.TLS, err = expendDockerTLSConfiguration(v); err != nil {
 			return
 		}

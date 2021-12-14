@@ -45,7 +45,6 @@ func InitCluster(configure *config.Configuration, node *ssh.Node) *ssh.Node {
 		copyKubeletAdminConfig(node)
 		applyApiServerEndpoint(configure, node)
 	}
-	configure.K8S.JoinNode(true, node.Host)
 	return node
 }
 

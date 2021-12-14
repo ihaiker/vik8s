@@ -13,7 +13,7 @@ type Plugin interface {
 	Flags(cmd *cobra.Command)
 
 	//Apply 生成插件
-	Apply(cmd *cobra.Command, configure *config.Configuration, node *ssh.Node)
+	Apply(configure *config.Configuration, node *ssh.Node)
 
 	//Clean 清楚插件内容
 	Clean(node *ssh.Node)
@@ -23,13 +23,13 @@ type plugins []Plugin
 
 var Plugins = plugins{
 	NewFlannelCni(), NewCalico(),
-	new(customer),
+	new(Customer),
 }
 
 func (p *plugins) Apply(cmd *cobra.Command, configure *config.Configuration, node *ssh.Node) {
 	for _, plugin := range *p {
 		if plugin.Name() == cmd.Use {
-			plugin.Apply(cmd, configure, node)
+			plugin.Apply(configure, node)
 		}
 	}
 }

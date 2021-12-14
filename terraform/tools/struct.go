@@ -62,7 +62,15 @@ func ListItemsWrapper(values interface{}) []*ResourceDataWrapper {
 	}
 }
 
-func (this *ResourceDataWrapper) Get(name string) (interface{}, bool) {
+func (this *ResourceDataWrapper) Get(name string) interface{} {
+	if this.values == nil {
+		return this.data.Get(name)
+	} else {
+		return this.values[name]
+	}
+}
+
+func (this *ResourceDataWrapper) GetOk(name string) (interface{}, bool) {
 	if this.values == nil {
 		return this.data.GetOk(name)
 	} else {
@@ -72,7 +80,7 @@ func (this *ResourceDataWrapper) Get(name string) (interface{}, bool) {
 }
 
 func (this ResourceDataWrapper) String(name, def string) string {
-	if value, has := this.Get(name); !has {
+	if value, has := this.GetOk(name); !has {
 		return def
 	} else if str, match := value.(string); match && str != "" {
 		return str
@@ -82,7 +90,7 @@ func (this ResourceDataWrapper) String(name, def string) string {
 }
 
 func (this ResourceDataWrapper) Int(name string) int {
-	if value, has := this.Get(name); !has {
+	if value, has := this.GetOk(name); !has {
 		return 0
 	} else if str, match := value.(int); match && str != 0 {
 		return str
@@ -92,7 +100,7 @@ func (this ResourceDataWrapper) Int(name string) int {
 }
 
 func (this ResourceDataWrapper) Bool(name string) bool {
-	if value, has := this.Get(name); !has {
+	if value, has := this.GetOk(name); !has {
 		return false
 	} else if str, match := value.(bool); match {
 		return str
@@ -102,7 +110,7 @@ func (this ResourceDataWrapper) Bool(name string) bool {
 }
 
 func (this ResourceDataWrapper) List(name string, def []string) []string {
-	if value, has := this.Get(name); !has {
+	if value, has := this.GetOk(name); !has {
 		return nil
 	} else if str, match := value.([]interface{}); match {
 		outs := make([]string, len(str))
@@ -116,7 +124,7 @@ func (this ResourceDataWrapper) List(name string, def []string) []string {
 }
 
 func (this ResourceDataWrapper) Set(name string, def []string) []string {
-	if value, has := this.Get(name); !has {
+	if value, has := this.GetOk(name); !has {
 		return def
 	} else if set, match := value.(*schema.Set); match && set.Len() > 0 {
 		outs := make([]string, set.Len())
@@ -130,7 +138,7 @@ func (this ResourceDataWrapper) Set(name string, def []string) []string {
 }
 
 func (this ResourceDataWrapper) Map(name string, def map[string]string) map[string]string {
-	if value, has := this.Get(name); !has {
+	if value, has := this.GetOk(name); !has {
 		return def
 	} else if m, match := value.(map[string]string); match {
 		return m

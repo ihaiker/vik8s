@@ -11,30 +11,30 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type flannel struct {
+type Flannel struct {
 	Version     string `flag:"version" help:"the flannel version"`
 	Repo        string `flag:"repo" help:"docker image pull from."`
 	LimitCPU    string `flag:"limits-cpu" help:"Container Cup Limit"`
 	LimitMemory string `flag:"limits-memory" help:"Container Memory Limit"`
 }
 
-func NewFlannelCni() *flannel {
-	return &flannel{
+func NewFlannelCni() *Flannel {
+	return &Flannel{
 		Version:     "v0.14.0",
 		LimitCPU:    "100m",
 		LimitMemory: "50Mi",
 	}
 }
-func (f *flannel) Name() string {
+func (f *Flannel) Name() string {
 	return "flannel"
 }
 
-func (f *flannel) Flags(cmd *cobra.Command) {
+func (f *Flannel) Flags(cmd *cobra.Command) {
 	err := cobrax.Flags(cmd, f, "", "")
 	utils.Panic(err, "set flannel flag error")
 }
 
-func (f *flannel) Apply(cmd *cobra.Command, configure *config.Configuration, node *ssh.Node) {
+func (f *Flannel) Apply(configure *config.Configuration, node *ssh.Node) {
 	data := paths.Json{
 		"Version": f.Version, "Repo": repo.QuayIO(f.Repo),
 		"CIDR": configure.K8S.PodCIDR, "Interface": configure.K8S.Interface,
@@ -45,7 +45,7 @@ func (f *flannel) Apply(cmd *cobra.Command, configure *config.Configuration, nod
 	utils.Panic(err, "apply flannel network")
 }
 
-func (f *flannel) Clean(node *ssh.Node) {
+func (f *Flannel) Clean(node *ssh.Node) {
 	_ = node.Sudo().CmdStdout("ifconfig flannel.1 down")
 	_ = node.Sudo().CmdStdout("ip link delete flannel.1")
 	_ = node.Sudo().CmdStdout("rm -rf /var/lib/cni/ /etc/cni/net.d/*")

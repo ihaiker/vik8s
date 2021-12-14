@@ -38,4 +38,4 @@
 
 [dd]: https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https%3A%2F%2Fqr.dingtalk.com%2Faction%2Fjoingroup%3Fcode%3Dv1%2Ck1%2CZiQs4kjvfFMm5EDwWHPZSGGZRCHeW%2BZUwqlW73xXrO0%3D "钉钉群地址"
 [qq]: https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https%3A%2F%2Fqm.qq.com%2Fcgi-bin%2Fqm%2Fqr%3Fk%3DRif3DnLnNWbZh3BTQod_vYcCpYRSpLkk%26authKey%3DIng0sqF0Wj6o22WMjXBDiu38V9arojuEcy5iGLR%2BfHMNOoYoAkg1tpcK9B3mkL4b%26noverify%3D0 "QQ"
-[quickstart]: https://vik8s.renzhen.la/#quick-start
+[quickstart]: http://vik8s.renzhen.la/#quick-start

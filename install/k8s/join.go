@@ -33,7 +33,7 @@ func JoinControl(configure *config.Configuration, node *ssh.Node) {
 	makeKubernetesCerts(configure, node)
 	makeJoinControlPlaneConfigFiles(configure, node)
 
-	remote := node.Vik8s("apply/kubeadm.yaml")
+	remote := master.Vik8s("apply/kubeadm.yaml")
 	bugfixImages(master, node, remote)
 
 	joinCmd := getJoinCmd(master)
@@ -42,8 +42,6 @@ func JoinControl(configure *config.Configuration, node *ssh.Node) {
 	copyKubeletAdminConfig(node)
 
 	fix(configure, master, node)
-
-	configure.K8S.JoinNode(true, node.Host)
 }
 
 func JoinWorker(configure *config.Configuration, node *ssh.Node) {
@@ -66,7 +64,7 @@ func JoinWorker(configure *config.Configuration, node *ssh.Node) {
 
 	makeWorkerConfigFiles(configure, node)
 
-	remote := node.Vik8s("apply/kubeadm.yaml")
+	remote := master.Vik8s("apply/kubeadm.yaml")
 	bugfixImages(master, node, remote)
 
 	joinCmd := getJoinCmd(master)
@@ -74,7 +72,6 @@ func JoinWorker(configure *config.Configuration, node *ssh.Node) {
 	utils.Panic(node.Sudo().CmdOutput(cmd, os.Stdout), "join %s", node.Host)
 
 	fix(configure, master, node)
-	configure.K8S.JoinNode(false, node.Host)
 }
 
 func setNodeHosts(configure *config.Configuration, node *ssh.Node) {
