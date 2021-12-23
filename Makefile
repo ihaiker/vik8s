@@ -25,16 +25,5 @@ mkdocs: ## 构建文档
 	docker run --rm -v `pwd`/:/build xhaiker/mkdocs:latest build -c
 
 clean: ## 清理
-	./scripts/vagrant.sh destroy -f
+	vagrant destroy -f
 	rm -rf ./bin .vagrant
-
-terraform: ## terraform插件编译
-	./scripts/plugins-build.sh
-
-tf-test: terraform ## terraform插件测试
-	@cd scripts && \
-	rm -rf .terraform && rm -f .terraform.* && \
-	rm -rf ~/.vik8s/terraform/* && \
-	tf init && \
-	tf apply --auto-approve
-

@@ -22,4 +22,4 @@ go-bindata -modtime 1590460659 -pkg yamls -o yaml/assets.go -ignore .*\.go -igno
 echo "format yaml/assets.go"
 go fmt yaml/assets.go
 
-go build -trimpath -ldflags "$param" -o ./bin/vik8s cmd/main.go
+go build -trimpath -ldflags "$param" -o ./bin/vik8s main.go

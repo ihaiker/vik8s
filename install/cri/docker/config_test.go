@@ -27,6 +27,7 @@ func (p TestDockerSuite) TearDownTest() {
 
 func (t *TestDockerSuite) TestEnableTLS() {
 	cfg := config.DefaultDockerConfiguration()
+	cfg.TLS = new(config.DockerCertsConfiguration)
 	cfg.TLS.Enable = true
 	err := Config(cfg)
 	t.Nil(err)
@@ -39,6 +40,7 @@ func (t *TestDockerSuite) TestEnableTLS() {
 
 func (t *TestDockerSuite) TestEnableCustomTLS() {
 	cfg := config.DefaultDockerConfiguration()
+	cfg.TLS = new(config.DockerCertsConfiguration)
 	cfg.TLS.Enable = true
 	cfg.TLS.CaCertPath = paths.Join(DockerCertsPath, "ca.pem")
 
@@ -59,7 +61,8 @@ func (t *TestDockerSuite) TestDaemonJson() {
 	cfg.DaemonJson = path
 	err = Config(cfg)
 	t.Nil(err, "config daemon.json error")
-	t.False(cfg.TLS.Enable)
+	t.Nil(cfg.TLS)
+	//t.False(cfg.TLS.Enable)
 }
 func TestDockerConfig(t *testing.T) {
 	suite.Run(t, new(TestDockerSuite))

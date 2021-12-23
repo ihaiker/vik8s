@@ -2,12 +2,13 @@
 
 ## 下一步开发计划
 
-- [ ] ngx工具类库抽离，单独成立项目。[github repo][NGX_REPO]，[docs][NGX_DOCS]
+- [ ] ngx工具类库抽离，单独成立项目。
 - [ ] 添加对containerd支持。
-- [ ] [添加对Terraform工具的支持](https://terraform.io/)
+- [x] [添加对Terraform工具的支持](https://terraform.io/)
 
 ## 更新历史
 
+- [v0.6.0 发布于：2021-12-23](./v0.6.0.md)
 - [v0.5.2 发布于：2021-11-21](./v0.5.2.md)
 - [v0.5.0 发布于：2021-07-01](./v0.5.0.md)  
 - v0.4.1

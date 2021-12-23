@@ -1,4 +1,4 @@
-package core
+package cmd
 
 import (
 	"github.com/ihaiker/vik8s/ingress"

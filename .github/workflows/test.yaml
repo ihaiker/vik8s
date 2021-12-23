@@ -6,8 +6,6 @@ on:
   pull_request:
     branches:
       - master
-  schedule:
-    - cron: "0 0 * * 4"
 
 jobs:
   check:
@@ -40,19 +38,13 @@ jobs:
     strategy:
       matrix:
         go_version:
-          - 1.14
           - 1.15
-          - 1.16
         os:
           - macos
           - ubuntu
           - windows
         goarch:
-          - 386
           - amd64
-        exclude:
-          - os: macos
-            goarch: 386
 
     name: test (${{ matrix.os }}/go-${{ matrix.go_version }}/${{ matrix.goarch }})
     runs-on: ${{ matrix.os }}-latest

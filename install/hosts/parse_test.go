@@ -52,14 +52,14 @@ func (t ParseAddressSuite) TestBase() {
 	t.Equal(2, len(nodes), "node size not equal 2")
 	t.Equal("10.24.0.10", nodes[0].Host)
 	t.Equal("test", nodes[1].User)
-	t.Equal("234", nodes[1].Port)
+	t.Equal(234, nodes[1].Port)
 
 	nodes, err = ParseAddr(*t.opt, "test:123@10.24.0.10-11:234")
 	t.Nil(err, "parse error")
 	t.Equal(2, len(nodes), "node size not equal 2")
 	t.Equal("10.24.0.10", nodes[0].Host)
 	t.Equal("test", nodes[1].User)
-	t.Equal("234", nodes[1].Port)
+	t.Equal(234, nodes[1].Port)
 	t.Equal("123", nodes[1].Password)
 
 	nodes, err = ParseAddr(*t.opt, "test:123@10.24.0.10-15:234")
