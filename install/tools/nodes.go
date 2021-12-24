@@ -2,9 +2,9 @@ package tools
 
 import (
 	"fmt"
+	"github.com/fatih/color"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
-	"gopkg.in/fatih/color.v1"
 	"os"
 	"strings"
 )

@@ -3,12 +3,12 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"github.com/fatih/color"
 	"github.com/ihaiker/vik8s/config"
 	hs "github.com/ihaiker/vik8s/install/hosts"
 	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/spf13/cobra"
-	"gopkg.in/fatih/color.v1"
 	"os"
 	"runtime"
 	"strings"

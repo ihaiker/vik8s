@@ -3,9 +3,9 @@ package ssh
 import (
 	"bufio"
 	"fmt"
+	"github.com/fatih/color"
 	"github.com/ihaiker/vik8s/libs/logs"
 	"github.com/ihaiker/vik8s/libs/utils"
-	"gopkg.in/fatih/color.v1"
 	"path/filepath"
 	"strconv"
 	"strings"

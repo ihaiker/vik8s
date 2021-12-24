@@ -2,13 +2,13 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/fatih/color"
 	"github.com/ihaiker/vik8s/install/paths"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
 	"github.com/kvz/logstreamer"
 	"github.com/peterh/liner"
 	"github.com/spf13/cobra"
-	"gopkg.in/fatih/color.v1"
 	"io"
 	"log"
 	"os"

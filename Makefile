@@ -1,7 +1,4 @@
-.PHONY: help chmod build vagrant esxi cicd mkdocs clean test release terraform tf-test
-
-export TF_LOG=info
-export TF_LOG_PATH=/dev/stdout
+.PHONY: help chmod build vagrant cicd mkdocs clean test
 
 help: ## 帮助信息
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_-]+:.*?## / {sub("\\\\n",sprintf("\n%22c"," "), $$2);printf "\033[36m%s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)

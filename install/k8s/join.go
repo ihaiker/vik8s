@@ -2,12 +2,12 @@ package k8s
 
 import (
 	"fmt"
+	"github.com/fatih/color"
 	"github.com/ihaiker/vik8s/config"
 	"github.com/ihaiker/vik8s/install/bases"
 	"github.com/ihaiker/vik8s/install/cri"
 	"github.com/ihaiker/vik8s/libs/ssh"
 	"github.com/ihaiker/vik8s/libs/utils"
-	"gopkg.in/fatih/color.v1"
 	"os"
 	"strings"
 )

@@ -39,7 +39,7 @@ jobs:
         id: go
         with:
           stable: false
-          go-version: 1.16
+          go-version: 1.17.5
 
       - name: Checkout code
         uses: actions/checkout@v2
@@ -50,7 +50,7 @@ jobs:
           tagRegex: "(.*)"
 
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v2.8.0
         with:
           args: release --release-header-tmpl=./docs/releases/${{ steps.tagName.outputs.tag }}.md --rm-dist
         env:

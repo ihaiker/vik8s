@@ -2,8 +2,8 @@ package ssh
 
 import (
 	"bytes"
+	"github.com/fatih/color"
 	"github.com/ihaiker/vik8s/libs/utils"
-	"gopkg.in/fatih/color.v1"
 	"io"
 	"os"
 )
