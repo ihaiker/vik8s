@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="Haiker">
+  <link rel="canonical" href="https://vik8s.renzhen.la/reduce/">
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>简单使用 - vik8s</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
+
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+  <link href="../extra.css" rel="stylesheet" />
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "\u7b80\u5355\u4f7f\u7528";
+    var mkdocs_page_input_path = "reduce/index.md";
+    var mkdocs_page_url = "/reduce/";
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/yaml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/shell.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/json.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> vik8s</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="..">简介</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../quickstart/">快速开始</a>
+                    </li>
+                </ul>
+                <p class="caption"><span class="caption-text">命令详解</span></p>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="#">集群安装命令</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../cmds/k8s/">Kubernetes 集群初始化</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../cmds/k8s/cni/">Kubernetes网络插件</a>
+                </li>
+    </ul>
+                    </li>
+                    <li class="toctree-l1"><a class="reference internal" href="../cmds/hosts/">主机访问方式管理</a>
+                    </li>
+                    <li class="toctree-l1"><a class="reference internal" href="../cmds/etcd/">使用外部ETCD集群</a>
+                    </li>
+                    <li class="toctree-l1"><a class="reference internal" href="../cmds/bash/">集群统一维护</a>
+                    </li>
+                </ul>
+                <p class="caption"><span class="caption-text">Reduce配置简化</span></p>
+                <ul class="current">
+                    <li class="toctree-l1 current"><a class="reference internal current" href="./">简单使用</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#reduce">Reduce 原理</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#reduce_1">Reduce 系统定义配置方式</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#kubernetes">kubernetes配置转换方式</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#yaml">yaml标签方式。</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#demo">更多Demo查看</a>
+    </li>
+    </ul>
+                    </li>
+                    <li class="toctree-l1"><a class="reference internal" href="plugins/">自定义扩展简化</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../terraform/">Terraform支持</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../releases/">版本历史</a>
+                    </li>
+                </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">vik8s</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Reduce配置简化 &raquo;</li>
+        
+      
+    
+    <li>简单使用</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/ihaiker/vik8s/edit/master/docs/reduce/index.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  
+  <hr/>
+</div>
+
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="reduce-kubernetes">Reduce kubernetes 简化配置</h1>
+<p>无论是在学习或者工作中都要编写yaml文件，我不知道其他人对yaml配置是否存在这样困惑：配置是否有些复杂了（当然了解了细节也明白是为啥）。
+本程序reduce命令将尽可能的简化配置。</p>
+<p>reduce命令采用类似<code>nginx.conf</code>的配置方式配置kubernetes。</p>
+<p>先给一个简单的配置：mysql.conf</p>
+<pre><code class="language-nginx">kubernetes v1.18.2;
+prefix vik8s.io;
+namespace vik8s;
+
+configmap mysql-config {
+    mysql.root.password haiker;
+    mysql.vik8s.password vik8s;
+}
+
+deployment mysql {
+    restartPolicy Always;
+    container mysql mysql:5.7.29 IfNotPresent {
+        port 3306;
+        env MYSQL_ROOT_PASSWORD configmap mysql-config mysql.root.password;
+        envs {
+            MYSQL_DATABASE vik8s;
+            MYSQL_USER vik8s;
+            MYSQL_PASSWORD configmap mysql-config mysql.vik8s.password;
+        }
+        mount hostPath:mysql-data /data/mysql:/var/lib/mysql;
+    }
+
+    container php-my-admin phpmyadmin/phpmyadmin {
+        envs {
+            PMA_HOST 127.0.0.1;
+            PMA_USER root;
+            PMA_PASSWORD configmap mysql-config mysql.root.password;
+        }
+        port http 80;
+    }
+}
+
+service deployment:mysql mysql-admin {
+    port admin 80:80;
+    port mysql 3306:3306;
+}
+
+ingress mysql-admin {
+    rules myadmin.vik8s.io {
+        http paths {
+            serviceName mysql-admin;
+            servicePort admin;
+        }
+    }
+}
+</code></pre>
+<p>使用 <code>vik8s reduce mysql.conf</code> 编译后输出yaml内容。不知道您是否觉得会感觉配置清爽了许多呢（只要您不回答：呵呵，就好）。</p>
+<h2 id="reduce">Reduce 原理</h2>
+<p>配置分为四种配置方式：</p>
+<ul>
+<li><a href="plugins/">用户自定配置插件</a></li>
+<li>Reduce 系统定义配置方式</li>
+<li>kubernetes配置转换方式</li>
+<li>yaml标签方式。</li>
+</ul>
+<p>优先顺序为从前向后。</p>
+<h3 id="reduce_1">Reduce 系统定义配置方式</h3>
+<p>关于此处就不使用长篇论述了，您可以自己使用 <code>vik8s reduce demo &lt;kind&gt;</code> 查看demo实例。    </p>
+<h3 id="kubernetes">kubernetes配置转换方式</h3>
+<p>由于kubernetes kind比较多，所有并非所有配置都做了简化处理，当然如果依然要使用此方式配置的话，就需要提供一个配置方式。此方式应用而生。
+此方式配置有个统一的前缀 <code>kind:version name</code>。下面我们就一个简单的实例来说明。</p>
+<pre><code class="language-nginx">CustomResourceDefinition:apiextensions.k8s.io/v1beta1 bgpconfigurations.crd.projectcalico.org {
+    scope Cluster;
+    group crd.projectcalico.org;
+    version v1;
+    names {
+        kind BGPConfiguration;
+        plural bgpconfigurations;
+        singular bgpconfiguration;
+    }
+}
+
+
+PodSecurityPolicy:policy/v1beta1 psp.flannel.unprivileged {
+    annotations {
+        seccomp.security.alpha.kubernetes.io/allowedProfileNames docker/default;
+        seccomp.security.alpha.kubernetes.io/defaultProfileName docker/default;
+        apparmor.security.beta.kubernetes.io/allowedProfileNames runtime/default;
+        apparmor.security.beta.kubernetes.io/defaultProfileName runtime/default;
+    }
+    privileged false;
+    volumes configMap secret emptyDir hostPath;
+
+    allowedHostPaths {
+        pathPrefix &quot;/etc/cni/net.d&quot;;
+    }
+    allowedHostPaths pathPrefix=/etc/kube-flannel;
+    allowedHostPaths pathPrefix=/run/flannel;
+
+    readOnlyRootFilesystem false;
+    runAsUser {
+        rule RunAsAny;
+    }
+    supplementalGroups {
+        rule RunAsAny;
+    }
+    fsGroup rule=RunAsAny;
+    # Privilege Escalation
+    allowPrivilegeEscalation false;
+    defaultAllowPrivilegeEscalation false;
+    # Capabilities
+    allowedCapabilities 'NET_ADMIN';
+    # Host namespaces
+    hostPID false;
+    hostIPC false;
+    hostNetwork true;
+    hostPorts {
+        min 0;
+        max 65535;
+    }
+    # SELinux
+    seLinux rule=RunAsAny;
+}
+</code></pre>
+<h3 id="yaml">yaml标签方式。</h3>
+<p>此方式就是直接使用yaml配置文件，做配置。</p>
+<pre><code class="language-nginx">yaml '
+yamlSource
+';
+</code></pre>
+<h2 id="demo">更多Demo查看</h2>
+<pre><code class="language-shell">vik8s reduce demo
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="plugins/" class="btn btn-neutral float-right" title="自定义扩展简化">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../cmds/bash/" class="btn btn-neutral" title="集群统一维护"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+      <p>Copyright @2021 Haiker</p>
+    
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/ihaiker/vik8s/" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../cmds/bash/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="plugins/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme_extra.js" defer></script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>

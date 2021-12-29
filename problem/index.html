@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="Haiker">
+  <link rel="canonical" href="https://vik8s.renzhen.la/problem/">
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>常见问题汇总 - vik8s</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
+
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+  <link href="../extra.css" rel="stylesheet" />
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "\u5e38\u89c1\u95ee\u9898\u6c47\u603b";
+    var mkdocs_page_input_path = "problem.md";
+    var mkdocs_page_url = "/problem/";
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/yaml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/shell.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/json.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> vik8s</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="..">简介</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../quickstart/">快速开始</a>
+                    </li>
+                </ul>
+                <p class="caption"><span class="caption-text">命令详解</span></p>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="#">集群安装命令</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../cmds/k8s/">Kubernetes 集群初始化</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../cmds/k8s/cni/">Kubernetes网络插件</a>
+                </li>
+    </ul>
+                    </li>
+                    <li class="toctree-l1"><a class="reference internal" href="../cmds/hosts/">主机访问方式管理</a>
+                    </li>
+                    <li class="toctree-l1"><a class="reference internal" href="../cmds/etcd/">使用外部ETCD集群</a>
+                    </li>
+                    <li class="toctree-l1"><a class="reference internal" href="../cmds/bash/">集群统一维护</a>
+                    </li>
+                </ul>
+                <p class="caption"><span class="caption-text">Reduce配置简化</span></p>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../reduce/">简单使用</a>
+                    </li>
+                    <li class="toctree-l1"><a class="reference internal" href="../reduce/plugins/">自定义扩展简化</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../terraform/">Terraform支持</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../releases/">版本历史</a>
+                    </li>
+                </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">vik8s</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>常见问题汇总</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/ihaiker/vik8s/edit/master/docs/problem.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  
+  <hr/>
+</div>
+
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="_1">常见问题汇总</h1>
+<p>这里归总的一些问题，基本已经在程序安装时处理，但是为了方便还是记录一下。</p>
+<h2 id="_2">网络问题</h2>
+<h3 id="podpod">POD无法访问外网或者无法POD之间无法访问。</h3>
+<p>1、是否是使用了calico这样的网络插件并且开始了网络访问限制。这个就需要自己检查了。通过命令<code>kubectl get networkpolicies.networking.k8s.io -A</code>查看是否有网络问题</p>
+<p>2、如果 Node 上安装的 Docker 版本大于 1.12，那么 Docker 会把默认的 iptables FORWARD 策略改为 DROP。转发丢弃
+  这会引发 Pod 网络访问的问题，在每个节点执行命令 <code>iptables -P FORWARD ACCEPT</code></p>
+<h2 id="dashboard-kubectl-proxy">Dashboard 使用 <code>kubectl proxy</code>无法访问</h2>
+<h3 id="1no-endpoints-available-for-service-httpskubernetes-dashboard">1、提示no endpoints available for service "https:kubernetes-dashboard:"</h3>
+<p>首先要查看是否是pod未启动成功。<code>kubectl -n kubernetes-dashboard get pod</code> 查看状态是不是<code>Running</code>状态。
+如果不是就需要查看POD为什么没有启动成功，当然了网上的教程大多是images下载错误(气愤的居然google出来的也全是此问题，无奈，😂，😂，😂)。
+如果不用的是本软件，此问题当然不存在了。
+存在的问题是：本软件对dashboard的yaml文件有所修改增加了一些功能点，尤其是对于service的端口进行了更改，<code>从443改为8443</code>和容器统一，所以在官方提供的教程里面就是错误的了需要添加端口号的。
+此问题有关的详细内容自己查阅一下kubernates API文档吧。当然了本程序肯定对此进行了处理，这里仅仅是记录一下。</p>
+<h3 id="2">2 、如果命令不添加参数需要在安装机器本机本地访问的。</h3>
+<p>需要添加参数：<code>--accept-paths='^.*' --address=&lt;hostIP&gt; --accept-hosts="^.*$"</code>。
+但是添加参数以后，在其他主机上通过IP是可以访问了但是登录授权貌似还是有问题的。
+这是因为Dashboard只允许localhost和127.0.0.1使用HTTP连接进行访问，而其它地址只允许使用HTTPS。
+因此，如果需要在非本机访问Dashboard的话，只能选择其他访问方式：<code>NodePort</code>、<code>Ingress</code>、公开的<code>ApiServer</code>方式。</p>
+<h4 id="21-nodeport">2.1 NodePort 方式</h4>
+<p>NodePort方式就是修改server的<code>type: NodePort</code>,并且需要你去生成tls证书。对应本程序您只需要添加一个参数 <code>--expose</code>。</p>
+<p>此参数存在三中类型值</p>
+<table>
+<thead>
+<tr>
+<th>值</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-1</td>
+<td>参数等于禁用状态，也就是service的type=ClusterIP</td>
+</tr>
+<tr>
+<td>0</td>
+<td>系统自动分配一个端口，并且type=NodePort</td>
+</tr>
+<tr>
+<td>maxPort &gt; n &gt; 0</td>
+<td>就是NodePort的端口地址</td>
+</tr>
+</tbody>
+</table>
+<h4 id="22-ingress">2.2 Ingress 方式</h4>
+<p>网上也有很多教程是针对此种方式的，但是很多教程都没有说其中一个很重要的问题就是证书的信任问题，后端的证书必须是一个。相关介绍请查阅 <a href="1">TLS communication between Traefik and backend pods¶</a>
+有了上面的方式此方式当然也对应本程序的一个参数<code>--ingress</code>啦，。</p>
+<h4 id="23-apiserver">2.3 公开的ApiServer方式。</h4>
+<p>如果Kubernetes API服务器是公开的，并可以从外部访问，那我们可以直接使用API Server的方式来访问，也是比较推荐的方式。</p>
+<p>Dashboard的访问地址为：
+```shell script
+https://<master-ip>:<apiserver-port>/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/</p>
+<pre><code>但是返回的结果可能如下：
+```json
+{
+  &quot;kind&quot;: &quot;Status&quot;,
+  &quot;apiVersion&quot;: &quot;v1&quot;,
+  &quot;metadata&quot;: {
+
+  },
+  &quot;status&quot;: &quot;Failure&quot;,
+  &quot;message&quot;: &quot;services \&quot;https:kubernetes-dashboard:\&quot; is forbidden: User \&quot;system:anonymous\&quot; cannot get services/proxy in the namespace \&quot;kube-system\&quot;&quot;,
+  &quot;reason&quot;: &quot;Forbidden&quot;,
+  &quot;details&quot;: {
+    &quot;name&quot;: &quot;https:kubernetes-dashboard:&quot;,
+    &quot;kind&quot;: &quot;services&quot;
+  },
+  &quot;code&quot;: 403
+}
+</code></pre>
+<p>这是因为最新版的k8s默认启用了RBAC，并为未认证用户赋予了一个默认的身份：anonymous。对于API Server来说，它是使用证书进行认证的，我们需要先创建一个证书：</p>
+<ul>
+<li>1.首先找到kubectl命令的配置文件，默认情况下为/etc/kubernetes/admin.conf，</li>
+<li>2.然后我们使用client-certificate-data和client-key-data生成一个p12文件，可使用下列命令：</li>
+</ul>
+<pre><code class="language-shell">#生成client-certificate-data
+grep 'client-certificate-data' ~/.kube/config | head -n 1 | awk '{print $2}' | base64 -d &gt;&gt; kubecfg.crt
+
+# 生成client-key-data
+grep 'client-key-data' ~/.kube/config | head -n 1 | awk '{print $2}' | base64 -d &gt;&gt; kubecfg.key
+
+# 生成p12，
+openssl pkcs12 -export -clcerts -inkey kubecfg.key -in kubecfg.crt -out kubecfg.p12 -name &quot;kubernetes-client&quot;
+
+# 导入P12文件就可以打开了
+</code></pre>
+<h3 id="3dashboard-squarego-jose-error-in-cryptographic-primitive">3、dashboard进去后显示 <code>square/go-jose: error in cryptographic primitive</code></h3>
+<p>这个就是简单问题了。你只需要点击右上角的注销重新加来就好了。因为dashboard把你之间的token记住了，而你又重新部署过token更换了</p>
+<h2 id="warning-imagegcfailed-kubelet-xxx-failed-to-get-imagefs-info-unable-to-find-data-in-memory-cache">节点加入后 <code>Warning  ImageGCFailed  kubelet, xxx failed to get imageFs info: unable to find data in memory cache</code></h2>
+<p>处理方式 
+```shell script
+yum install -y systemd</p>
+<pre><code>这样一个一个的安装比较费事，我们的工具就来了，在全部节点运行相同命令
+```shell script
+vik8s -- yum install -y systemd
+</code></pre>
+<h2 id="_3">证书问题</h2>
+<p>在有些时候会报出<code>certificate has expired or is not yet valid</code>问题，这个主要是由于服务器时间不一致导致。</p>
+<h2 id="transaction-test-error">Transaction test error</h2>
+<p>大多数情况下需要执行 <code>yum update</code></p>
+<h2 id="glusterfs">GlusterFS</h2>
+<h3 id="_4">集群 复制分数问题</h3>
+<p>集群 brick % 复制分数 == 0</p>
+<h3 id="hostname">新接待加入时使用hostname问题</h3>
+<p>在新加入节点使用hostname方式会出现一些问题，提示无法连接peer，
+这是因为在gluster完成第一次安装后后面又有新机器添加，如果使用hostname方式的话需要添加/etc/hosts文件内容，之前初始化的pod里面并不包含这些新添加的机器
+解决方式：</p>
+<ul>
+<li>更新pod，同时会自动更新/etc/hosts文件(会导致peer断联几秒钟)</li>
+<li>直接更新host文件. <code>cat /etc/hosts &gt;&gt; /var/lib/kubelet/pods/$(PODID)/etc-hosts</code></li>
+</ul>
+<h2 id="golangbug">最后记录一个golang方法特别容易出的问题（BUG 我觉得应该算是吧）,因为这个导致我错误好几次呢。</h2>
+<p>问题描述：在一个yaml文件中，总共有 44 行。执行下面的方法结果是多少? 感兴趣的朋友可以试验一下。我可以告诉你的是结果不一定是 44，至于是为什么看一下源码就了解了</p>
+<pre><code class="language-golang">
+func FileLine(filePath string ) {
+    f , err := os.Open(filePath)
+    if err != nil {
+        panic(err)
+    }
+    reader := bufio.NewReader(f)
+    num := 0
+    for {
+        _, _, err := reader.ReadLine()
+        if err == io.EOF {
+            break
+        }
+        num += 1
+    }
+    fmt.Println(num)
+}
+
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+      <p>Copyright @2021 Haiker</p>
+    
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/ihaiker/vik8s/" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+    
+  </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme_extra.js" defer></script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>

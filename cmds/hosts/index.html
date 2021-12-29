@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="Haiker">
+  <link rel="canonical" href="https://vik8s.renzhen.la/cmds/hosts/">
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>主机访问方式管理 - vik8s</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
+
+  <link rel="stylesheet" href="../../css/theme.css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+  <link href="../../extra.css" rel="stylesheet" />
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "\u4e3b\u673a\u8bbf\u95ee\u65b9\u5f0f\u7ba1\u7406";
+    var mkdocs_page_input_path = "cmds/hosts/index.md";
+    var mkdocs_page_url = "/cmds/hosts/";
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/yaml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/shell.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/json.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> vik8s</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../..">简介</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../../quickstart/">快速开始</a>
+                    </li>
+                </ul>
+                <p class="caption"><span class="caption-text">命令详解</span></p>
+                <ul class="current">
+                    <li class="toctree-l1"><a class="reference internal" href="#">集群安装命令</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../k8s/">Kubernetes 集群初始化</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../k8s/cni/">Kubernetes网络插件</a>
+                </li>
+    </ul>
+                    </li>
+                    <li class="toctree-l1 current"><a class="reference internal current" href="./">主机访问方式管理</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#_2">简单实例</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#_3">参数详解</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#_4">使用代理</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#_5">使用技巧</a>
+    </li>
+    </ul>
+                    </li>
+                    <li class="toctree-l1"><a class="reference internal" href="../etcd/">使用外部ETCD集群</a>
+                    </li>
+                    <li class="toctree-l1"><a class="reference internal" href="../bash/">集群统一维护</a>
+                    </li>
+                </ul>
+                <p class="caption"><span class="caption-text">Reduce配置简化</span></p>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../../reduce/">简单使用</a>
+                    </li>
+                    <li class="toctree-l1"><a class="reference internal" href="../../reduce/plugins/">自定义扩展简化</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../../terraform/">Terraform支持</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../../releases/">版本历史</a>
+                    </li>
+                </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">vik8s</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>命令详解 &raquo;</li>
+        
+      
+    
+    <li>主机访问方式管理</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/ihaiker/vik8s/edit/master/docs/cmds/hosts/index.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  
+  <hr/>
+</div>
+
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="_1">主机访问方式管理</h1>
+<p>在某些情况下，会出现每个主机的密码或秘钥不一致，或者集群访问需要通过代理，为了让安装更方便，我们添加了 <code>hosts</code>命令。此命令可以先行把集群ip添加的到管理之中，在之后指定主机的时候，我们只需要指定主机的<code>IP</code>或者<code>hostname</code>即可。</p>
+<h2 id="_2">简单实例</h2>
+<pre><code class="language-shell">$ vik8s hosts -u root -P passwd 10.24.0.10
+$ vik8s hosts -u admin -i ~/.ssh/id_rsa 10.24.0.11
+$ vik8s hosts -u addmin -P passwd --port 22
+</code></pre>
+<p>命令基本上符合<code>ssh</code>命令的参数，就不多余赘述。有关参数可以使用 <code>vik8s hosts --help</code>方式查看。</p>
+<h2 id="_3">参数详解</h2>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>默认值</th>
+<th>环境变量获取</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-u, –user</td>
+<td>root</td>
+<td>VIK8S_SSH_USER</td>
+<td>设置登录账户</td>
+</tr>
+<tr>
+<td>-P, --password</td>
+<td></td>
+<td>VIK8S_SSH_PASSWORD</td>
+<td>ssh账户密码</td>
+</tr>
+<tr>
+<td>--port</td>
+<td>22</td>
+<td>VIK8S_SSH_PORT</td>
+<td>ssh端口号</td>
+</tr>
+<tr>
+<td>-i, --private-key</td>
+<td>$HOME/.ssh/id_rsa</td>
+<td>VIK8S_SSH_PRIVATE_KEY</td>
+<td>ssh private key</td>
+</tr>
+<tr>
+<td>--proxy</td>
+<td></td>
+<td>VIK8S_SSH_PROXY</td>
+<td>使用的ssh代理，更多查看代理使用章节</td>
+</tr>
+<tr>
+<td>--passphras</td>
+<td></td>
+<td>VIK8S_SSH_PASSPHRASE</td>
+<td>private key passphrase</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_4">使用代理</h2>
+<p>为了保证系统安全有些时候我们无法直接访问控制节点，需要使用代理去访问此时我们就需要使用需要使用ssh代理访问我们的主机。</p>
+<p>添加代理和添加主机一样，我们主要先把代理ssh主机10.24.加入到管理列表，</p>
+<pre><code class="language-shell">vik8s hosts -u root -P password &lt;ssh_proxy_ip&gt;
+</code></pre>
+<p>然后添加我们需要访问的主机</p>
+<pre><code class="language-shell">vik8s hosts &lt;node_ip&gt; --proxy=&lt;ssh_proxy_ip&gt;
+</code></pre>
+<h2 id="_5">使用技巧</h2>
+<p>为了让管理变得更通用，我们进一步支持了<code>ssh</code>命令的一致性</p>
+<pre><code class="language-shell">vik8s hosts admin@10.24.0.10:12232 
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../etcd/" class="btn btn-neutral float-right" title="使用外部ETCD集群">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../k8s/cni/" class="btn btn-neutral" title="Kubernetes网络插件"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+      <p>Copyright @2021 Haiker</p>
+    
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/ihaiker/vik8s/" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../k8s/cni/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../etcd/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme_extra.js" defer></script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>

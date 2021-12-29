@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="very easy install kubernetes">
+  <meta name="author" content="Haiker">
+  <link rel="canonical" href="https://vik8s.renzhen.la/">
+  <link rel="shortcut icon" href="img/favicon.ico">
+  <title>vik8s</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
+
+  <link rel="stylesheet" href="css/theme.css" />
+  <link rel="stylesheet" href="css/theme_extra.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+  <link href="extra.css" rel="stylesheet" />
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "\u7b80\u4ecb";
+    var mkdocs_page_input_path = "index.md";
+    var mkdocs_page_url = "/";
+  </script>
+  
+  <script src="js/jquery-2.1.1.min.js" defer></script>
+  <script src="js/modernizr-2.8.3.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/yaml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/shell.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/json.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+        <a href="." class="icon icon-home"> vik8s</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+                <ul class="current">
+                    <li class="toctree-l1 current"><a class="reference internal current" href=".">简介</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#_2">特性</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#_3">快速开始：</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="quickstart/">快速开始</a>
+                    </li>
+                </ul>
+                <p class="caption"><span class="caption-text">命令详解</span></p>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="#">集群安装命令</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="cmds/k8s/">Kubernetes 集群初始化</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="cmds/k8s/cni/">Kubernetes网络插件</a>
+                </li>
+    </ul>
+                    </li>
+                    <li class="toctree-l1"><a class="reference internal" href="cmds/hosts/">主机访问方式管理</a>
+                    </li>
+                    <li class="toctree-l1"><a class="reference internal" href="cmds/etcd/">使用外部ETCD集群</a>
+                    </li>
+                    <li class="toctree-l1"><a class="reference internal" href="cmds/bash/">集群统一维护</a>
+                    </li>
+                </ul>
+                <p class="caption"><span class="caption-text">Reduce配置简化</span></p>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="reduce/">简单使用</a>
+                    </li>
+                    <li class="toctree-l1"><a class="reference internal" href="reduce/plugins/">自定义扩展简化</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="terraform/">Terraform支持</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="releases/">版本历史</a>
+                    </li>
+                </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href=".">vik8s</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>简介</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/ihaiker/vik8s/edit/master/docs/index.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  
+  <hr/>
+</div>
+
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="_1">简介</h1>
+<p><img alt="" src="logo.png" /> <img alt="" src="logo_txt.png" /></p>
+<p>一个非常简单kubernetes高可用集群安装部署工具，支持 v1.19.+</p>
+<p>程序尽可能采用原生kubernetes特性不对kubernetes进行修改和面向过程模式编写，把安装过程清晰化。</p>
+<h2 id="_2">特性</h2>
+<ul>
+<li>简单快捷方便的安装方式。所有安装基本上就是一条命令</li>
+<li>多集群管理，方便的管理不同集群。</li>
+<li>统一命令管理程序，可以方便的在客户端使用一条命令在所有管理主机上运行。</li>
+<li>独立应用不依赖任何第三方</li>
+<li>可控的证书时间（默认：44年，本人的幸运数字就是4，我的地盘我任性）</li>
+<li>可选择性的镜像地址。默认提供国内/外<strong>可信&amp;安全</strong>的镜像地址。不使用离线包和私有镜像（为啥不提供离线包？您是否还记得IOS环境侵入问题，Goolge一下吧，当然这样的话你的所有安装节点必须可以联网去下载镜像。）</li>
+<li>通过使用service特性和IPVS实现HA高可用，不依赖于任何第三实现。</li>
+<li>轻松的增加集群节点 <code>vik8s join -m &lt;ip&gt;</code></li>
+<li>ETCD节点可单独安装和节点添加。<code>vik8s etcd init &lt;ip1&gt; &lt;ip2&gt; ...</code> 和 <code>vik8s etcd join &lt;ip3&gt; ...</code></li>
+<li>提供周边 安装，同样简单方便。<ul>
+<li>dashboard (1.0 后废弃)</li>
+<li>ingress (nginx/traefik)</li>
+</ul>
+</li>
+<li>【重磅推出】kubernetes reduce 命令，简化yaml配置文件。 <a href="reduce/">查看教程和实例</a>。</li>
+</ul>
+<h3 id="_3">快速开始：</h3>
+<p>查看文档：<a href="quickstart/">Quickstart</a></p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="quickstart/" class="btn btn-neutral float-right" title="快速开始">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+      <p>Copyright @2021 Haiker</p>
+    
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/ihaiker/vik8s/" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+    
+      <span><a href="quickstart/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '.';</script>
+    <script src="js/theme_extra.js" defer></script>
+    <script src="js/theme.js" defer></script>
+      <script src="search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.2.3
+Build Date UTC : 2021-12-29 12:09:21.894459+00:00
+-->
