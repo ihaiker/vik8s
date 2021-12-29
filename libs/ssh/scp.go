@@ -61,7 +61,7 @@ func (node *Node) ScpContent(content []byte, remotePath string) error {
 		return node._scpContent(content, remotePath)
 	} else {
 		path := fmt.Sprintf("/tmp/vik8s/%s", filepath.Base(remotePath))
-		if err := node.ScpContent(content, path); err != nil {
+		if err := node._scpContent(content, path); err != nil {
 			return err
 		}
 		dir := filepath.Dir(remotePath)
